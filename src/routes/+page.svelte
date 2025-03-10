@@ -3,9 +3,18 @@
 </script>
 
 <style>
+    main{
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+
     .page-body-container{
         display: flex;
         background-color: #2f2f2f;
+        flex: 1;
+        justify-content: space-between;
     }
     .display-container{
         display: flex;
@@ -15,7 +24,7 @@
 
 <main>
     <Header></Header>
-    <div>Dropdown</div>
+    <div style="color:black">Dropdown</div>
     <div class="page-body-container">
         <div>Source</div>
         <div class="display-container">
