@@ -1,6 +1,6 @@
 <style>
     .input-container{
-        width: 25%;
+        width: 35%;
         background-color: #484848;
     }
 </style>
