@@ -1,4 +1,6 @@
-<div class="header"></div>
+<script>
+    import DropdownMenu from "./DropdownMenu.svelte";
+</script>
 
 <style>
     .header{
@@ -7,3 +9,5 @@
         background-color: #595959;
     }
 </style>
+
+<div class="header"><DropdownMenu></DropdownMenu></div>

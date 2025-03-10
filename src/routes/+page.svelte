@@ -1,5 +1,10 @@
 <script>
     import Header from "./Header.svelte";
+    import SourceCode from "./SourceCode.svelte";
+    import InputField from "./InputField.svelte";
+    import Controls from "./Controls.svelte";
+    import Canvas from "./Canvas.svelte";
+    import ConsoleLog from "./ConsoleLog.svelte";
 </script>
 
 <style>
@@ -19,19 +24,19 @@
     .display-container{
         display: flex;
         flex-direction: column;
+        width: 100%;
     }
 </style>
 
 <main>
     <Header></Header>
-    <div style="color:black">Dropdown</div>
     <div class="page-body-container">
-        <div>Source</div>
+        <SourceCode></SourceCode>
         <div class="display-container">
-            <div>Controls</div>
-            <div>Canvas</div>
-            <div>ConsoleLog</div>
+            <Controls></Controls>
+            <Canvas></Canvas>
+            <ConsoleLog></ConsoleLog>
         </div>
-        <div>Input Field</div>
+        <InputField></InputField>
     </div>
 </main>
