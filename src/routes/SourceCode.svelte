@@ -1,6 +1,6 @@
 <style>
     .source-container{
-        width: 40%;
+        width: 70%;
         background-color: #484848;
     }
 </style>
