@@ -1,5 +1,5 @@
 <script>
-    import DropdownMenu from "./DropdownMenu.svelte";
+    import DropdownButton from "./DropdownButton.svelte";
 </script>
 
 <style>
@@ -11,4 +11,4 @@
     }
 </style>
 
-<div class="header"><DropdownMenu></DropdownMenu></div>
+<div class="header"><DropdownButton></DropdownButton></div>

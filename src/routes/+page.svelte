@@ -1,7 +1,7 @@
 <script>
     import Header from "./Header.svelte";
     import SourceCode from "./SourceCode.svelte";
-    import InputField from "./InputField.svelte";
+    import AlgorithmSelector from "./AlgorithmSelector.svelte";
     import Controls from "./Controls.svelte";
     import Canvas from "./Canvas.svelte";
     import ConsoleLog from "./ConsoleLog.svelte";
@@ -31,12 +31,12 @@
 <main>
     <Header></Header>
     <div class="page-body-container">
-        <SourceCode></SourceCode>
+        <AlgorithmSelector></AlgorithmSelector>
         <div class="display-container">
             <Controls></Controls>
             <Canvas></Canvas>
             <ConsoleLog></ConsoleLog>
         </div>
-        <InputField></InputField>
+        <SourceCode></SourceCode>
     </div>
 </main>
