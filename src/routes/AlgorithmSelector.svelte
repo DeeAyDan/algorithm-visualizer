@@ -1,7 +1,7 @@
 <script lang="ts">
     // @ts-nocheck
     
-    import { isOpen, selectedAlgorithm, selectedAlgorithmSourceCode } from "../stores/store.svelte.js";
+    import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
     import { algorithmComponents } from "../stores/algorithmComponents";
 
 
@@ -18,8 +18,11 @@
     };
 
     function selectAlgorithm(algorithm: string){
-        selectedAlgorithm.set(algorithm);
-        selectedAlgorithmSourceCode.set(algorithmComponents[algorithm].sourceCodeText);
+        if (algorithmComponents[algorithm]) {
+            selectedAlgorithm.set(algorithm);
+        } else {
+            console.error(`Algorithm '${algorithm}' not found.`);
+        }
         isOpen.set(false);
     }
 
