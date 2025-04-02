@@ -1,21 +1,13 @@
 <script>
 // @ts-nocheck
-
-
     import Header from "./Header.svelte";
     import SourceCode from "./SourceCode.svelte";
     import AlgorithmSelector from "./AlgorithmSelector.svelte";
     import Controls from "./Controls.svelte";
     import Canvas from "./Canvas.svelte";
     import ConsoleLog from "./ConsoleLog.svelte";
-    import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
-
-    import MaxSumPath from "../algorithms/MaxSumPath.svelte";
-
-
-    const algorithmComponents = {
-    maxSumPath: MaxSumPath,
-  };
+    import { isOpen, selectedAlgorithm, selectedAlgorithmSourceCode } from "../stores/store.svelte.js";
+    import { algorithmComponents } from "../stores/algorithmComponents";
 
     let algorithmMenuVisible = false;
     $: $isOpen, algorithmMenuVisible = $isOpen;
@@ -67,8 +59,8 @@
     <Header />
     <div class="page-body-container">
         <div class="display-container">
-            {#if selectedAlgorithm.selectedAlgorithm}
-            <svelte:component this={algorithmComponents[selectedAlgorithm.selectedAlgorithm]} />
+            {#if $selectedAlgorithm}
+            <svelte:component this={algorithmComponents[$selectedAlgorithm]} />
             {/if}
         </div>
         <div class="left-panel">
@@ -76,8 +68,8 @@
                 <AlgorithmSelector />
             </div>
             <div class="algorithm-selector {algorithmMenuVisible ? '' : 'visible'}">
-                {#if selectedAlgorithm.selectedAlgorithm}
-                <SourceCode code={selectedAlgorithm.sourceCode} />
+                {#if $selectedAlgorithmSourceCode}
+                <SourceCode code={$selectedAlgorithmSourceCode} />
                 {:else}
                 <div>
                     <h1 class="select-title">Válassz egy algoritmust!</h1>
@@ -85,6 +77,5 @@
                 {/if}
             </div>
         </div>
-        
     </div>
 </main>

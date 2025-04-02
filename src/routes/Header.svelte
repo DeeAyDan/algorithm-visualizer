@@ -1,6 +1,12 @@
 <script>
     import DropdownButton from "./DropdownButton.svelte";
-    import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
+    import { isOpen, selectedAlgorithm, selectedAlgorithmSourceCode } from "../stores/store.svelte.js";
+
+    function closeMenu() {
+        isOpen.set(false);
+        selectedAlgorithm.set("");
+        selectedAlgorithmSourceCode.set("");
+    }
 </script>
 
 <style>
@@ -25,6 +31,6 @@
 </style>
 
 <div class="header">
-    <button class="title" on:click={() => selectedAlgorithm.selectedAlgorithm = ""}>Algoritmus Vizualizáló.</button>
+    <button class="title" on:click={() => closeMenu()}>Algoritmus Vizualizáló.</button>
     <DropdownButton></DropdownButton>
 </div>

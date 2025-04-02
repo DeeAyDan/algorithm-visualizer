@@ -2,7 +2,7 @@
     import Canvas from '../routes/Canvas.svelte';
     import ConsoleLog from '../routes/ConsoleLog.svelte';
     import Controls from '../routes/Controls.svelte';
-    import { selectedAlgorithm } from '../stores/store.svelte';
+    import { selectedAlgorithmSourceCode } from '../stores/store.svelte';
 
     let placeholderText = {
       controls: "These are the controls for MaxSumPath",
@@ -10,7 +10,7 @@
       canvas: "Visualizing MaxSumPath",
     };
 
-    selectedAlgorithm.sourceCode =`
+    selectedAlgorithmSourceCode.set(`
     function maxSumPath(matrix) {
         let maxSum = 0;
         for (let row of matrix) {
@@ -21,11 +21,7 @@
         }
         return maxSum;
     }
-    `;
-
-    export let sourceCodeText = selectedAlgorithm.sourceCode;
-    console.log (sourceCodeText);
-
+    `);
   </script>
   
   <div class="algorithm-container">

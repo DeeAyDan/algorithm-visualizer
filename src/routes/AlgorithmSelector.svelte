@@ -1,5 +1,9 @@
 <script lang="ts">
-    import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
+    // @ts-nocheck
+    
+    import { isOpen, selectedAlgorithm, selectedAlgorithmSourceCode } from "../stores/store.svelte.js";
+    import { algorithmComponents } from "../stores/algorithmComponents";
+
 
     let algorithmGroups = {
         divideAndConquer: false,
@@ -14,7 +18,8 @@
     };
 
     function selectAlgorithm(algorithm: string){
-        selectedAlgorithm.selectedAlgorithm = algorithm;
+        selectedAlgorithm.set(algorithm);
+        selectedAlgorithmSourceCode.set(algorithmComponents[algorithm].sourceCodeText);
         isOpen.set(false);
     }
 
@@ -81,7 +86,7 @@
         </button>
         <div class="algorithm-list {algorithmGroups.divideAndConquer ? 'visible' : ''}">
             <button class="algorithm-button todo">Faktoriális számítás</button>
-            <button class="algorithm-button" on:click={() => selectAlgorithm("hanoiTower")}>Hanoi tornyai</button>
+            <button class="algorithm-button" on:click={() => selectAlgorithm("towersOfHanoi")}>Hanoi tornyai</button>
             <button class="algorithm-button todo">Hilbert-görbék</button>
         </div>
     </div>
