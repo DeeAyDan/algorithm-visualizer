@@ -1,5 +1,6 @@
 <script>
     import DropdownButton from "./DropdownButton.svelte";
+    import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
 </script>
 
 <style>
@@ -13,14 +14,17 @@
     }
 
     .title{
+        background: none;
+        border: none;
         color: white;
         font-size: 20px;
         padding: 5px 10px 5px 10px;
         font-family: 'Courier New', Courier, monospace;
+        cursor: pointer;
     }
 </style>
 
 <div class="header">
-    <span class="title">Algoritmus Vizualizáló.</span>
+    <button class="title" on:click={() => selectedAlgorithm.selectedAlgorithm = ""}>Algoritmus Vizualizáló.</button>
     <DropdownButton></DropdownButton>
 </div>

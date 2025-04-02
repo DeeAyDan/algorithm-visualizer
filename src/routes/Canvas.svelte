@@ -5,4 +5,6 @@
     }
 </style>
 
-<div class="canvas-container">Canvas</div>
+<div class="canvas-container">
+    
+</div>

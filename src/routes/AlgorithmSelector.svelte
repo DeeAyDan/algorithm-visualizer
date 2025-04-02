@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
+
     let algorithmGroups = {
         divideAndConquer: false,
         dynamicProgramming: false,
@@ -10,6 +12,11 @@
         minimumSpanningTree: false,
         geometryAlgorithms: false
     };
+
+    function selectAlgorithm(algorithm: string){
+        selectedAlgorithm.selectedAlgorithm = algorithm;
+        isOpen.set(false);
+    }
 
     function toggleGroup(group: keyof typeof algorithmGroups) {
         algorithmGroups[group] = !algorithmGroups[group];
@@ -41,6 +48,8 @@
         text-align: right;
         padding-right: 10px;
         padding: 5px 10px 5px 0px;
+        background: none;
+        width: 100%;
     }
 
     .algorithm-button:hover {
@@ -71,9 +80,9 @@
             Oszd meg és uralkodj
         </button>
         <div class="algorithm-list {algorithmGroups.divideAndConquer ? 'visible' : ''}">
-            <div class="algorithm-button todo">Faktoriális számítás</div>
-            <div class="algorithm-button todo">Hanoi tornyai</div>
-            <div class="algorithm-button todo">Hilbert-görbék</div>
+            <button class="algorithm-button todo">Faktoriális számítás</button>
+            <button class="algorithm-button" on:click={() => selectAlgorithm("hanoiTower")}>Hanoi tornyai</button>
+            <button class="algorithm-button todo">Hilbert-görbék</button>
         </div>
     </div>
     
@@ -82,9 +91,9 @@
             Dinamikus programozás
         </button>
         <div class="algorithm-list {algorithmGroups.dynamicProgramming ? 'visible' : ''}">
-            <div class="algorithm-button todo">Legnagyobb összegű út</div>
-            <div class="algorithm-button todo">Pénzváltó algoritmus</div>
-            <div class="algorithm-button todo">Knuth-Morris-Pratt algoritmus</div>
+            <button class="algorithm-button" on:click={() => selectAlgorithm("maxSumPath")}>Legnagyobb összegű út</button>
+            <button class="algorithm-button todo">Pénzváltó algoritmus</button>
+            <button class="algorithm-button todo">Knuth-Morris-Pratt algoritmus</button>
         </div>
     </div>
     <div class="algorithm-group">
@@ -92,9 +101,9 @@
             Mohó algoritmusok
         </button>
         <div class="algorithm-list {algorithmGroups.greedyAlgorithms ? 'visible' : ''}">
-            <div class="algorithm-button todo">Tört hátizsák probléma</div>
-            <div class="algorithm-button todo">Tört hátizsák probléma (ismétléssel)</div>
-            <div class="algorithm-button todo">Utazási probléma</div>
+            <button class="algorithm-button todo">Tört hátizsák probléma</button>
+            <button class="algorithm-button todo">Tört hátizsák probléma (ismétléssel)</button>
+            <button class="algorithm-button todo">Utazási probléma</button>
         </div>
     </div>
     <div class="algorithm-group">
@@ -102,10 +111,10 @@
             Rendezési algoritmusok
         </button>
         <div class="algorithm-list {algorithmGroups.sortingAlgorithms ? 'visible' : ''}">
-            <div class="algorithm-button todo">Összefésüléses rendezés</div>
-            <div class="algorithm-button todo">Beszúrásos rendezés</div>
-            <div class="algorithm-button todo">Kupacrendezés</div>
-            <div class="algorithm-button todo">Gyorsrendezés</div>
+            <button class="algorithm-button todo">Összefésüléses rendezés</button>
+            <button class="algorithm-button todo">Beszúrásos rendezés</button>
+            <button class="algorithm-button todo">Kupacrendezés</button>
+            <button class="algorithm-button todo">Gyorsrendezés</button>
         </div>
     </div>
     <div class="algorithm-group">
@@ -113,13 +122,13 @@
             Keresőfák
         </button>
         <div class="algorithm-list {algorithmGroups.searchTrees ? 'visible' : ''}">
-            <div class="algorithm-button todo">Bináris fa</div>
-            <div class="algorithm-button todo">AVL-fa</div>
-            <div class="algorithm-button todo">B-fa</div>
-            <div class="algorithm-button todo">Piros-fekete fa</div>
-            <div class="algorithm-button todo">2-3 fa</div>
-            <div class="algorithm-button todo">2-3-4 fa</div>
-            <div class="algorithm-button todo">Bináris kupac</div>
+            <button class="algorithm-button todo">Bináris fa</button>
+            <button class="algorithm-button todo">AVL-fa</button>
+            <button class="algorithm-button todo">B-fa</button>
+            <button class="algorithm-button todo">Piros-fekete fa</button>
+            <button class="algorithm-button todo">2-3 fa</button>
+            <button class="algorithm-button todo">2-3-4 fa</button>
+            <button class="algorithm-button todo">Bináris kupac</button>
         </div>
     </div>
     <div class="algorithm-group">
@@ -127,7 +136,7 @@
             Sztring algoritmusok
         </button>
         <div class="algorithm-list {algorithmGroups.stringAlgorithms ? 'visible' : ''}">
-            <div class="algorithm-button todo">Rabin-Karp algoritmus</div>
+            <button class="algorithm-button todo">Rabin-Karp algoritmus</button>
         </div>
     </div>
     <div class="algorithm-group">
@@ -135,8 +144,8 @@
             Legrövidebb út keresése
         </button>
         <div class="algorithm-list {algorithmGroups.shortestPath ? 'visible' : ''}">
-            <div class="algorithm-button todo">Dijkstra algoritmus</div>
-            <div class="algorithm-button todo">Bellman-Ford algoritmus</div>
+            <button class="algorithm-button todo">Dijkstra algoritmus</button>
+            <button class="algorithm-button todo">Bellman-Ford algoritmus</button>
         </div>
     </div>
     <div class="algorithm-group">
@@ -144,8 +153,8 @@
             Minimális feszítőfák
         </button>
         <div class="algorithm-list {algorithmGroups.minimumSpanningTree ? 'visible' : ''}">
-            <div class="algorithm-button todo">Prim algoritmus</div>
-            <div class="algorithm-button todo">Kruskal algoritmus</div>
+            <button class="algorithm-button todo">Prim algoritmus</button>
+            <button class="algorithm-button todo">Kruskal algoritmus</button>
         </div>
     </div>
     <div class="algorithm-group">
@@ -153,9 +162,9 @@
             Geometriai algoritmusok
         </button>
         <div class="algorithm-list {algorithmGroups.geometryAlgorithms ? 'visible' : ''}">
-            <div class="algorithm-button todo">Konvex burok</div>
-            <div class="algorithm-button todo">Chan algoritmusa</div>
-            <div class="algorithm-button todo">Graham szkennelése</div>
+            <button class="algorithm-button todo">Konvex burok</button>
+            <button class="algorithm-button todo">Chan algoritmusa</button>
+            <button class="algorithm-button todo">Graham szkennelése</button>
         </div>
     </div>
 </div>

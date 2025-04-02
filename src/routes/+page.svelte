@@ -5,7 +5,7 @@
     import Controls from "./Controls.svelte";
     import Canvas from "./Canvas.svelte";
     import ConsoleLog from "./ConsoleLog.svelte";
-    import { isOpen } from "../stores/store";
+    import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
 
     let algorithmMenuVisible = false;
 
@@ -38,7 +38,7 @@
         overflow: auto;
         box-sizing: border-box; 
         background-color: #484848;
-        min-width: 450px;
+        width: 550px;
 
     }
     .algorithm-selector{
@@ -49,22 +49,33 @@
     .algorithm-selector.visible{
         display: block;
     }
+    .select-title{
+        text-align: center;
+    }
 </style>
 
 <main>
     <Header></Header>
     <div class="page-body-container">
         <div class="display-container">
-            <Controls></Controls>
-            <Canvas></Canvas>
-            <ConsoleLog></ConsoleLog>
+            {#if selectedAlgorithm.selectedAlgorithm}
+            <Controls />
+            <Canvas />
+            <ConsoleLog />
+            {/if}
         </div>
         <div class="left-panel">
             <div class="algorithm-selector {algorithmMenuVisible ? 'visible' : ''}">
-                <AlgorithmSelector></AlgorithmSelector>
+                <AlgorithmSelector />
             </div>
             <div class="algorithm-selector {algorithmMenuVisible ? '' : 'visible'}">
-                <SourceCode></SourceCode>
+                {#if selectedAlgorithm.selectedAlgorithm}
+                <SourceCode />
+                {:else}
+                <div>
+                    <h1 class="select-title">Válassz egy algoritmust!</h1>
+                </div>
+                {/if}
             </div>
         </div>
         

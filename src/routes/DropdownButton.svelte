@@ -1,6 +1,6 @@
 <!-- Dropdown.svelte -->
 <script>
-    import { isOpen } from "../stores/store";
+    import { isOpen } from "../stores/store.svelte.js";
 
     function toggleDropdown() {
         isOpen.update(value => !value);
