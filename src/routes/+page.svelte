@@ -1,4 +1,7 @@
 <script>
+// @ts-nocheck
+
+
     import Header from "./Header.svelte";
     import SourceCode from "./SourceCode.svelte";
     import AlgorithmSelector from "./AlgorithmSelector.svelte";
@@ -7,8 +10,14 @@
     import ConsoleLog from "./ConsoleLog.svelte";
     import { isOpen, selectedAlgorithm } from "../stores/store.svelte.js";
 
-    let algorithmMenuVisible = false;
+    import MaxSumPath from "../algorithms/MaxSumPath.svelte";
 
+
+    const algorithmComponents = {
+    maxSumPath: MaxSumPath,
+  };
+
+    let algorithmMenuVisible = false;
     $: $isOpen, algorithmMenuVisible = $isOpen;
 </script>
 
@@ -55,13 +64,11 @@
 </style>
 
 <main>
-    <Header></Header>
+    <Header />
     <div class="page-body-container">
         <div class="display-container">
             {#if selectedAlgorithm.selectedAlgorithm}
-            <Controls />
-            <Canvas />
-            <ConsoleLog />
+            <svelte:component this={algorithmComponents[selectedAlgorithm.selectedAlgorithm]} />
             {/if}
         </div>
         <div class="left-panel">
@@ -70,7 +77,7 @@
             </div>
             <div class="algorithm-selector {algorithmMenuVisible ? '' : 'visible'}">
                 {#if selectedAlgorithm.selectedAlgorithm}
-                <SourceCode />
+                <SourceCode code={selectedAlgorithm.sourceCode} />
                 {:else}
                 <div>
                     <h1 class="select-title">Válassz egy algoritmust!</h1>
