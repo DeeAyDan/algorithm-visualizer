@@ -5,6 +5,11 @@
     import Controls from "./Controls.svelte";
     import Canvas from "./Canvas.svelte";
     import ConsoleLog from "./ConsoleLog.svelte";
+    import { isOpen } from "../stores/store";
+
+    let algorithmMenuVisible = false;
+
+    $: $isOpen, algorithmMenuVisible = $isOpen;
 </script>
 
 <style>
@@ -13,8 +18,6 @@
         display: flex;
         flex-direction: column;
     }
-
-
     .page-body-container{
         display: flex;
         background-color: #2f2f2f;
@@ -26,17 +29,44 @@
         flex-direction: column;
         width: 100%;
     }
+    .left-panel{
+        padding: 0px;
+        display: flex;
+        flex-direction: column;
+        background-color: #2f2f2f;
+        max-height: calc(100vh - 35px);
+        overflow: auto;
+        box-sizing: border-box; 
+        background-color: #484848;
+        min-width: 450px;
+
+    }
+    .algorithm-selector{
+        display: none;
+        padding: 0px;
+        margin: 0px;
+    }
+    .algorithm-selector.visible{
+        display: block;
+    }
 </style>
 
 <main>
     <Header></Header>
     <div class="page-body-container">
-        <AlgorithmSelector></AlgorithmSelector>
         <div class="display-container">
             <Controls></Controls>
             <Canvas></Canvas>
             <ConsoleLog></ConsoleLog>
         </div>
-        <SourceCode></SourceCode>
+        <div class="left-panel">
+            <div class="algorithm-selector {algorithmMenuVisible ? 'visible' : ''}">
+                <AlgorithmSelector></AlgorithmSelector>
+            </div>
+            <div class="algorithm-selector {algorithmMenuVisible ? '' : 'visible'}">
+                <SourceCode></SourceCode>
+            </div>
+        </div>
+        
     </div>
 </main>

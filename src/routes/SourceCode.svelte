@@ -1,3 +1,6 @@
+<script lang="ts">
+</script>
+
 <style>
     .source-container{
         width: 70%;

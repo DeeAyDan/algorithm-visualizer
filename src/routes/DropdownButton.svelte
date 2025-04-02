@@ -14,7 +14,6 @@
 <style>
     .dropdown {
         position:relative;
-        margin: auto;
         height: 100%;
     }
 
@@ -23,6 +22,7 @@
         border: none;
         cursor: pointer;
         height: 100%;
+        margin-right: 15px;
     }
     .arrow{
         display: inline;
@@ -34,8 +34,8 @@
 
 <div class="dropdown">
     <button class="dropdown-button" on:click={toggleDropdown}>
-         <span class="arrow {inputVisible ? 'visible' : ''}">Select an algorithm ▼</span>
-         <span class="arrow {!inputVisible ? 'visible' : ''}">Close the menu ▼</span>
+         <span class="arrow {inputVisible ? 'visible' : ''}">Algoritmus választó ▼</span>
+         <span class="arrow {!inputVisible ? 'visible' : ''}">Menü bezárása</span>
 
     </button>
 </div>
