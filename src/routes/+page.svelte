@@ -60,7 +60,11 @@
     <div class="page-body-container">
         <div class="display-container">
             {#if $selectedAlgorithm}
-            <svelte:component this={algorithmComponents[$selectedAlgorithm]} />
+            
+            <Canvas />
+            <ConsoleLog />
+            {:else}
+            <div class="tag">Válassz egy algoritmust!</div>
             {/if}
         </div>
         <div class="left-panel">

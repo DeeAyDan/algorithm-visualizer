@@ -99,7 +99,7 @@
             Dinamikus programozás
         </button>
         <div class="algorithm-list {algorithmGroups.dynamicProgramming ? 'visible' : ''}">
-            <button class="algorithm-button" on:click={() => selectAlgorithm("maxSumPath")}>Legnagyobb összegű út</button>
+            <button class="algorithm-button todo">Legnagyobb összegű út</button>
             <button class="algorithm-button todo">Pénzváltó algoritmus</button>
             <button class="algorithm-button todo">Knuth-Morris-Pratt algoritmus</button>
         </div>
