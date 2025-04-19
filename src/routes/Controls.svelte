@@ -1,23 +1,38 @@
 <script lang="ts">
 	// @ts-nocheck
 	import { createEventDispatcher } from 'svelte';
-	import { algorithmComponents } from '../stores/algorithmComponents';
 	import {
-		selectedAlgorithmSourceCode,
-		selectedAlgorithm,
+		algorithmStatus,
+		resumeSignal,
 		currentStep,
 		totalSteps,
 		speed
 	} from '../stores/store.svelte.js';
+	import { get } from 'svelte/store';
 
 	const dispatch = createEventDispatcher();
 
+	// Progress bar érték kiszámítása
 	$: progressPercentage = ($currentStep / $totalSteps) * 100 + '%';
 
-	function handlePlay() {
+	// ▶️ Start
+	function handleStart() {
+		algorithmStatus.set('running');
 		dispatch('start', { speed });
 	}
 
+	// ⏸️ Pause
+	function handlePause() {
+		algorithmStatus.set('paused');
+	}
+
+	// ▶️ Resume
+	function handleResume() {
+		algorithmStatus.set('running');
+		resumeSignal.update(n => n + 1);
+	}
+
+	// Sebesség állítása
 	function handleSpeedChange(newSpeed: number) {
 		speed.set(Number(newSpeed));
 	}
@@ -25,23 +40,24 @@
 
 <div class="controls-bar">
 	<div class="tag">Controls</div>
-	<button class="play-button" on:click={handlePlay}>
-		<!-- SVG -->
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="20"
-			height="20"
-			viewBox="0 0 24 24"
-			fill="aliceblue"
-			class="feather feather-play"><polygon points="5 3 19 12 5 21 5 3" /></svg
-		> Play
-	</button>
 
+	<!-- Állapotfüggő gombok -->
+	{#if $algorithmStatus === 'idle'}
+		<button class="play-button" on:click={handleStart}>Start</button>
+	{:else if $algorithmStatus === 'running'}
+		<button class="play-button" on:click={handlePause}>Pause</button>
+	{:else if $algorithmStatus === 'paused'}
+		<button class="play-button" on:click={handleResume}>Resume</button>
+	{/if}
+
+	<!-- Léptetési információ -->
 	<div class="step-counter">
 		<div class="progress" data-label="{$currentStep}/{$totalSteps}">
 			<span class="value" style="--progress-percentage: {progressPercentage}"></span>
 		</div>
 	</div>
+
+	<!-- Sebességcsúszka -->
 	<div class="speed-slider">
 		<label for="speed-range">Speed</label>
 		<input

@@ -7,3 +7,6 @@ export const currentStep = writable(0);
 export const totalSteps = writable(0);
 export const consoleLog = writable([]);
 export const speed = writable(50);
+
+export const algorithmStatus = writable('idle');
+export const resumeSignal = writable(0);

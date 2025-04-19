@@ -1,19 +1,22 @@
 <script lang="ts">
 	// @ts-nocheck
 	import { onMount } from 'svelte';
-    import {
+	import {
 		selectedAlgorithmSourceCode,
 		currentStep,
 		totalSteps,
 		consoleLog,
-		speed
+		speed,
+		algorithmStatus,
+		resumeSignal
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 
 	let data = [8, 3, 7, 10, 4, 6, 9, 2, 1, 5];
 	let stepCount = 0;
-    currentStep.set(0);
+	currentStep.set(0);
+	algorithmStatus.set('idle');
 
 	let pivotIndex: number | null = null;
 	let activeIndex: number | null = null;
@@ -26,7 +29,7 @@
 		totalSteps.set(estimatedSteps);
 	});
 
-	function countQuickSortSteps(){
+	function countQuickSortSteps() {
 		let steps = 0;
 
 		function countSort(arr: number[], left: number, right: number): void {
@@ -63,8 +66,6 @@
 		return steps;
 	}
 
-	
-
 	// Késleltető helper
 	function delay(ms: number) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
@@ -82,9 +83,9 @@
 		stepCount = 0;
 		currentStep.set(0);
 
-        consoleLog.update((logs) => [...logs,'QuickSort indítása...']);
+		consoleLog.update((logs) => [...logs, 'QuickSort indítása...']);
 		await quickSort(data, 0, data.length - 1);
-        consoleLog.update((logs) => [...logs,'QuickSort kész!']);
+		consoleLog.update((logs) => [...logs, 'QuickSort kész!']);
 
 		totalSteps.set(stepCount);
 	}
@@ -98,6 +99,23 @@
 		}
 	}
 
+	function waitUntilResume(): Promise<void> {
+		return new Promise((resolve) => {
+			const unsub = resumeSignal.subscribe(() => {
+				if (get(algorithmStatus) === 'running') {
+					unsub();
+					resolve();
+				}
+			});
+		});
+	}
+
+	async function pauseIfNeeded() {
+		if (get(algorithmStatus) === 'paused') {
+			await waitUntilResume();
+		}
+	}
+
 	async function partition(arr: number[], left: number, right: number): Promise<number> {
 		let pivot = arr[right];
 		pivotIndex = right;
@@ -107,6 +125,7 @@
 		for (let j = left; j < right; j++) {
 			activeIndex = j;
 			log(`Összehasonlítás: ${arr[j]} <= ${pivot}`);
+			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
 
 			if (arr[j] <= pivot) {
@@ -114,6 +133,7 @@
 				[arr[i], arr[j]] = [arr[j], arr[i]];
 				log(`Csere: ${arr[i]} <-> ${arr[j]}`);
 				data = [...arr];
+				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
 			}
 		}
@@ -123,6 +143,7 @@
 		log(`Pivot helyre rakása: ${arr[i + 1]} <-> ${arr[right]}`);
 
 		data = [...arr];
+		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
 		swapIndices = null;
 		pivotIndex = null;
