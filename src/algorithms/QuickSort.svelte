@@ -9,7 +9,7 @@
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 
-	let data = [5, 3, 18, 14, 8, 1, 2, 6, 10, 2, 1, 8]; // vagy generált tömb
+	let data = [8, 3, 7, 10, 4, 6, 9, 2, 1, 5];
 	let speed = 50;
 	let stepCount = 0;
     currentStep.set(0);
@@ -20,7 +20,12 @@
 
 	consoleLog.set([]);
 
-	function countQuickSortSteps(arr: number[]): number {
+	onMount(() => {
+		const estimatedSteps = countQuickSortSteps();
+		totalSteps.set(estimatedSteps);
+	});
+
+	function countQuickSortSteps(){
 		let steps = 0;
 
 		function countSort(arr: number[], left: number, right: number): void {
@@ -33,30 +38,31 @@
 
 		function countPartition(arr: number[], left: number, right: number): number {
 			let pivot = arr[right];
-			steps++; // pivot kiválasztás
+			steps++;
 			let i = left - 1;
 
 			for (let j = left; j < right; j++) {
-				steps++; // összehasonlítás
+				steps++;
+
 				if (arr[j] <= pivot) {
-					steps++; // csere
 					i++;
+					steps++;
+					[arr[i], arr[j]] = [arr[j], arr[i]];
+					copy = [...arr];
 				}
 			}
 
-			steps++; // pivot helyre rakása
+			[arr[i + 1], arr[right]] = [arr[right], arr[i + 1]];
+			steps++;
 			return i + 1;
 		}
 
-		const copy = [...arr];
+		let copy = [...data];
 		countSort(copy, 0, copy.length - 1);
 		return steps;
 	}
 
-	onMount(() => {
-		const estimatedSteps = countQuickSortSteps(data);
-		totalSteps.set(estimatedSteps);
-	});
+	
 
 	// Késleltető helper
 	function delay(ms: number) {
@@ -150,7 +156,7 @@ function quickSort(arr, left, right) {
 					: ''} {swapIndices && (index === swapIndices[0] || index === swapIndices[1])
 					? 'swap'
 					: ''}"
-				style="height: {num * 10}px"
+				style="height: {num * 20}px"
 			>
 				{num}
 			</div>
@@ -174,7 +180,7 @@ function quickSort(arr, left, right) {
 		justify-content: center;
 		align-items: flex-end;
 		height: 200px;
-		margin: 1rem 0;
+		margin: 1rem 0 0 0;
 	}
 
 	.bar {
