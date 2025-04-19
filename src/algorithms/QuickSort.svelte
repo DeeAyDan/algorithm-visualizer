@@ -105,6 +105,7 @@
 		let pivot = arr[right];
 		pivotIndex = right;
 		log(`Pivot kiválasztva: ${pivot}`);
+		await delay(900 - get(speed) * 8);
 		let i = left - 1;
 		for (let j = left; j < right; j++) {
 			activeIndex = j;
