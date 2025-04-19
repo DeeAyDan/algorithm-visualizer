@@ -6,10 +6,10 @@
 		selectedAlgorithmSourceCode,
 		selectedAlgorithm,
 		currentStep,
-		totalSteps
+		totalSteps,
+		speed
 	} from '../stores/store.svelte.js';
 
-	let speed = 50;
 	const dispatch = createEventDispatcher();
 
 	$: progressPercentage = ($currentStep / $totalSteps) * 100 + '%';
@@ -19,7 +19,7 @@
 	}
 
 	function handleSpeedChange(newSpeed: number) {
-		speed = newSpeed;
+		speed.set(Number(newSpeed));
 	}
 </script>
 
@@ -50,7 +50,7 @@
 			id="speed-range"
 			min="1"
 			max="100"
-			value={speed}
+			bind:value={$speed}
 			on:input={(e) => handleSpeedChange(e.target.value)}
 		/>
 	</div>

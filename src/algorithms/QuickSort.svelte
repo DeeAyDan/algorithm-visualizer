@@ -5,12 +5,13 @@
 		selectedAlgorithmSourceCode,
 		currentStep,
 		totalSteps,
-		consoleLog
+		consoleLog,
+		speed
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
+	import { get } from 'svelte/store';
 
 	let data = [8, 3, 7, 10, 4, 6, 9, 2, 1, 5];
-	let speed = 50;
 	let stepCount = 0;
     currentStep.set(0);
 
@@ -80,7 +81,6 @@
 		consoleLog.set([]);
 		stepCount = 0;
 		currentStep.set(0);
-		speed = event.detail.speed;
 
         consoleLog.update((logs) => [...logs,'QuickSort indítása...']);
 		await quickSort(data, 0, data.length - 1);
@@ -107,14 +107,14 @@
 		for (let j = left; j < right; j++) {
 			activeIndex = j;
 			log(`Összehasonlítás: ${arr[j]} <= ${pivot}`);
-			await delay(900 - speed * 8);
+			await delay(900 - get(speed) * 8);
 
 			if (arr[j] <= pivot) {
 				i++;
 				[arr[i], arr[j]] = [arr[j], arr[i]];
 				log(`Csere: ${arr[i]} <-> ${arr[j]}`);
 				data = [...arr];
-				await delay(900 - speed * 8);
+				await delay(900 - get(speed) * 8);
 			}
 		}
 
@@ -123,7 +123,7 @@
 		log(`Pivot helyre rakása: ${arr[i + 1]} <-> ${arr[right]}`);
 
 		data = [...arr];
-		await delay(900 - speed * 8);
+		await delay(900 - get(speed) * 8);
 		swapIndices = null;
 		pivotIndex = null;
 		activeIndex = null;

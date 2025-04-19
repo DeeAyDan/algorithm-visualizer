@@ -6,3 +6,4 @@ export const selectedAlgorithmSourceCode = writable("");
 export const currentStep = writable(0);
 export const totalSteps = writable(0);
 export const consoleLog = writable([]);
+export const speed = writable(50);
