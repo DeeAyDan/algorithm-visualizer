@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { selectedAlgorithmSourceCode } from "../stores/store.svelte";
+	import { selectedAlgorithmSourceCode, selectedAlgorithm } from "../stores/store.svelte";
 
 </script>
 
