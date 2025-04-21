@@ -13,9 +13,21 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 
+	// ==== Adattömb randomizálása ====
+	function shuffle(array) {
+		let currentIndex = array.length;
+		while (currentIndex != 0) {
+			let randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex--;
+
+			[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+		}
+	}
+
 	// ==== Alapadatok ====
-	let data = [8, 3, 7, 10, 4, 6, 9, 2, 1, 5];
-	let initialArr = [...data];
+	let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+	shuffle(data);
+	let initArr = [...data];
 	let maxValue = Math.max(...data);
 	currentStep.set(0);
 	algorithmStatus.set('idle');
@@ -26,7 +38,7 @@
 	let activeIndex: number | null = null;
 	let swapIndices: [number, number] | null = null;
 
-		// ==== Előkalkulált lépésszám ====
+	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalSteps.set(countQuickSortSteps());
 	});
@@ -86,7 +98,8 @@
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-					data = [...initialArr];
+					data = [...initArr];
+
 					unsub();
 					resolve();
 				}
@@ -113,7 +126,6 @@
 		consoleLog.update((logs) => [...logs, 'QuickSort kész!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
-
 	}
 
 	async function quickSort(arr: number[], left: number, right: number) {
@@ -178,7 +190,8 @@ function quickSort(arr, left, right) {
 					: ''} {swapIndices && (index === swapIndices[0] || index === swapIndices[1])
 					? 'swap'
 					: ''}"
-				style="height: {(num / maxValue) * 100}%">
+				style="height: {(num / maxValue) * 100}%"
+			>
 				{num}
 			</div>
 		{/each}
@@ -211,7 +224,15 @@ function quickSort(arr, left, right) {
 		font-size: 12px;
 		transition: height 0.3s ease;
 	}
-	.bar.pivot { background-color: crimson; }
-	.bar.active { background-color: gold; color: black; }
-	.bar.swap { background-color: limegreen; color: black; }
+	.bar.pivot {
+		background-color: crimson;
+	}
+	.bar.active {
+		background-color: gold;
+		color: black;
+	}
+	.bar.swap {
+		background-color: limegreen;
+		color: black;
+	}
 </style>
