@@ -5,11 +5,11 @@
 <div class="console-log-container">
 	<div class="tag">Console Log</div>
 	<div class="console">
-		<ul class="console-list">
+		<ol class="console-list">
 			{#each $consoleLog as line}
 				<li>{line}</li>
 			{/each}
-		</ul>
+		</ol>
 	</div>
 </div>
 
@@ -33,5 +33,6 @@
 	}
 	.console-list {
 		position: absolute;
+		left: 20px;
 	}
 </style>
