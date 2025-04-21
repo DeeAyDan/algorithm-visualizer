@@ -7,3 +7,11 @@
     - Algoritmus futás
     - HTML
     - CSS
+
+    {index === activeIndex
+					? 'active'
+					: ''} {swapIndices && (index === swapIndices[0] || index === swapIndices[1])
+					? 'swap'
+					: ''} {index === insertedIndex
+					? 'inserted'
+					: ''}
