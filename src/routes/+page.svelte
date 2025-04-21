@@ -34,7 +34,7 @@
 			</div>
 			<div class="algorithm-selector {algorithmMenuVisible ? '' : 'visible'}">
 				{#if $selectedAlgorithmSourceCode}
-					<SourceCode code={$selectedAlgorithmSourceCode} />
+					<SourceCode />
 				{:else}
 					<div>
 						<h1 class="select-title">Válassz egy algoritmust!</h1>
