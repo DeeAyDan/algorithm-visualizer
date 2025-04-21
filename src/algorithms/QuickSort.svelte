@@ -15,6 +15,7 @@
 
 	// ==== Alapadatok ====
 	let data = [8, 3, 7, 10, 4, 6, 9, 2, 1, 5];
+	let initialArr = [...data];
 	let maxValue = Math.max(...data);
 	currentStep.set(0);
 	algorithmStatus.set('idle');
@@ -79,9 +80,27 @@
 			});
 		});
 	}
+	function waitUntilRestart(): Promise<void> {
+		return new Promise((resolve) => {
+			const unsub = resumeSignal.subscribe(() => {
+				if (get(algorithmStatus) === 'idle') {
+					consoleLog.set([]);
+					currentStep.set(0);
+					data = [...initialArr];
+					unsub();
+					resolve();
+				}
+			});
+		});
+	}
 	async function pauseIfNeeded() {
 		if (get(algorithmStatus) === 'paused') {
 			await waitUntilResume();
+		}
+	}
+	async function restartAlgorithm() {
+		if (get(algorithmStatus) === 'finished') {
+			await waitUntilRestart();
 		}
 	}
 
@@ -92,6 +111,9 @@
 		consoleLog.update((logs) => [...logs, 'QuickSort indítása...']);
 		await quickSort(data, 0, data.length - 1);
 		consoleLog.update((logs) => [...logs, 'QuickSort kész!']);
+		algorithmStatus.set('finished');
+		await restartAlgorithm();
+
 	}
 
 	async function quickSort(arr: number[], left: number, right: number) {

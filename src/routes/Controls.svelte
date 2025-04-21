@@ -32,6 +32,12 @@
 		resumeSignal.update(n => n + 1);
 	}
 
+	// ▶️ Resume
+	function handleReset() {
+		algorithmStatus.set('idle');
+		resumeSignal.update(n => n + 1);
+	}
+
 	// Sebesség állítása
 	function handleSpeedChange(newSpeed: number) {
 		speed.set(Number(newSpeed));
@@ -48,6 +54,8 @@
 		<button class="play-button" on:click={handlePause}>Pause</button>
 	{:else if $algorithmStatus === 'paused'}
 		<button class="play-button" on:click={handleResume}>Resume</button>
+	{:else if $algorithmStatus === 'finished'}
+		<button class="play-button" on:click={handleReset}>Reset</button>
 	{/if}
 
 	<!-- Léptetési információ -->
