@@ -1,32 +1,132 @@
 <script lang="ts">
-    import Canvas from '../routes/Canvas.svelte';
-    import ConsoleLog from '../routes/ConsoleLog.svelte';
-    import Controls from '../routes/Controls.svelte';
-    import { selectedAlgorithmSourceCode } from '../stores/store.svelte';
+	// @ts-nocheck
+	import { onMount } from 'svelte';
+	import {
+		selectedAlgorithmSourceCode,
+		currentStep,
+		totalSteps,
+		consoleLog,
+		speed,
+		algorithmStatus,
+		resumeSignal
+	} from '../stores/store.svelte.js';
+	import Controls from '../routes/Controls.svelte';
+	import { get } from 'svelte/store';
 
-    let placeholderText = {
-      controls: "These are the controls for MaxSumPath",
-      consoleLog: "Console log of MaxSumPath execution steps",
-      canvas: "Visualizing MaxSumPath",
-    };
+	// ==== Adattömb randomizálása ====
 
-    selectedAlgorithmSourceCode.set(`
-    function maxSumPath(matrix) {
-        let maxSum = 0;
-        for (let row of matrix) {
-            let rowSum = row.reduce((a, b) => a + b, 0);
-            if (rowSum > maxSum) {
-                maxSum = rowSum;
-            }
-        }
-        return maxSum;
-    }
-    `);
-  </script>
-  
-  <div class="algorithm-container">
-    <Controls text={placeholderText.controls} />
-    <Canvas text={placeholderText.canvas} />
-    <ConsoleLog text={placeholderText.consoleLog} />
-  </div>
-  
+
+	// ==== Alapadatok ====
+
+	currentStep.set(0);
+	algorithmStatus.set('idle');
+	consoleLog.set([]);
+
+	// ==== Vizualizációs indexek ====
+    let insertedIndex: number | null = null;
+
+
+	// ==== Előkalkulált lépésszám ====
+	onMount(() => {
+		totalSteps.set(0);
+	});
+
+
+	// ==== Késleltetés és vezérlés ====
+	function log(message: string) {
+		consoleLog.update((logs) => [...logs, message]);
+		currentStep.update((n) => n + 1);
+	}
+	function delay(ms: number) {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
+	function waitUntilResume(): Promise<void> {
+		return new Promise((resolve) => {
+			const unsub = resumeSignal.subscribe(() => {
+				if (get(algorithmStatus) === 'running') {
+					unsub();
+					resolve();
+				}
+			});
+		});
+	}
+	function waitUntilRestart(): Promise<void> {
+		return new Promise((resolve) => {
+			const unsub = resumeSignal.subscribe(() => {
+				if (get(algorithmStatus) === 'idle') {
+					consoleLog.set([]);
+					currentStep.set(0);
+					data = [...initArr];
+
+					unsub();
+					resolve();
+				}
+			});
+		});
+	}
+	async function pauseIfNeeded() {
+		if (get(algorithmStatus) === 'paused') {
+			await waitUntilResume();
+		}
+	}
+	async function restartAlgorithm() {
+		if (get(algorithmStatus) === 'finished') {
+			await waitUntilRestart();
+		}
+	}
+
+	// ==== InsersionSort futás ====
+	async function startAlgorithm(event) {
+		consoleLog.set([]);
+		currentStep.set(0);
+		consoleLog.update((logs) => [...logs, 'InsersionSort indítása...']);
+		await insersionSort(data);
+		consoleLog.update((logs) => [...logs, 'InsersionSort kész!']);
+		algorithmStatus.set('finished');
+		await restartAlgorithm();
+	}
+
+	// ==== Forráskód megjelenítés ====
+	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+</script>
+
+<!-- ==== Komponens markup ==== -->
+<div class="algorithm-container">
+	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
+	<div class="tag">Canvas</div>
+	<div class="array-visual">
+
+	</div>
+</div>
+
+<!-- ==== Stílus ==== -->
+<style>
+	.tag {
+		display: inline-block;
+		top: 0;
+		left: 0;
+		background-color: #484848;
+		color: white;
+		padding: 3px;
+	}
+	.array-visual {
+		display: flex;
+		gap: 4px;
+		justify-content: center;
+		align-items: flex-end;
+		height: 200px;
+		margin: 1rem 0 0 0;
+	}
+	.bar {
+		width: 5%;
+		background-color: teal;
+		text-align: center;
+		color: white;
+		font-size: 12px;
+		transition: height 0.3s ease;
+	}
+	.bar.inserted {
+		background-color: crimson;
+	}
+
+</style>
