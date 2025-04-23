@@ -37,7 +37,7 @@
 		</button>
 		<div class="algorithm-list {algorithmGroups.divideAndConquer ? 'visible' : ''}">
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('factorialCalculator')}>Faktoriális számítás</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('towersOfHanoi')}>Hanoi tornyai</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('towersOfHanoi')}>Hanoi tornyai</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('hilbertCurves')}>Hilbert-görbék</button>
 		</div>
 	</div>

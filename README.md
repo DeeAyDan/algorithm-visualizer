@@ -8,6 +8,14 @@
     - HTML
     - CSS
 
+## Algoritmus Checklist
+    - [ ] Alap adatok
+    - [ ] Vizualizáló indexek
+    - [ ] Előkalkulált lépésszám
+    - [ ] Algoritmus futás
+    - [ ] HTML
+    - [ ] CSS
+
     {index === activeIndex
 					? 'active'
 					: ''} {swapIndices && (index === swapIndices[0] || index === swapIndices[1])
