@@ -25,7 +25,7 @@
 	}
 
 	// ==== Alapadatok ====
-	let data = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+	let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	shuffle(data);
 	let initArr = [...data];
 	let maxValue = Math.max(...data);
@@ -34,80 +34,79 @@
 	consoleLog.set([]);
 
 	// ==== Vizualizációs indexek ====
-    let activeIndices: [number, number] | null = null;
-    let mergedRange: [number, number] | null = null;
-
+	let activeIndices: number[] = [];
+	let swapIndices: [number, number] | null = null;
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-        let countArray = [...data];
+		let countArray = [...data];
 		totalSteps.set(countMergeSortSteps(countArray));
 	});
 
-    function countMergeSortSteps(array){
-        let steps = 0;
+	function countMergeSortSteps(array) {
+		let steps = 0;
 
-        let length = array.length;
-        if(length < 2) return 0;
+		let length = array.length;
+		if (length < 2) return 0;
 
-        let middle = length / 2;
-        let leftArray = [];
-        let rightArray = [];
+		let middle = Math.floor(length / 2);
+		let leftArray = [];
+		let rightArray = [];
 
-        let i = 0; // left array
-        let j = 0; // right array
+		let i = 0; // left array
+		let j = 0; // right array
 
-        for (; i < length; i++) {
-            if (i < middle) {
-                leftArray.push(array[i]);
-            }
-            else {
-                rightArray.push(array[i]);
-            }
-        }
-        steps += countMergeSortSteps(leftArray);
-        steps += countMergeSortSteps(rightArray);
-        steps += countMerge(leftArray, rightArray, array);
+		for (; i < length; i++) {
+			if (i < middle) {
+				leftArray.push(array[i]);
+			} else {
+				rightArray.push(array[i]);
+				j++;
+			}
+		}
 
+		steps += countMergeSortSteps(leftArray);
+		steps += countMergeSortSteps(rightArray);
+		steps += countMerge(leftArray, rightArray, array);
 
-        return steps;
-    }
-    function countMerge(leftArray, rightArray, array){
-        let steps = 0;
-        let leftSize = array.length / 2;
-        let rightSize = array.length - leftSize;
-        let i = 0, l = 0, r = 0;
+		return steps;
+	}
+	function countMerge(leftArray, rightArray, array) {
+		let steps = 0;
+		let leftSize = Math.floor(array.length / 2);
+		let rightSize = array.length - leftSize;
+		let i = 0,
+			l = 0,
+			r = 0;
 
-        while(l < leftSize && r < rightSize) {
-            // összehasonlítás
-            steps++;
-            i++;
-            if(leftArray[l] < rightArray[r]) {
-                array[i] = leftArray[l];
-                l++;
-            }
-            else {
-                array[i] = rightArray[r];
-                r++;
-            }
-        }
-        while(l < leftSize){
+		while (l < leftSize && r < rightSize) {
+			steps++;
 
-            steps++;
-            array[i] = leftArray[l];
-            i++;
-            l++;
-        }
-        while(r < rightSize){
+			if (leftArray[l] < rightArray[r]) {
+				array[i] = leftArray[l];
+				l++;
+				i++;
+			} else {
+				array[i] = rightArray[r];
+				r++;
+				i++;
+			}
+		}
+		while (l < leftSize) {
+			steps++;
+			array[i] = leftArray[l];
+			i++;
+			l++;
+		}
+		while (r < rightSize) {
+			steps++;
+			array[i] = rightArray[r];
+			i++;
+			r++;
+		}
 
-            steps++;
-            array[i] = rightArray[r];
-            i++;
-            r++;
-        }
-
-        return steps;
-    }
+		return steps;
+	}
 
 	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
@@ -157,73 +156,83 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, 'MergeSort indítása...']);
-		await MergeSort(data);
+		await mergeSort(data);
 		consoleLog.update((logs) => [...logs, 'MergeSort kész!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
-    function mergeSort(array){
-        let length = array.length;
-        if(length < 2) return 0;
+	async function mergeSort(array: number[], startIndex = 0): Promise<void> {
+		if (array.length < 2){
+			return;
+		}
 
-        // subarray kivalasztas
+		const middle = Math.floor(array.length / 2);
+		const left = array.slice(0, middle);
+		const right = array.slice(middle);
 
-        let middle = length / 2;
-        let leftArray = [];
-        let rightArray = [];
+		await mergeSort(left, startIndex);
+		await mergeSort(right, startIndex + middle);
 
-        let i = 0;
-        let j = 0;
+		await merge(left, right, array, startIndex);
+	}
 
-        for (; i < length; i++) {
-            if (i < middle) {
-                leftArray.push(array[i]);
-            }
-            else {
-                rightArray.push(array[i]);
-            }
-        }
-        mergeSort(leftArray);
-        mergeSort(rightArray);
-        Merge(leftArray, rightArray, array);
+	async function merge(left: number[], right: number[], merged: number[], startIndex: number) {
+	let i = 0,
+		l = 0,
+		r = 0;
 
-    }
-    function Merge(leftArray, rightArray, array){
-        let leftSize = array.length / 2;
-        let rightSize = array.length - leftSize;
-        let i = 0, l = 0, r = 0;
+	activeIndices = Array.from({ length: merged.length }, (_, idx) => startIndex + idx);
 
-        while(l < leftSize && r < rightSize) {
-            // összehasonlítás
-            steps++;
-            i++;
-            if(leftArray[l] < rightArray[r]) {
-                array[i] = leftArray[l];
-                l++;
-            }
-            else {
-                array[i] = rightArray[r];
-                r++;
-            }
-        }
-        while(l < leftSize){
+	while (l < left.length && r < right.length) {
+		log(`Összehasonlítás: ${left[l]} <= ${right[r]}`);
 
-            steps++;
-            array[i] = leftArray[l];
-            i++;
-            l++;
-        }
-        while(r < rightSize){
+		swapIndices = [startIndex + i];
 
-            steps++;
-            array[i] = rightArray[r];
-            i++;
-            r++;
-        }
 
-        return steps;
-    }
+		if (left[l] <= right[r]) {
+			merged[i] = left[l++];
+		} else {
+			merged[i] = right[r++];
+		}
+
+		await pauseIfNeeded();
+		await delay(900 - get(speed) * 8);
+
+		data[startIndex + i] = merged[i];
+		data = [...data];
+		i++;
+		swapIndices = null;
+	}
+
+	while (l < left.length) {
+		log(`Másolás balról: ${left[l]}`);
+		swapIndices = [startIndex + i];
+
+		await pauseIfNeeded();
+		await delay(900 - get(speed) * 8);
+		merged[i] = left[l++];
+		data[startIndex + i] = merged[i];
+		data = [...data];
+		i++;
+	}
+
+	while (r < right.length) {
+		log(`Másolás jobbról: ${right[r]}`);
+		swapIndices = [startIndex + i];
+
+		await pauseIfNeeded();
+		await delay(900 - get(speed) * 8);
+		merged[i] = right[r++];
+		data[startIndex + i] = merged[i];
+		data = [...data];
+		i++;
+	}
+	swapIndices = null;
+	activeIndices = [];
+}
+
+
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(`
@@ -236,10 +245,11 @@ Merge Sort`);
 	<div class="tag">Canvas</div>
 	<div class="array-visual">
 		{#each data as num, index}
-			<div
-				class="bar "
-				style="height: {(num / maxValue) * 100}%"
-			>
+			<div class="bar {activeIndices.includes(index)
+					? 'active'
+					: ''} {swapIndices && (index === swapIndices[0] || index === swapIndices[1])
+					? 'swap'
+					: ''}" style="height: {(num / maxValue) * 100}%">
 				{num}
 			</div>
 		{/each}
@@ -271,9 +281,6 @@ Merge Sort`);
 		color: white;
 		font-size: 12px;
 		transition: height 0.3s ease;
-	}
-	.bar.inserted {
-		background-color: crimson;
 	}
 	.bar.active {
 		background-color: gold;
