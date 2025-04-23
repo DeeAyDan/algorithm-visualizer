@@ -38,9 +38,6 @@
 
 	initializeTowers();
 
-	// ==== Vizualizációs indexek ====
-	let insertedIndex: number | null = null;
-
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalSteps.set(Math.pow(2, numDisks) - 1);
