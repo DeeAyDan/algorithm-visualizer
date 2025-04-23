@@ -13,24 +13,38 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 
-	// ==== Adattömb randomizálása ====
-
-
 	// ==== Alapadatok ====
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 
-	// ==== Vizualizációs indexek ====
-    let insertedIndex: number | null = null;
+	let numDisks = 8;
+	let towers: number[][] = [[], [], []];
+	let initTowers: number[][] = [[], [], []];
 
+	function initializeTowers() {
+		towers = [[], [], []];
+		for (let i = numDisks; i >= 1; i--) {
+			towers[0].push(i);
+		}
+		initTowers = towers.map((t) => [...t]);
+	}
+
+	function getDiskColor(disk: number): string {
+		const colors = ['#a3e4db', '#6ddccf', '#3ec6c1', '#2a9caa', '#197889', '#10505f'];
+		return colors[disk - 1] || '#0b3c47';
+	}
+
+	initializeTowers();
+
+	// ==== Vizualizációs indexek ====
+	let insertedIndex: number | null = null;
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		totalSteps.set(0);
+		totalSteps.set(Math.pow(2, numDisks) - 1);
 	});
-
 
 	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
@@ -72,18 +86,44 @@
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			await waitUntilRestart();
+			towers = initTowers.map((t) => [...t]);
 		}
 	}
 
-	// ==== InsersionSort futás ====
+	// ==== Hanoi Futás futás ====
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'InsersionSort indítása...']);
-		await insersionSort(data);
-		consoleLog.update((logs) => [...logs, 'InsersionSort kész!']);
+		initializeTowers();
+		consoleLog.update((logs) => [...logs, 'Hanoi tornyai indítása...']);
+
+		await hanoi(numDisks, 0, 2, 1);
+
+		consoleLog.update((logs) => [...logs, 'Hanoi tornyai kész!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
+	}
+
+	async function hanoi(n: number, from: number, to: number, aux: number) {
+		if (n === 0) return;
+
+		await hanoi(n - 1, from, aux, to);
+
+		// Vizualizált lépés
+		await moveDisk(from, to);
+
+		await hanoi(n - 1, aux, to, from);
+	}
+
+	async function moveDisk(from: number, to: number) {
+		let disk = towers[from].pop();
+		if (disk !== undefined) {
+			towers[to].push(disk);
+			log(`Lépés: ${disk} korong ${'ABC'[from]} → ${'ABC'[to]}`);
+			towers = towers.map((t) => [...t]);
+			await pauseIfNeeded();
+			await delay(900 - get(speed) * 8);
+		}
 	}
 
 	// ==== Forráskód megjelenítés ====
@@ -94,8 +134,18 @@
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="tag">Canvas</div>
-	<div class="array-visual">
-
+	<div class="tower-visual">
+		{#each towers as tower, towerIndex}
+			<div class="tower">
+				{#each [...tower] as disk}
+					<div
+						class="disk"
+						style="width: {disk * 20 + 20}px; background-color: {getDiskColor(disk)}">
+					</div>
+				{/each}
+				<div class="bar"></div>
+			</div>
+		{/each}
 	</div>
 </div>
 
@@ -109,24 +159,36 @@
 		color: white;
 		padding: 3px;
 	}
-	.array-visual {
-		display: flex;
-		gap: 4px;
-		justify-content: center;
-		align-items: flex-end;
-		height: 200px;
-		margin: 1rem 0 0 0;
-	}
+
 	.bar {
 		width: 5%;
-		background-color: teal;
-		text-align: center;
-		color: white;
-		font-size: 12px;
-		transition: height 0.3s ease;
-	}
-	.bar.inserted {
-		background-color: crimson;
+		height: 100%;
+		background-color: #888;
+		position: absolute;
 	}
 
+	.tower-visual {
+		display: flex;
+		justify-content: space-around;
+		align-items: flex-end;
+		height: 250px;
+		margin-top: 1rem;
+	}
+
+	.tower {
+		display: flex;
+		flex-direction: column-reverse;
+		align-items: center;
+		width: 30%;
+		height: 100%;
+		padding-bottom: 10px;
+		position: relative;
+	}
+
+	.disk {
+		height: 20px;
+		border-radius: 4px;
+		margin-top: 5px;
+		z-index: 10;
+	}
 </style>
