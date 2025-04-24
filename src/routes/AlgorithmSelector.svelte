@@ -47,7 +47,7 @@
 			Dinamikus programozás
 		</button>
 		<div class="algorithm-list {algorithmGroups.dynamicProgramming ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('maxSumPath')}>Legnagyobb összegű út</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('maxSumPath')}>Legnagyobb összegű út</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('coinChange')}>Pénzváltó algoritmus</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('knuthMorrisPratt')}>Knuth-Morris-Pratt algoritmus</button>
 		</div>
