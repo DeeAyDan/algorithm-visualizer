@@ -18,15 +18,31 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	let inputNumber = 5;
+	let steps: number[] = [];
 
 	// ==== Vizualizációs indexek ====
 
-
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		totalSteps.set(0);
+		let steps = 0;
+		totalSteps.set(recursiveFactorialCounting(inputNumber));
 	});
 
+	function recursiveFactorialCounting(n: number) {
+		steps++;
+
+		if (n === 0 || n === 1) {
+			steps++;
+			return 1;
+		}
+
+		steps++;
+		const partial = recursiveFactorialCounting(n - 1);
+		const result = n * partial;
+
+		return steps;
+	}
 
 	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
@@ -52,9 +68,7 @@
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-
-					// adatok vissza allitasa ide
-
+					inputNumber = 5;
 					unsub();
 					resolve();
 				}
@@ -76,26 +90,64 @@
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'Algoritmus indítása...']);
+		consoleLog.update((logs) => [...logs, 'Faktoriális indítása...']);
 
-		// Algoritmust indito fuggveny ide
-		
-		consoleLog.update((logs) => [...logs, 'Algoritmus kész!']);
+		steps = 0;
+		totalSteps.set(recursiveFactorialCounting(inputNumber));
+		let result = await recursiveFactorial(inputNumber);
+		consoleLog.update((logs) => [...logs, `Végeredmény: ${inputNumber}! = ${result}`]);
+
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
+	async function recursiveFactorial(n: number): Promise<number> {
+		log(`Belépés: factorial(${n})`);
+		await pauseIfNeeded();
+		await delay(900 - get(speed) * 8);
+
+		if (n === 0 || n === 1) {
+			log(`Alapeset: ${n}! = 1`);
+			await pauseIfNeeded();
+			await delay(900 - get(speed) * 8);
+			return 1;
+		}
+
+		const partial = await recursiveFactorial(n - 1);
+		const result = n * partial;
+
+		log(`Visszatérés: ${n}! = ${n} * ${partial} = ${result}`);
+		await pauseIfNeeded();
+		await delay(900 - get(speed) * 8);
+
+		return result;
+	}
+
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	selectedAlgorithmSourceCode.set(`function factorial(n) {
+	let result = 1;
+	for (let i = 1; i <= n; i++) {
+		result *= i;
+	}
+	return result;
+}`);
 </script>
+
+<!-- ===== Bemeneti mező a Controls alatt ===== -->
+<div class="custom-input">
+	<label for="inputNumber">Szám (n):</label>
+	<input
+		id="inputNumber"
+		type="number"
+		bind:value={inputNumber}
+		min="0"
+		placeholder="Adj meg egy számot"
+	/>
+</div>
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
-	<div class="array-visual">
-
-	</div>
 </div>
 
 <!-- ==== Stílus ==== -->
@@ -116,5 +168,39 @@
 		height: 200px;
 		margin: 1rem 0 0 0;
 	}
+	.custom-input {
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		gap: 10px;
+		padding: 1rem;
+		border-bottom: 3px solid #505050;
+	}
 
+	.custom-input input {
+		width: 60px;
+		padding: 5px;
+		font-size: 1rem;
+		background-color: #2f2f2f;
+		border: 3px solid #505050;
+	}
+	.factorial-bars {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 1rem;
+	}
+
+	.factorial-row {
+		display: flex;
+		width: 100%;
+		height: 20px;
+		gap: 1px;
+	}
+
+	.factorial-segment {
+		flex: 1;
+		background-color: teal;
+		transition: background-color 0.2s ease;
+	}
 </style>
