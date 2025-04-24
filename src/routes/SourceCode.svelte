@@ -1,10 +1,20 @@
 <script lang="ts">
 	import { selectedAlgorithmSourceCode, selectedAlgorithm } from "../stores/store.svelte";
 
+	function formatAlgorithmName(name: string): string {
+	return name
+		.replace(/([A-Z])/g, ' $1') // camelCase -> szóköz a nagybetűk előtt
+		.replace(/_/g, ' ')         // snake_case -> szóköz
+		.replace(/^./, (str) => str.toUpperCase()); // első betű nagybetűs
+}
+
+
+$: formattedAlgorithmName = formatAlgorithmName($selectedAlgorithm);
+
 </script>
 
 <div class="source-container">
-	<div class="tag">Source Code</div>
+	<div class="tag">{formattedAlgorithmName}</div>
 		<div>
 			{$selectedAlgorithmSourceCode}
 		</div>
