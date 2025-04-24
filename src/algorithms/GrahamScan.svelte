@@ -13,9 +13,6 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 
-	// ==== Adattömb randomizálása ====
-
-
 	// ==== Alapadatok ====
 
 	currentStep.set(0);
@@ -23,7 +20,6 @@
 	consoleLog.set([]);
 
 	// ==== Vizualizációs indexek ====
-    let insertedIndex: number | null = null;
 
 
 	// ==== Előkalkulált lépésszám ====
@@ -56,7 +52,8 @@
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-					data = [...initArr];
+
+					// adatok vissza allitasa ide
 
 					unsub();
 					resolve();
@@ -79,9 +76,11 @@
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'InsersionSort indítása...']);
-		await insersionSort(data);
-		consoleLog.update((logs) => [...logs, 'InsersionSort kész!']);
+		consoleLog.update((logs) => [...logs, 'Algoritmus indítása...']);
+
+		// Algoritmust indito fuggveny ide
+		
+		consoleLog.update((logs) => [...logs, 'Algoritmus kész!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
@@ -116,17 +115,6 @@
 		align-items: flex-end;
 		height: 200px;
 		margin: 1rem 0 0 0;
-	}
-	.bar {
-		width: 5%;
-		background-color: teal;
-		text-align: center;
-		color: white;
-		font-size: 12px;
-		transition: height 0.3s ease;
-	}
-	.bar.inserted {
-		background-color: crimson;
 	}
 
 </style>

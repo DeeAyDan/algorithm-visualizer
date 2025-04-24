@@ -96,8 +96,7 @@
 
 			solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
 
-			log(`Megoldás [${i},${j}] = ${solutionMatrix[i][j]} (${chosenFrom})`);
-		}
+			log(`Megoldás [${i},${j}] = ${matrix[i][j]} + max(${fromTop}, ${fromLeft}) = ${solutionMatrix[i][j]} (${chosenFrom})`);		}
 	}
 	activeCell = null;
 }
