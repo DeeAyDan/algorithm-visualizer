@@ -19,9 +19,11 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 
-	let numDisks = 8;
+	let numDisks = 6;
 	let towers: number[][] = [[], [], []];
 	let initTowers: number[][] = [[], [], []];
+	let initArr = [...towers];
+	let data;
 
 	function initializeTowers() {
 		towers = [[], [], []];
