@@ -158,7 +158,7 @@
 <style>
 	.custom-input {
 		display: flex;
-		justify-content: flex-start;
+		justify-content: center;
 		align-items: center;
 		gap: 10px;
 		padding: 1rem;
