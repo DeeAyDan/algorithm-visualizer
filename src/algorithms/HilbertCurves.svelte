@@ -157,7 +157,7 @@
 
 <!-- Input mező az order-hez -->
 <div class="custom-input">
-	<label for="order">Order:</label>
+	<label for="order">Görbe rendje:</label>
 	<input id="order" type="number" min="1" max="8" bind:value={order} />
 </div>
 
