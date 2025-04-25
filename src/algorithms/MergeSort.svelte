@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import {
 		selectedAlgorithmSourceCode,
+		selectedAlgorithm,
 		currentStep,
 		totalSteps,
 		consoleLog,
@@ -12,6 +13,8 @@
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
+	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+
 
 	// ==== Adattömb randomizálása ====
 	function shuffle(array) {
@@ -32,6 +35,8 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+
 
 	// ==== Vizualizációs indexek ====
 	let activeIndices: number[] = [];
@@ -155,9 +160,9 @@
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'MergeSort indítása...']);
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 		await mergeSort(data);
-		consoleLog.update((logs) => [...logs, 'MergeSort kész!']);
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}

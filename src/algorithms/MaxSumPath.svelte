@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import {
 		selectedAlgorithmSourceCode,
+		selectedAlgorithm,
 		currentStep,
 		totalSteps,
 		consoleLog,
@@ -12,6 +13,8 @@
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
+	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+
 
 	// ==== Alapadatok ====
 	const size = 4;
@@ -22,6 +25,8 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+
 
 	// ==== Segédfüggvények ====
 	function generateMatrix(n) {
@@ -129,9 +134,9 @@ async function reconstructPath() {
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'MaxSumPath indítása...']);
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 		await maxSumPath();
-		consoleLog.update((logs) => [...logs, 'MaxSumPath kész!']);
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		reconstructPath();
 		await restartAlgorithm();

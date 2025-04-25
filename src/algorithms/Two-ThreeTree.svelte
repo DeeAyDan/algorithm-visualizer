@@ -8,16 +8,20 @@
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal
+		resumeSignal,
+		selectedAlgorithm
+
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
+	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
 	// ==== Alapadatok ====
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Vizualizációs indexek ====
 
@@ -76,11 +80,11 @@
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'Algoritmus indítása...']);
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		// Algoritmust indito fuggveny ide
 		
-		consoleLog.update((logs) => [...logs, 'Algoritmus kész!']);
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}

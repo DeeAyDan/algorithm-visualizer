@@ -5,6 +5,7 @@
 		selectedAlgorithmSourceCode,
 		currentStep,
 		totalSteps,
+		selectedAlgorithm,
 		consoleLog,
 		speed,
 		algorithmStatus,
@@ -12,12 +13,16 @@
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
+	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+
 
 	// ==== Alapadatok ====
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+
 
 	let numDisks = 6;
 	let towers: number[][] = [[], [], []];
@@ -94,11 +99,11 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		initializeTowers();
-		consoleLog.update((logs) => [...logs, 'Hanoi tornyai indítása...']);
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await hanoi(numDisks, 0, 2, 1);
 
-		consoleLog.update((logs) => [...logs, 'Hanoi tornyai kész!']);
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}

@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import {
 		selectedAlgorithmSourceCode,
+		selectedAlgorithm,
 		currentStep,
 		totalSteps,
 		consoleLog,
@@ -12,12 +13,15 @@
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
+	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+
 
 	// ==== Alapadatok ====
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 	let inputNumber = 5;
 	let steps: number[] = [];
 
@@ -90,7 +94,7 @@
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'Faktoriális indítása...']);
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		steps = 0;
 		totalSteps.set(recursiveFactorialCounting(inputNumber));
@@ -152,22 +156,6 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
-	.array-visual {
-		display: flex;
-		gap: 4px;
-		justify-content: center;
-		align-items: flex-end;
-		height: 200px;
-		margin: 1rem 0 0 0;
-	}
 	.custom-input {
 		display: flex;
 		justify-content: flex-start;
@@ -176,31 +164,11 @@
 		padding: 1rem;
 		border-bottom: 3px solid #505050;
 	}
-
 	.custom-input input {
 		width: 60px;
 		padding: 5px;
 		font-size: 1rem;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
-	}
-	.factorial-bars {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		padding: 1rem;
-	}
-
-	.factorial-row {
-		display: flex;
-		width: 100%;
-		height: 20px;
-		gap: 1px;
-	}
-
-	.factorial-segment {
-		flex: 1;
-		background-color: teal;
-		transition: background-color 0.2s ease;
 	}
 </style>

@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import {
 		selectedAlgorithmSourceCode,
+		selectedAlgorithm,
 		currentStep,
 		totalSteps,
 		consoleLog,
@@ -12,6 +13,8 @@
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
+	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+
 
 	// ==== Adattömb randomizálása ====
 	function shuffle(array) {
@@ -32,6 +35,8 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+
 
 	// ==== Vizualizációs indexek ====
 	let pivotIndex: number | null = null;
@@ -121,9 +126,9 @@
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, 'QuickSort indítása...']);
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 		await quickSort(data, 0, data.length - 1);
-		consoleLog.update((logs) => [...logs, 'QuickSort kész!']);
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
