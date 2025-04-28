@@ -25,6 +25,36 @@
 
 	let moneyToExchange = 1.29;
 
+	let newCoin = 0;
+	let showInsertForm = false;
+	let showDeleteList = false;
+
+	function openInsertForm() {
+		showInsertForm = true;
+		showDeleteList = false;
+	}
+
+	function openDeleteList() {
+		showDeleteList = true;
+		showInsertForm = false;
+	}
+
+	function insertNewCoin() {
+		if (newCoin > 0) {
+			exchangeCoins = [...exchangeCoins, Number(newCoin)].sort((a, b) => a - b);
+			newCoin = 0;
+			showInsertForm = false;
+		}
+	}
+
+	function deleteCoin(index) {
+	const newArray = [...exchangeCoins];
+	newArray.splice(index, 1);
+	exchangeCoins = newArray;
+	showDeleteList = false;
+}
+
+
 	// ==== Vizualizációs indexek ====
 
 	// ==== Előkalkulált lépésszám ====
@@ -76,13 +106,54 @@
 		}
 	}
 
+	let usedCoins = [];
+
 	// ==== InsersionSort futás ====
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		// Algoritmust indito fuggveny ide
+		let amount = Math.round(moneyToExchange * 100); // Centekben számolunk az egyszerűség kedvéért
+		let coins = exchangeCoins.map((c) => Math.round(c * 100)); // szintén centekben
+
+		let dp = Array(amount + 1).fill(Infinity);
+		let lastCoin = Array(amount + 1).fill(-1);
+
+		dp[0] = 0;
+
+		totalSteps.set(amount); // minden cent egy lépés lehet
+
+		for (let i = 1; i <= amount; i++) {
+			for (let coin of coins) {
+				if (i - coin >= 0 && dp[i - coin] + 1 < dp[i]) {
+					dp[i] = dp[i - coin] + 1;
+					lastCoin[i] = coin;
+				}
+			}
+			await pauseIfNeeded();
+			await delay(40 - get(speed) * 2); // gyors kis lépések
+			currentStep.update((n) => n + 1);
+		}
+
+		// Visszafejtjük a megoldást
+		usedCoins = [];
+		let current = amount;
+		while (current > 0) {
+			let coin = lastCoin[current];
+			if (coin === -1) {
+				consoleLog.update((logs) => [...logs, 'Nem lehet pontosan felváltani!']);
+				break;
+			}
+			usedCoins.push(coin / 100); // Vissza váltjuk forintra
+			current -= coin;
+		}
+
+		// Megjelenítjük
+		log(`Minimum érme szám: ${usedCoins.length}`);
+		usedCoins.forEach((coin) => log(`Érme felhasználva: ${coin.toFixed(2)} Ft`));
+
+		totalSteps.set(usedCoins.length);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -99,15 +170,34 @@
 		<label for="order">Felváltandó:</label>
 		<input id="order" bind:value={moneyToExchange} />
 	</div>
-	<div>
-		<input id="order" />
-		<button>Beszúrás</button>
-	</div>
-	<div>
-		<input id="order" />
-		<button>Kivétel</button>
+
+	<div class="custom-buttons">
+		<div class="button-group">
+			<button on:click={openInsertForm}>Beszúrás</button>
+			{#if showInsertForm}
+				<div class="dropdown">
+					<input type="number" placeholder="Érme értéke" bind:value={newCoin} />
+					<button on:click={insertNewCoin}>Hozzáadás</button>
+				</div>
+			{/if}
+		</div>
+
+		<div class="button-group">
+			<button on:click={openDeleteList}>Kivétel</button>
+			{#if showDeleteList}
+				<div class="dropdown">
+					{#each exchangeCoins as coin, index}
+						<div class="delete-item">
+							{coin.toFixed(2)} Ft
+							<button on:click={() => deleteCoin(index)}>Törlés</button>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
 	</div>
 </div>
+
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
@@ -125,6 +215,11 @@
 		<div class="exchangeField">
 			<div>Felváltandó: {moneyToExchange}</div>
 			<div>Felhasznált érmék:</div>
+			<div class="used-coins">
+				{#each usedCoins as coin}
+					<div class="coin">{coin}</div>
+				{/each}
+			</div>
 		</div>
 	</div>
 </div>
@@ -199,4 +294,45 @@
 		background-color: #2f2f2f;
 		cursor: pointer;
 	}
+	.custom-buttons {
+	display: flex;
+	gap: 20px;
+	position: relative;
+}
+
+.button-group {
+	position: relative;
+}
+
+.dropdown {
+	position: absolute;
+	top: 110%;
+	left: 0;
+	background-color: #2f2f2f;
+	border: 2px solid #505050;
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 200px;
+	z-index: 10;
+}
+
+.dropdown input, .dropdown button {
+	width: 100%;
+	padding: 5px;
+	background-color: #3a3a3a;
+	color: white;
+	border: 1px solid #666;
+}
+
+.delete-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background-color: #3a3a3a;
+	padding: 5px;
+	border-radius: 4px;
+}
+
 </style>

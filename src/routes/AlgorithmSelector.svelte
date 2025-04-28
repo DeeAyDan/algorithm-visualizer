@@ -57,8 +57,8 @@
 			Mohó algoritmusok
 		</button>
 		<div class="algorithm-list {algorithmGroups.greedyAlgorithms ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('fractionalKnapsack')}>Tört hátizsák probléma</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('fractionalKnapsackRep')}>Tört hátizsák probléma (ismétléssel)</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('fractionalKnapsack')}>Tört hátizsák probléma</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('fractionalKnapsackRep')}>Tört hátizsák probléma (ismétléssel)</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('travelingProblem')}>Utazási probléma</button>
 		</div>
 	</div>
