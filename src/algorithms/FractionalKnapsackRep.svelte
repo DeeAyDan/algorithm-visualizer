@@ -155,59 +155,57 @@
 
 	// ==== InsersionSort futás ====
 	async function startAlgorithm(event) {
-		consoleLog.set([]);
-		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+	consoleLog.set([]);
+	currentStep.set(0);
+	consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		// Reset zsák
-		sack = Array(sackSize).fill(null);
-		sackFilled = 0;
-		sackValue = 0;
+	// Reset zsák
+	sack = Array(sackSize).fill(null);
+	sackFilled = 0;
+	sackValue = 0;
 
-		// Frissítjük a ratio-kat (ha változott pl. kézi beírásnál)
-		items = items.map((item) => ({
-			...item,
-			ratio: item.value / item.weight
-		}));
+	// Frissítjük a ratio-kat (ha változott pl. kézi beírásnál)
+	items = items.map((item) => ({
+		...item,
+		ratio: item.value / item.weight
+	}));
 
-		// Beállítjuk a total steps-t
-		totalSteps.set(items.length);
+	// Beállítjuk a total steps-t
+	totalSteps.set(sackSize); // minden berakott cella egy lépés lesz
 
-		// Rendezzük a tárgyakat arány szerint
-		let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
-		let item = sortedItems[0];
-		let canTake = sackSize;
+	// Rendezzük a tárgyakat arány szerint
+	let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
 
-		 while(canTake > 0) {
-			await pauseIfNeeded();
-			await delay(900 - get(speed) * 8);
+	while (sackFilled < sackSize) {
 
-			canTake = Math.min(item.weight, sackSize - sackFilled);
-			let fraction = canTake / item.weight;
+		const bestItem = sortedItems[0];
 
-			for (let i = 0; i < sack.length && canTake > 0; i++) {
-				if (sack[i] === null) {
-					sack[i] = item;
-					canTake--;
-					await delay(90 - get(speed) * 8);
+		let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
+		let fraction = canTake / bestItem.weight;
 
-				}
+		// Töltsük ki a zsákot a legjobb item-mel
+		for (let i = 0; i < sack.length && canTake > 0; i++) {
+			if (sack[i] === null) {
+				sack[i] = bestItem;
+				canTake--;
+				await pauseIfNeeded();
+				await delay(200 - get(speed) * 8);
+				currentStep.update((n) => n + 1);
 			}
-
-			sackValue += item.value * fraction;
-			log(`${item.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`);
-
-			if (sackFilled >= sackSize) {
-				break;
-			}
-
-			sackFilled = sack.filter((x) => x !== null).length;
 		}
 
-		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
-		algorithmStatus.set('finished');
-		await restartAlgorithm();
+		sackValue += bestItem.value * fraction;
+		sackFilled = sack.filter((x) => x !== null).length;
+
+
+		consoleLog.update((logs) => [...logs, `${bestItem.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`]);
 	}
+
+	consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+	algorithmStatus.set('finished');
+	await restartAlgorithm();
+}
+
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
