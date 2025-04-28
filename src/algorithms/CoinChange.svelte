@@ -20,7 +20,7 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
-	let exchangeCoins = [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 5, 10]
+	let exchangeCoins = [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 5, 10];
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	let moneyToExchange = 1.29;
@@ -114,12 +114,17 @@
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="tag">Canvas</div>
 	<div class="coin-visual">
+		<div>Felhasználható érmék</div>
 		<div class="exchangeCoins">
 			{#each exchangeCoins as coin}
-			<div class="coin">
-				{coin}
-			</div>
-		{/each}
+				<div class="coin">
+					{coin}
+				</div>
+			{/each}
+		</div>
+		<div class="exchangeField">
+			<div>Felváltandó: {moneyToExchange}</div>
+			<div>Felhasznált érmék:</div>
 		</div>
 	</div>
 </div>
@@ -143,26 +148,27 @@
 		margin: 1rem 0 0 0;
 	}
 
-	.exchangeCoins{
+	.exchangeCoins {
 		display: grid;
 		grid-template-columns: 33% 33% 33%;
 		gap: 5px;
 	}
 
-	.coin{
+	.coin {
 		background-color: gold;
 		color: black;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		border-radius: 100%;
-		width: 75px;
-		height: 75px;
+		border: 3px solid orange;
+		width: 70px;
+		height: 70px;
 	}
 
 	.custom-input {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		justify-content: center;
 		align-items: center;
 		gap: 10px;

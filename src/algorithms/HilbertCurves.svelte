@@ -25,7 +25,7 @@
 	let order = 4;
 	let canvas;
 	let ctx;
-	let size = 450;
+	let size = 300;
 	let points = [];
 	let totalPointCount = 0;
 

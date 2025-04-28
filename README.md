@@ -50,6 +50,8 @@ Megvalósítási ötletek:
 	- item modositasa
 	- item torlese
 
+
+
 - Binary Tree
 - AVL tree
 - B-tree
@@ -73,3 +75,9 @@ Megvalósítási ötletek:
 - Knuth-Morris-Pratt algoritmus
 - Utazas
 - Kupacrendezés
+
+
+## Doku:
+
+Hátizsák probléma ötlet: 
+	tárgyak módosáitása - elvetettem az ötletet, mivel nem használata csak marginálisan javította volna a felhasználó felületett és nagyon zsúfolt lett volna a felület.

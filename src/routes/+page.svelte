@@ -23,7 +23,9 @@
 		<div class="display-container">
 			{#if $selectedAlgorithm}
 				<Canvas />
+				{#if $selectedAlgorithm !== 'hilbertCurves'}
 				<ConsoleLog />
+				{/if}
 			{:else}
 				<div class="tag">Válassz egy algoritmust!</div>
 			{/if}
