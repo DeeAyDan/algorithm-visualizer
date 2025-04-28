@@ -17,13 +17,12 @@
 
 
 TODO: 2025.04.25:
-	- knapsack (mind a kettot)
-	- pénzváltó algoritmus
 	- hasonló felípítésü fa algoritmusok megvalósítása
 	- Szakdoga dokumentáció elkezdése: struktura megtervezése, elsö 3-5 oldal
 
 Updatere szorul:
 Factorial - source code kijeloles
+Penzvalto: - progress bar, canvas display, log tweak
 
 Szakdolgozat doksi:
 Az alkalmazásról:
