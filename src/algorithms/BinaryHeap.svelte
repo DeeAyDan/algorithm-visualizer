@@ -15,64 +15,89 @@
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
-	// ==== Alapadatok ====
-
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	let elementValue;
-	// ==== Vizualizációs indexek ====
+	let heap: number[] = [Infinity]; // heap[0] nem használt, 1-indexelt
 
 	function validateInput() {
-		if (!elementValue) {
+		if (elementValue === undefined || elementValue === null) {
 			log('Kérlek adj meg egy értéket!');
+			return false;
+		} else if (typeof elementValue !== 'number') {
+			log('Kérlek számot adj meg!');
+			return false;
+		} else if (elementValue < 0 || elementValue > 100) {
+			log('Kérlek 0 és 100 közötti számot adj meg!');
 			return false;
 		}
 		return true;
 	}
 
-	// Elem beszúrása
+	function heapifyUp(index: number) {
+		while (index > 1 && heap[Math.floor(index / 2)] > heap[index]) {
+			[heap[Math.floor(index / 2)], heap[index]] = [heap[index], heap[Math.floor(index / 2)]];
+			index = Math.floor(index / 2);
+			log('Heapify up...');
+		}
+	}
+
 	function insertElement() {
-		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem beszúrása: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra módosítása ide
-			log(`Elem hozzáadva: ${elementValue}`);
+	if (!validateInput()) return;
+	heap.push(elementValue);
+	heap = [...heap]; // Új referencia létrehozása
+	log(`Elem beszúrása: ${elementValue}`);
+	heapifyUp(heap.length - 1);
+}
+
+function deleteElement() {
+	if (heap.length <= 1) return log('A kupac üres.');
+	log(`Gyökér törlése: ${heap[1]}`);
+	heap[1] = heap[heap.length - 1];
+	heap.pop();
+	heap = [...heap]; // Új referencia létrehozása
+	heapifyDown(1);
+}
+
+
+	function heapifyDown(index: number) {
+		while (2 * index < heap.length) {
+			let left = 2 * index;
+			let right = 2 * index + 1;
+			let smallest = left;
+			if (right < heap.length && heap[right] < heap[left]) {
+				smallest = right;
+			}
+			if (heap[index] <= heap[smallest]) break;
+			[heap[index], heap[smallest]] = [heap[smallest], heap[index]];
+			index = smallest;
+			log('Heapify down...');
 		}
 	}
 
-	// Elem törlése
-	function deleteElement() {
-		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem törlése: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra módosítása ide
-			log(`Elem törölve: ${elementValue}`);
-		}
-	}
-
-	// Elem keresés
 	function searchElement() {
-		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem keresése: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra keresés logikája ide
-			log(`Elem megtalálva: ${elementValue}`);
-		}
+		if (!validateInput()) return;
+		const index = heap.findIndex((val) => val === elementValue);
+		if (index === -1) log(`${elementValue} nincs a kupacban.`);
+		else log(`${elementValue} megtalálva indexen: ${index}`);
 	}
 
-	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalSteps.set(0);
 	});
 
-	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
 		consoleLog.update((logs) => [...logs, message]);
 		currentStep.update((n) => n + 1);
 	}
+
 	function delay(ms: number) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
+
 	function waitUntilResume(): Promise<void> {
 		return new Promise((resolve) => {
 			const unsub = resumeSignal.subscribe(() => {
@@ -83,97 +108,120 @@
 			});
 		});
 	}
+
 	function waitUntilRestart(): Promise<void> {
 		return new Promise((resolve) => {
 			const unsub = resumeSignal.subscribe(() => {
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-
-					// adatok vissza allitasa ide
-
+					heap = [Infinity];
 					unsub();
 					resolve();
 				}
 			});
 		});
 	}
+
 	async function pauseIfNeeded() {
 		if (get(algorithmStatus) === 'paused') {
 			await waitUntilResume();
 		}
 	}
+
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			await waitUntilRestart();
 		}
 	}
 
-	// ==== Algoritmus futás ====
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
-
-		// Algoritmust indito fuggveny ide
-
+		// Itt nincs teljes futtatás, mert műveleteken keresztül manipuláljuk a struktúrát.
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
-	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	selectedAlgorithmSourceCode.set(`Bináris kupac vizualizáció`);
 </script>
 
 <div class="control-buttons">
 	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Elem értéke" />
 	<button on:click={insertElement}>Elem beszúrás</button>
-	<button on:click={deleteElement}>Elem törlés</button>
+	<button on:click={deleteElement}>Gyökér törlés</button>
 	<button on:click={searchElement}>Elem keresés</button>
 </div>
 
-<!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
-	<div class="array-visual"></div>
+	<div class="tag">Kupac (tömb és fa)</div>
+	<div class="array-visual">
+		<div class="row">
+			{#each heap.slice(1) as value, i}
+				<div class="bar">{value}</div>
+			{/each}
+		</div>
+		<svg viewBox="0 0 800 400" class="svg-tree">
+			{#each heap.slice(1) as value, i (i)}
+					{#if 2 * (i + 1) < heap.length}
+						<line x1={(i + 1) * 50} y1={50 + Math.floor(Math.log2(i + 1)) * 70}
+							x2={(2 * (i + 1)) * 50} y2={50 + Math.floor(Math.log2(2 * (i + 1))) * 70}
+							stroke="black" />
+					{/if}
+					{#if 2 * (i + 1) + 1 < heap.length}
+						<line x1={(i + 1) * 50} y1={50 + Math.floor(Math.log2(i + 1)) * 70}
+							x2={(2 * (i + 1) + 1) * 50} y2={50 + Math.floor(Math.log2(2 * (i + 1) + 1)) * 70}
+							stroke="black" />
+					{/if}
+					<circle cx={(i + 1) * 50} cy={50 + Math.floor(Math.log2(i + 1)) * 70} r="15" fill="#ccc" />
+					<text x={(i + 1) * 50} y={55 + Math.floor(Math.log2(i + 1)) * 70} text-anchor="middle" fill="black" font-size="14">{value}</text>
+			{/each}
+		</svg>
+	</div>
 </div>
 
-<!-- ==== Stílus ==== -->
 <style>
 	.tag {
 		display: inline-block;
-		top: 0;
-		left: 0;
 		background-color: #484848;
 		color: white;
 		padding: 3px;
 	}
 	.array-visual {
 		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		align-items: center;
+	}
+	.row {
+		display: flex;
 		gap: 4px;
+	}
+	.bar {
+		width: 30px;
+		height: 30px;
+		border: 1px solid #000;
+		display: flex;
+		align-items: center;
 		justify-content: center;
-		align-items: flex-end;
-		height: 200px;
-		margin: 1rem 0 0 0;
 	}
 	.control-buttons {
 		display: flex;
-		justify-content: space-around;
-		padding: 1rem;
+		justify-content: center;
+		gap: 1rem;
 		margin-bottom: 1rem;
 	}
-
 	.control-buttons input {
 		width: 150px;
 		padding: 0.5rem;
-		margin-right: 10px;
 		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
+		color: white;
 	}
-
 	.control-buttons button {
 		padding: 0.5rem 1rem;
 		background-color: #505050;
@@ -182,9 +230,13 @@
 		border-radius: 5px;
 		cursor: pointer;
 	}
-
 	.control-buttons button:hover {
 		background-color: #45a049;
 	}
-
+	.svg-tree {
+		width: 100%;
+		height: 300px;
+		border: 1px solid #aaa;
+		background-color: #f8f8f8;
+	}
 </style>

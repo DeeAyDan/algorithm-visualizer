@@ -29,7 +29,6 @@
 
 
 ## Hátralévő algoritmusok
-	- kupacrendezés
 	- Bináris fa
 	- AVL-fa
 	- B-fa
@@ -51,6 +50,7 @@ Factorial - source code kijeloles
 Penzvalto: - progress bar, canvas display, log tweak
 heapsort: - alkalmaazni rá a többi rendező algoritmus elemeit: random start input, stb
 		  - vizualizálás javitás + css
+binary heap: SVG looks funny, css, step by step visual, empty heap
 
 ------Szakdolgozat doksi:---------
 

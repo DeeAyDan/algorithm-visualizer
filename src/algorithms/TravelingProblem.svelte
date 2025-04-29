@@ -192,12 +192,4 @@
 		color: white;
 		padding: 3px;
 	}
-	.array-visual {
-		display: flex;
-		gap: 4px;
-		justify-content: center;
-		align-items: flex-end;
-		height: 200px;
-		margin: 1rem 0 0 0;
-	}
 </style>
