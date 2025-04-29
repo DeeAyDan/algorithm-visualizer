@@ -14,6 +14,26 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { avl } from '../stores/trees/avl.js';
+
+
+	import TreeNode from '../stores/trees/TreeNode.svelte';
+  const tree = {
+    value: 10,
+    height: 2,
+    left: {
+      value: 5,
+      height: 1,
+      left: null,
+      right: null
+    },
+    right: {
+      value: 15,
+      height: 1,
+      left: null,
+      right: null
+    }
+  };
 
 	// ==== Alapadatok ====
 
@@ -29,6 +49,15 @@
 		if (!elementValue) {
 			log('Kérlek adj meg egy értéket!');
 			return false;
+		} else if (typeof elementValue !== 'number') {
+			log('Kérlek adj meg egy számot!');
+			return false;
+		} else if (elementValue < 0) {
+			log('Kérlek adj meg egy pozitív számot!');
+			return false;
+		} else if (elementValue > 100) {
+			log('Kérlek adj meg egy 0 és 100 közötti számot!');
+			return false;
 		}
 		return true;
 	}
@@ -36,18 +65,20 @@
 	// Elem beszúrása
 	function insertElement() {
 		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem beszúrása: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra módosítása ide
-			log(`Elem hozzáadva: ${elementValue}`);
+			const value = parseInt(elementValue);
+			avl.insert(value);
+			log(`Beszúrva: ${value}`);
+			log('Aktuális sorrend: ' + avl.inOrder().join(', '));
 		}
 	}
 
 	// Elem törlése
 	function deleteElement() {
 		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem törlése: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra módosítása ide
-			log(`Elem törölve: ${elementValue}`);
+			const value = parseInt(elementValue);
+			avl.delete(value);
+			log(`Törölve: ${value}`);
+			log('Aktuális sorrend: ' + avl.inOrder().join(', '));
 		}
 	}
 
@@ -109,7 +140,7 @@
 		}
 	}
 
-	// ==== InsersionSort futás ====
+	// ==== Algoritmus futás ====
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
@@ -137,7 +168,9 @@
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="tag">Canvas</div>
-	<div class="array-visual"></div>
+	<div class="array-visual">
+		<TreeNode {...tree} />
+	</div>
 </div>
 
 <!-- ==== Stílus ==== -->
@@ -186,5 +219,4 @@
 	.control-buttons button:hover {
 		background-color: #45a049;
 	}
-
 </style>
