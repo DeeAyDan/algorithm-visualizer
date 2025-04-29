@@ -9,9 +9,7 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-
 		selectedAlgorithm
-
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -24,14 +22,29 @@
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
-	// ==== Vizualizációs indexek ====
+	// === Városok ===
+	type City = { x: number; y: number };
+	let cities: City[] = [];
+	let tspPath: number[] = [];
+	let currentCityIndex: number | null = null;
+	let nextCityIndex: number | null = null;
 
+	// === Vizualizáció és adatok ===
+	function generateCities(count = 8) {
+		cities = Array.from({ length: count }, () => ({
+			x: Math.random() * 500 + 50,
+			y: Math.random() * 300 + 50
+		}));
+	}
+
+	function euclideanDistance(a: City, b: City) {
+		return Math.hypot(a.x - b.x, a.y - b.y);
+	}
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		totalSteps.set(0);
+		totalSteps.set(8);
 	});
-
 
 	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
@@ -57,9 +70,9 @@
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-
-					// adatok vissza allitasa ide
-
+					tspPath = [];
+					currentCityIndex = null;
+					nextCityIndex = null;
 					unsub();
 					resolve();
 				}
@@ -77,17 +90,62 @@
 		}
 	}
 
-	// ==== InsersionSort futás ====
+	// ==== TSP futás ====
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
-
-		// Algoritmust indito fuggveny ide
-		
+		generateCities();
+		await greedyTSP(cities);
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
+	}
+
+	async function greedyTSP(cities: City[]) {
+		const n = cities.length;
+		const visited = new Set<number>();
+		let current = 0;
+		tspPath = [current];
+		visited.add(current);
+
+		while (visited.size < n) {
+			let nearest = null;
+			let minDist = Infinity;
+
+			for (let i = 0; i < n; i++) {
+				if (!visited.has(i)) {
+					let dist = euclideanDistance(cities[current], cities[i]);
+					if (dist < minDist) {
+						minDist = dist;
+						nearest = i;
+					}
+				}
+			}
+
+			if (nearest !== null) {
+				currentCityIndex = current;
+				nextCityIndex = nearest;
+				log(`Lépés: ${current} → ${nearest}, távolság: ${minDist.toFixed(2)}`);
+				await pauseIfNeeded();
+				await delay(900 - get(speed) * 8);
+
+				current = nearest;
+				tspPath.push(current);
+				visited.add(current);
+			}
+		}
+
+		// visszatérés a kezdőpontra
+		currentCityIndex = current;
+		nextCityIndex = tspPath[0];
+		log(`Visszatérés: ${current} → ${tspPath[0]}`);
+		tspPath.push(tspPath[0]);
+		await pauseIfNeeded();
+		await delay(900 - get(speed) * 8);
+
+		currentCityIndex = null;
+		nextCityIndex = null;
 	}
 
 	// ==== Forráskód megjelenítés ====
@@ -98,9 +156,30 @@
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="tag">Canvas</div>
-	<div class="array-visual">
+	<svg width="600" height="400" style="border: 1px solid gray;">
+		{#if tspPath.length > 1}
+			{#each tspPath.slice(0, -1) as cityIndex, i}
+				<line
+					x1={cities[cityIndex].x}
+					y1={cities[cityIndex].y}
+					x2={cities[tspPath[i + 1]].x}
+					y2={cities[tspPath[i + 1]].y}
+					stroke="orange"
+					stroke-width="2"
+				/>
+			{/each}
+		{/if}
 
-	</div>
+		{#each cities as city, i}
+			<circle
+				cx={city.x}
+				cy={city.y}
+				r="6"
+				fill={i === currentCityIndex ? 'red' : i === nextCityIndex ? 'yellow' : 'blue'}
+			/>
+			<text x={city.x + 8} y={city.y - 8} font-size="12" fill="white">{i}</text>
+		{/each}
+	</svg>
 </div>
 
 <!-- ==== Stílus ==== -->
@@ -121,5 +200,4 @@
 		height: 200px;
 		margin: 1rem 0 0 0;
 	}
-
 </style>

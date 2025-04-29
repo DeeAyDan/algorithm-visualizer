@@ -48,7 +48,7 @@
 		</button>
 		<div class="algorithm-list {algorithmGroups.dynamicProgramming ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('maxSumPath')}>Legnagyobb összegű út</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('coinChange')}>Pénzváltó algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('coinChange')}>Pénzváltó algoritmus</button>
 		</div>
 	</div>
 	<div class="algorithm-group">
@@ -58,7 +58,7 @@
 		<div class="algorithm-list {algorithmGroups.greedyAlgorithms ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('fractionalKnapsack')}>Tört hátizsák probléma</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('fractionalKnapsackRep')}>Tört hátizsák probléma (ismétléssel)</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('travelingProblem')}>Utazási probléma</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('travelingProblem')}>Utazási probléma</button>
 		</div>
 	</div>
 	<div class="algorithm-group">
@@ -68,7 +68,7 @@
 		<div class="algorithm-list {algorithmGroups.sortingAlgorithms ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('mergeSort')}>Összefésüléses rendezés</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('insertionSort')}>Beszúrásos rendezés</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('heapSort')}>Kupacrendezés</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('heapSort')}>Kupacrendezés</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('quickSort')}>Gyorsrendezés</button>
 		</div>
 	</div>
