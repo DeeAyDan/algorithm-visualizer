@@ -28,13 +28,29 @@
     - [ ] CSS
 
 
-TODO: 2025.04.25:
-	- hasonló felípítésü fa algoritmusok megvalósítása
-	- Szakdoga dokumentáció elkezdése: struktura megtervezése, elsö 3-5 oldal
+## Hátralévő algoritmusok
+	- kupacrendezés
+	- Bináris fa
+	- AVL-fa
+	- B-fa
+	- Prios Fekete Fa
+	- 2-3 fa
+	- 2-3-4 fa
+	- bináris kupac
+	- rabin-karp algoritmus
+	- dijkstra algoritmus
+	- bellman ford shortest path
+	- prim minimum feszito fa
+	- kruskal minimum feszito fa
+	- konvex burok
+	- chans algoritmus
+	- graham scan
 
 Updatere szorul:
 Factorial - source code kijeloles
 Penzvalto: - progress bar, canvas display, log tweak
+heapsort: - alkalmaazni rá a többi rendező algoritmus elemeit: random start input, stb
+		  - vizualizálás javitás + css
 
 ------Szakdolgozat doksi:---------
 
