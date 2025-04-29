@@ -20,10 +20,10 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
-	let exchangeCoins = [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 5, 10];
+	let exchangeCoins = [1, 4, 6, 10];
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
-	let moneyToExchange = 1.29;
+	let moneyToExchange = 29;
 
 	let newCoin = 0;
 	let showInsertForm = false;
@@ -48,12 +48,11 @@
 	}
 
 	function deleteCoin(index) {
-	const newArray = [...exchangeCoins];
-	newArray.splice(index, 1);
-	exchangeCoins = newArray;
-	showDeleteList = false;
-}
-
+		const newArray = [...exchangeCoins];
+		newArray.splice(index, 1);
+		exchangeCoins = newArray;
+		showDeleteList = false;
+	}
 
 	// ==== Vizualizációs indexek ====
 
@@ -87,7 +86,8 @@
 					consoleLog.set([]);
 					currentStep.set(0);
 
-					// adatok vissza allitasa ide
+					usedCoins = [];
+					exchangeCoins = [1, 4, 6, 10];
 
 					unsub();
 					resolve();
@@ -114,8 +114,8 @@
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		let amount = Math.round(moneyToExchange * 100); // Centekben számolunk az egyszerűség kedvéért
-		let coins = exchangeCoins.map((c) => Math.round(c * 100)); // szintén centekben
+		let amount = Math.floor(moneyToExchange);
+		let coins = exchangeCoins.map((c) => Math.floor(c));
 
 		let dp = Array(amount + 1).fill(Infinity);
 		let lastCoin = Array(amount + 1).fill(-1);
@@ -145,13 +145,13 @@
 				consoleLog.update((logs) => [...logs, 'Nem lehet pontosan felváltani!']);
 				break;
 			}
-			usedCoins.push(coin / 100); // Vissza váltjuk forintra
+			usedCoins.push(coin); // Vissza váltjuk forintra
 			current -= coin;
 		}
 
 		// Megjelenítjük
 		log(`Minimum érme szám: ${usedCoins.length}`);
-		usedCoins.forEach((coin) => log(`Érme felhasználva: ${coin.toFixed(2)} Ft`));
+		usedCoins.forEach((coin) => log(`Érme felhasználva: ${coin}`));
 
 		totalSteps.set(usedCoins.length);
 
@@ -188,7 +188,7 @@
 				<div class="dropdown">
 					{#each exchangeCoins as coin, index}
 						<div class="delete-item">
-							{coin.toFixed(2)} Ft
+							{coin}
 							<button on:click={() => deleteCoin(index)}>Törlés</button>
 						</div>
 					{/each}
@@ -198,27 +198,31 @@
 	</div>
 </div>
 
-
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="tag">Canvas</div>
 	<div class="coin-visual">
-		<div>Felhasználható érmék</div>
-		<div class="exchangeCoins">
-			{#each exchangeCoins as coin}
-				<div class="coin">
-					{coin}
-				</div>
-			{/each}
-		</div>
-		<div class="exchangeField">
-			<div>Felváltandó: {moneyToExchange}</div>
-			<div>Felhasznált érmék:</div>
-			<div class="used-coins">
-				{#each usedCoins as coin}
-					<div class="coin">{coin}</div>
+		<div class="left-container">
+			<div>Felhasználható érmék</div>
+			<div class="exchangeCoins">
+				{#each exchangeCoins as coin}
+					<div class="coin">
+						{coin}
+					</div>
 				{/each}
+			</div>
+		</div>
+		<div class="change-table"></div>
+		<div class="right-container">
+			<div class="exchangeField">
+				<div>Felváltandó: {moneyToExchange}</div>
+				<div>Felhasznált érmék:</div>
+				<div class="used-coins">
+					{#each usedCoins as coin}
+						<div class="coin">{coin}</div>
+					{/each}
+				</div>
 			</div>
 		</div>
 	</div>
@@ -237,15 +241,16 @@
 	.coin-visual {
 		display: flex;
 		gap: 4px;
-		justify-content: center;
-		align-items: flex-end;
+		justify-content: space-between;
+		align-items: flex-start;
 		min-height: 200px;
-		margin: 1rem 0 0 0;
+		margin: 1rem;
 	}
 
 	.exchangeCoins {
-		display: grid;
-		grid-template-columns: 33% 33% 33%;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
 		gap: 5px;
 	}
 
@@ -257,8 +262,8 @@
 		align-items: center;
 		border-radius: 100%;
 		border: 3px solid orange;
-		width: 70px;
-		height: 70px;
+		width: 35px;
+		height: 35px;
 	}
 
 	.custom-input {
@@ -295,44 +300,48 @@
 		cursor: pointer;
 	}
 	.custom-buttons {
-	display: flex;
-	gap: 20px;
-	position: relative;
-}
+		display: flex;
+		gap: 20px;
+		position: relative;
+	}
 
-.button-group {
-	position: relative;
-}
+	.button-group {
+		position: relative;
+	}
 
-.dropdown {
-	position: absolute;
-	top: 110%;
-	left: 0;
-	background-color: #2f2f2f;
-	border: 2px solid #505050;
-	padding: 10px;
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	min-width: 200px;
-	z-index: 10;
-}
+	.dropdown {
+		position: absolute;
+		top: 110%;
+		left: 0;
+		background-color: #2f2f2f;
+		border: 2px solid #505050;
+		padding: 10px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 200px;
+		z-index: 10;
+	}
 
-.dropdown input, .dropdown button {
-	width: 100%;
-	padding: 5px;
-	background-color: #3a3a3a;
-	color: white;
-	border: 1px solid #666;
-}
+	.dropdown input,
+	.dropdown button {
+		width: 100%;
+		padding: 5px;
+		background-color: #3a3a3a;
+		color: white;
+		border: 1px solid #666;
+	}
 
-.delete-item {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	background-color: #3a3a3a;
-	padding: 5px;
-	border-radius: 4px;
-}
-
+	.delete-item {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		align-items: center;
+		background-color: #3a3a3a;
+		padding: 5px;
+		border-radius: 4px;
+	}
+	.used-coins{
+		display: flex;
+	}
 </style>
