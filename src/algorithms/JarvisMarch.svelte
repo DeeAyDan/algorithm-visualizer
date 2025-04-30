@@ -15,21 +15,27 @@
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
-	// ==== Alapadatok ====
-
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
-	// ==== Vizualizációs indexek ====
+	let points = [
+		{ x: 100, y: 100 },
+		{ x: 200, y: 50 },
+		{ x: 300, y: 150 },
+		{ x: 250, y: 250 },
+		{ x: 150, y: 300 },
+		{ x: 80, y: 200 }
+	];
 
-	// ==== Előkalkulált lépésszám ====
+	let highlightedEdge: [Point, Point] | null = null;
+	let hullEdges: [Point, Point][] = [];
+
 	onMount(() => {
 		totalSteps.set(0);
 	});
 
-	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
 		consoleLog.update((logs) => [...logs, message]);
 		currentStep.update((n) => n + 1);
@@ -53,9 +59,7 @@
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-
-					// adatok vissza allitasa ide
-
+					hullEdges = [];
 					unsub();
 					resolve();
 				}
@@ -73,31 +77,85 @@
 		}
 	}
 
-	// ==== InsersionSort futás ====
-	async function startAlgorithm(event) {
+	async function startAlgorithm() {
 		consoleLog.set([]);
 		currentStep.set(0);
+		hullEdges = [];
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		// Algoritmust indito fuggveny ide
+		await jarvisMarch(points);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
-	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	async function jarvisMarch(points: Point[]) {
+		if (points.length < 3) return;
+
+		let hull: Point[] = [];
+
+		// Kezdőpont: legbalabb
+		let leftmost = points.reduce((min, p) => (p.x < min.x ? p : min), points[0]);
+		let p = leftmost;
+
+		do {
+			hull.push(p);
+			let q = points[0] === p ? points[1] : points[0]; // Kezdő tipp a következő pontra
+
+			for (let r of points) {
+				highlightedEdge = [p, r];
+				log(`Vizsgálat: (${p.x}, ${p.y}) → (${r.x}, ${r.y})`);
+				await pauseIfNeeded();
+				await delay(900 - get(speed) * 8);
+
+				if (crossProduct(p, q, r) < 0) {
+					q = r;
+				}
+			}
+
+			hullEdges.push([p, q]);
+			p = q;
+		} while (p !== leftmost);
+
+		highlightedEdge = null;
+	}
+
+	function crossProduct(a: Point, b: Point, c: Point): number {
+		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+	}
+
+	selectedAlgorithmSourceCode.set(`Brute Force Convex Hull`);
 </script>
 
-<!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="tag">Canvas</div>
-	<div class="array-visual"></div>
+	<svg width="500" height="500" style="background: #fff; border: 1px solid #ccc;">
+		<!-- Összes pont -->
+		{#each points as p}
+			<circle cx={p.x} cy={p.y} r="5" fill="black" />
+		{/each}
+
+		<!-- Aktuálisan vizsgált él -->
+		{#if highlightedEdge}
+			<line
+				x1={highlightedEdge[0].x}
+				y1={highlightedEdge[0].y}
+				x2={highlightedEdge[1].x}
+				y2={highlightedEdge[1].y}
+				stroke="red"
+				stroke-width="2"
+			/>
+		{/if}
+
+		<!-- Konvex burok élek -->
+		{#each hullEdges as [a, b]}
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="green" stroke-width="2" />
+		{/each}
+	</svg>
 </div>
 
-<!-- ==== Stílus ==== -->
 <style>
 	.tag {
 		display: inline-block;
@@ -106,13 +164,5 @@
 		background-color: #484848;
 		color: white;
 		padding: 3px;
-	}
-	.array-visual {
-		display: flex;
-		gap: 4px;
-		justify-content: center;
-		align-items: flex-end;
-		height: 200px;
-		margin: 1rem 0 0 0;
 	}
 </style>
