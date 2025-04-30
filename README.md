@@ -35,15 +35,9 @@
 	- Prios Fekete Fa
 	- 2-3 fa
 	- 2-3-4 fa
-	- bináris kupac
-	- rabin-karp algoritmus
-	- dijkstra algoritmus
-	- bellman ford shortest path
-	- prim minimum feszito fa
-	- kruskal minimum feszito fa
-	- konvex burok
-	- chans algoritmus
-	- graham scan
+	- konvex burok (brute force)
+	- jarvis meneteles
+	- graham pásztázás
 
 Updatere szorul:
 Factorial - source code kijeloles

@@ -3,7 +3,7 @@ import BTree from "../algorithms/B-Tree.svelte";
 import BellmanFordShortestPath from "../algorithms/Bellman-FordShortestPath.svelte";
 import BinaryHeap from "../algorithms/BinaryHeap.svelte";
 import BinaryTree from "../algorithms/BinaryTree.svelte";
-import ChansAlgorithm from "../algorithms/ChansAlgorithm.svelte";
+import JarvisMarch from "../algorithms/JarvisMarch.svelte";
 import CoinChange from "../algorithms/CoinChange.svelte";
 import ConvexHull from "../algorithms/ConvexHull.svelte";
 import DijkstraShortestPath from "../algorithms/DijkstraShortestPath.svelte";
@@ -34,7 +34,7 @@ export const algorithmComponents = {
     bellmanFordShortestPath: BellmanFordShortestPath,
     binaryHeap: BinaryHeap,
     binaryTree: BinaryTree,
-    chansAlgorithm: ChansAlgorithm,
+    jarvisMarch: JarvisMarch,
     coinChange: CoinChange,
     convexHull: ConvexHull,
     dijkstraShortestPath: DijkstraShortestPath,

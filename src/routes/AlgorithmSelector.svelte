@@ -91,7 +91,7 @@
 			Sztring algoritmusok
 		</button>
 		<div class="algorithm-list {algorithmGroups.stringAlgorithms ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('rabinKarp')}>Rabin-Karp algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('rabinKarp')}>Rabin-Karp algoritmus</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('knuthMorrisPratt')}>Knuth-Morris-Pratt algoritmus</button>
 		</div>
 	</div>
@@ -118,9 +118,9 @@
 			Geometriai algoritmusok
 		</button>
 		<div class="algorithm-list {algorithmGroups.geometryAlgorithms ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('convexHull')}>Konvex burok</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('chansAlgorithm')}>Chan algoritmusa</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('grahamScan')}>Graham szkennelése</button>
+			<button class="algorithm-button todo" on:click={() => selectAlgorithm('convexHull')}>Konvex burok (Brute Force)</button>
+			<button class="algorithm-button todo" on:click={() => selectAlgorithm('jarvisMarch')}>Jarvis menetelés</button>
+			<button class="algorithm-button todo" on:click={() => selectAlgorithm('grahamScan')}>Graham pásztázás</button>
 		</div>
 	</div>
 </div>

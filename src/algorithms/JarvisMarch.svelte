@@ -9,9 +9,7 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-
 		selectedAlgorithm
-
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -26,12 +24,10 @@
 
 	// ==== Vizualizációs indexek ====
 
-
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalSteps.set(0);
 	});
-
 
 	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
@@ -84,7 +80,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		// Algoritmust indito fuggveny ide
-		
+
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
@@ -98,9 +94,7 @@
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="tag">Canvas</div>
-	<div class="array-visual">
-
-	</div>
+	<div class="array-visual"></div>
 </div>
 
 <!-- ==== Stílus ==== -->
@@ -121,5 +115,4 @@
 		height: 200px;
 		margin: 1rem 0 0 0;
 	}
-
 </style>
