@@ -35,8 +35,6 @@
 	- Prios Fekete Fa
 	- 2-3 fa
 	- 2-3-4 fa
-	- konvex burok (brute force)
-	- jarvis meneteles
 	- graham pásztázás
 
 Updatere szorul:
