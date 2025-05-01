@@ -95,13 +95,12 @@
 
 		let hull: Point[] = [];
 
-		// Kezdőpont: legbalabb
 		let leftmost = points.reduce((min, p) => (p.x < min.x ? p : min), points[0]);
 		let p = leftmost;
 
 		do {
 			hull.push(p);
-			let q = points[0] === p ? points[1] : points[0]; // Kezdő tipp a következő pontra
+			let q = points[0] === p ? points[1] : points[0];
 
 			for (let r of points) {
 				highlightedEdge = [p, r];
@@ -118,6 +117,10 @@
 			p = q;
 		} while (p !== leftmost);
 
+		// Záró él: utolsó és első pont összekötése
+		if (hull.length > 1) {
+			hullEdges.push([hull[hull.length - 1], hull[0]]);
+		}
 		highlightedEdge = null;
 	}
 
@@ -153,6 +156,11 @@
 		{#each hullEdges as [a, b]}
 			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="green" stroke-width="2" />
 		{/each}
+		<!-- Konvex burok pontjai (kiemelve) -->
+{#each hullEdges as [a, b]}
+<circle cx={a.x} cy={a.y} r="6" fill="limegreen" />
+{/each}
+
 	</svg>
 </div>
 
