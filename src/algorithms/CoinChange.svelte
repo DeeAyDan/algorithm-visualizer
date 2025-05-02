@@ -22,6 +22,8 @@
 	consoleLog.set([]);
 	let exchangeCoins = [1, 4, 6, 10];
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	let dpTable: { index: number; value: number; coin: number }[] = [];
+	let lastCoinTable = [];
 
 	let moneyToExchange = 29;
 
@@ -88,6 +90,7 @@
 
 					usedCoins = [];
 					exchangeCoins = [1, 4, 6, 10];
+					dpTable = [];
 
 					unsub();
 					resolve();
@@ -116,13 +119,25 @@
 
 		let amount = Math.floor(moneyToExchange);
 		let coins = exchangeCoins.map((c) => Math.floor(c));
+		dpTable = [];
+
+		await coinExchange(amount, coins);
+
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+		algorithmStatus.set('finished');
+		await restartAlgorithm();
+	}
+
+	async function coinExchange(amount, coins) {
+		lastCoinTable = Array(amount + 1).fill(-1);
+		dpTable[0] = 0;
 
 		let dp = Array(amount + 1).fill(Infinity);
 		let lastCoin = Array(amount + 1).fill(-1);
 
 		dp[0] = 0;
 
-		totalSteps.set(amount); // minden cent egy lépés lehet
+		totalSteps.set(amount);
 
 		for (let i = 1; i <= amount; i++) {
 			for (let coin of coins) {
@@ -131,12 +146,14 @@
 					lastCoin[i] = coin;
 				}
 			}
+
+			dpTable = [...dpTable, { index: i, value: dp[i], coin: lastCoin[i] }];
+
 			await pauseIfNeeded();
-			await delay(40 - get(speed) * 2); // gyors kis lépések
-			currentStep.update((n) => n + 1);
+			await delay(900 - get(speed) * 8);
+			log(`Összeg: ${i}, Minimum érme: ${dp[i]}, Utolsó érme: ${lastCoin[i]}`);
 		}
 
-		// Visszafejtjük a megoldást
 		usedCoins = [];
 		let current = amount;
 		while (current > 0) {
@@ -145,23 +162,42 @@
 				consoleLog.update((logs) => [...logs, 'Nem lehet pontosan felváltani!']);
 				break;
 			}
-			usedCoins.push(coin); // Vissza váltjuk forintra
+			usedCoins.push(coin);
 			current -= coin;
 		}
 
-		// Megjelenítjük
-		log(`Minimum érme szám: ${usedCoins.length}`);
-		usedCoins.forEach((coin) => log(`Érme felhasználva: ${coin}`));
-
-		totalSteps.set(usedCoins.length);
-
-		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
-		algorithmStatus.set('finished');
-		await restartAlgorithm();
+		consoleLog.update((logs) => [...logs, `Minimum érme szám: ${usedCoins.length}`]);
+		consoleLog.update((logs) => [...logs, `Felhasznált érmék: ${usedCoins}`]);
 	}
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	selectedAlgorithmSourceCode.set(
+`function coinExchange(amount, coins) {
+   lastCoinTable = Array(amount + 1).fill(-1);
+   let dp = Array(amount + 1).fill(Infinity);
+   let lastCoin = Array(amount + 1).fill(-1);
+   dp[0] = 0;
+      for (let i = 1; i <= amount; i++) {
+         for (let coin of coins) {
+            if (i - coin >= 0 && dp[i - coin] + 1 < dp[i]) {
+               dp[i] = dp[i - coin] + 1;
+               lastCoin[i] = coin;
+            }
+         }
+            dpTable = [...dpTable, { index: i, value: dp[i], coin: lastCoin[i] }];
+      }
+
+      usedCoins = [];
+      let current = amount;
+      while (current > 0) {
+         let coin = lastCoin[current];
+         if (coin === -1) {
+            break;
+         }
+         usedCoins.push(coin);
+         current -= coin;
+      }
+   }`);
 </script>
 
 <!-- Controls -->
@@ -201,11 +237,12 @@
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="coin-visual">
 		<div class="left-container">
-			<div>Felhasználható érmék</div>
-			<div class="exchangeCoins">
+			<div>Felhasználható</div>
+			<div>érmék</div>
+			<div class="exchange-coins">
 				{#each exchangeCoins as coin}
 					<div class="coin">
 						{coin}
@@ -213,9 +250,28 @@
 				{/each}
 			</div>
 		</div>
-		<div class="change-table"></div>
+		<div class="change-table">
+			<table>
+				<thead>
+					<tr>
+						<th>Összeg</th>
+						<th>Minimum érme</th>
+						<th>Utolsó érme</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each dpTable as row}
+						<tr>
+							<td>{row.index}</td>
+							<td>{row.value === Infinity ? '∞' : row.value}</td>
+							<td>{row.coin === -1 ? '-' : row.coin}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 		<div class="right-container">
-			<div class="exchangeField">
+			<div class="exchange-field">
 				<div>Felváltandó: {moneyToExchange}</div>
 				<div>Felhasznált érmék:</div>
 				<div class="used-coins">
@@ -240,20 +296,19 @@
 	}
 	.coin-visual {
 		display: flex;
-		gap: 4px;
+		gap: 40px;
 		justify-content: space-between;
 		align-items: flex-start;
 		min-height: 200px;
 		margin: 1rem;
 	}
-
-	.exchangeCoins {
+	.exchange-coins {
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: center;
 		gap: 5px;
+		margin-top: 1rem;
 	}
-
 	.coin {
 		background-color: gold;
 		color: black;
@@ -265,11 +320,10 @@
 		width: 35px;
 		height: 35px;
 	}
-
 	.custom-input {
 		display: flex;
 		flex-direction: row;
-		justify-content: center;
+		justify-content: space-between;
 		align-items: center;
 		gap: 10px;
 		padding: 1rem;
@@ -284,12 +338,15 @@
 		border: 3px solid #505050;
 	}
 	.custom-input button {
-		width: 150px;
-		text-align: center;
-		padding: 5px;
-		font-size: 1rem;
-		background-color: #2f2f2f;
+		padding: 0.5rem 1rem;
+		background-color: #444;
+		color: aliceblue;
+		border: none;
+		border-radius: 5px;
 		cursor: pointer;
+	}
+	.custom-input button:hover {
+		background-color: #5cb85c;
 	}
 	.custom-input label {
 		width: 150px;
@@ -304,11 +361,9 @@
 		gap: 20px;
 		position: relative;
 	}
-
 	.button-group {
 		position: relative;
 	}
-
 	.dropdown {
 		position: absolute;
 		top: 110%;
@@ -322,8 +377,6 @@
 		min-width: 200px;
 		z-index: 10;
 	}
-
-	.dropdown input,
 	.dropdown button {
 		width: 100%;
 		padding: 5px;
@@ -331,7 +384,14 @@
 		color: white;
 		border: 1px solid #666;
 	}
-
+	.dropdown input {
+		align-self: center;
+		width: 90%;
+		padding: 5px;
+		background-color: #3a3a3a;
+		color: white;
+		border: 1px solid #666;
+	}
 	.delete-item {
 		display: flex;
 		flex-direction: column;
@@ -341,7 +401,35 @@
 		padding: 5px;
 		border-radius: 4px;
 	}
-	.used-coins{
+	.left-container {
 		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: 200px;
+	}
+	.right-container {
+		width: 200px;
+	}
+	.used-coins {
+		display: flex;
+		margin-top: 1rem;
+		gap: 4px;
+	}
+	.change-table {
+		flex: 1;
+		height: 200px;
+		overflow: auto;
+	}
+	.change-table table {
+		border-collapse: collapse;
+		width: 100%;
+		background-color: #2f2f2f;
+		color: white;
+	}
+	.change-table th,
+	.change-table td {
+		border: 1px solid #505050;
+		padding: 5px;
+		text-align: center;
 	}
 </style>
