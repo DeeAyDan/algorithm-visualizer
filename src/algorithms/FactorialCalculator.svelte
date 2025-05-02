@@ -15,7 +15,6 @@
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
-
 	// ==== Alapadatok ====
 
 	currentStep.set(0);
@@ -24,8 +23,6 @@
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 	let inputNumber = 5;
 	let steps: number[] = [];
-
-	// ==== Vizualizációs indexek ====
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
@@ -126,15 +123,6 @@
 
 		return result;
 	}
-
-	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`function factorial(n) {
-	let result = 1;
-	for (let i = 1; i <= n; i++) {
-		result *= i;
-	}
-	return result;
-}`);
 </script>
 
 <!-- ===== Bemeneti mező a Controls alatt ===== -->
