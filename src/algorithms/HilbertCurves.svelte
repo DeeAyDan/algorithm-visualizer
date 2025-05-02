@@ -9,7 +9,8 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -21,6 +22,7 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	activeLine.set(-1);
 
 	let order = 4;
 	let canvas;
@@ -60,12 +62,11 @@
 		return new Promise((resolve) => {
 			const unsub = resumeSignal.subscribe(() => {
 				if (get(algorithmStatus) === 'idle') {
-
-
 					consoleLog.set([]);
-		currentStep.set(0);
-		ctx.clearRect(0, 0, size, size);
-		points = [];
+					currentStep.set(0);
+					ctx.clearRect(0, 0, size, size);
+					points = [];
+					activeLine.set(-1);
 
 					unsub();
 					resolve();
@@ -86,20 +87,25 @@
 
 	// ==== Algoritmus futás ====
 	async function startAlgorithm() {
-		
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		const count = Math.pow(4, order);
 		totalSteps.set(count);
+		await hilbertCurves(count);
+		activeLine.set(-1);
 
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+		algorithmStatus.set('finished');
+		await restartAlgorithm();
+	}
+
+	async function hilbertCurves(count) {
 		for (let i = 0; i < count; i++) {
-			await pauseIfNeeded();
 			await delay(200 - get(speed) * 8);
-
 			const p = getHilbertPoint(i, order);
 			points.push(p);
-
 			if (i > 0) {
+				
 				ctx.strokeStyle = `hsl(${(i / count) * 360}, 100%, 50%)`;
 				ctx.beginPath();
 				ctx.moveTo(points[i - 1].x, points[i - 1].y);
@@ -107,13 +113,10 @@
 				ctx.stroke();
 			}
 			log(`Lépés ${i + 1}: (${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
+			await pauseIfNeeded();
 		}
-		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
-		algorithmStatus.set('finished');
-		await restartAlgorithm();
 	}
 
-	// ==== Algoritmus ====
 	function getHilbertPoint(index: number, order: number) {
 		let v = { x: 0, y: 0 };
 		let n = Math.pow(2, order);
@@ -152,7 +155,57 @@
 	}
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	selectedAlgorithmSourceCode.set(
+		`function hilbertCurves(count){
+
+   for (let i = 0; i < count; i++) {
+      const p = getHilbertPoint(i, order);
+      points.push(p);
+
+      if (i > 0) {
+         ctx.strokeStyle = \`hsl($\{(i / count) * 360}, 100%, 50%)\`;
+         ctx.beginPath();
+         ctx.moveTo(points[i - 1].x, points[i - 1].y);
+         ctx.lineTo(p.x, p.y);
+         ctx.stroke();
+      }
+   }
+}
+ \n
+
+function getHilbertPoint(index: number, order: number) {
+   let v = { x: 0, y: 0 };
+   let n = Math.pow(2, order);
+   let tmp, rx, ry, s, t = index;
+
+   for (s = 1; s < n; s *= 2) {
+      rx = 1 & (t >> 1);
+      ry = 1 & (t ^ rx);
+      tmp = rotate(rx, ry, v.x, v.y, s);
+      v.x = tmp.x;
+      v.y = tmp.y;
+      v.x += s * rx;
+      v.y += s * ry;
+      t >>= 2;
+   }
+
+      return {
+         x: (v.x + 0.5) * (size / n),
+         y: (v.y + 0.5) * (size / n)
+      };
+   }
+ \n
+   function rotate(rx, ry, x, y, s) {
+      if (ry === 0) {
+         if (rx === 1) {
+            x = s - 1 - x;
+            y = s - 1 - y;
+    	}
+        return { x: y, y: x };
+      }
+      return { x, y };
+   }`
+	);
 </script>
 
 <!-- Input mező az order-hez -->
