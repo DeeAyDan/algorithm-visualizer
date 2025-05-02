@@ -1,9 +1,15 @@
 <script>
+// @ts-nocheck
+
 	import { consoleLog } from '../stores/store.svelte';
+	import { selectedAlgorithmSourceCode, selectedAlgorithm } from '../stores/store.svelte';
+	import { algorithmDisplayNames } from '../stores/algorithmMap';
+
+	$: formattedAlgorithmName = algorithmDisplayNames[$selectedAlgorithm];
 </script>
 
 <div class="console-log-container">
-	<div class="tag">Console Log</div>
+	<div class="tag">{formattedAlgorithmName}</div>
 	<div class="console">
 		<ol class="console-list">
 			{#each $consoleLog as line}
@@ -15,24 +21,25 @@
 
 <style>
 	.console-log-container {
-		border-bottom: 3px solid #505050;
 		flex: 1;
+		z-index: 10;
 	}
 	.tag {
 		display: inline-block;
 		top: 0;
 		left: 0;
 		background-color: #484848;
-		color: white;
+		color: aliceblue;
 		padding: 3px;
 	}
 	.console {
 		height: 90%;
 		overflow: auto;
 		position: relative;
+
 	}
 	.console-list {
-		position: absolute;
-		left: 20px;
+		margin: 1rem;
+		color: aliceblue;
 	}
 </style>
