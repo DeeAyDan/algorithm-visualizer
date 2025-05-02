@@ -45,17 +45,15 @@
 </script>
 
 <div class="controls-bar">
-	<div class="tag">Irányítások</div>
-
 	<!-- Állapotfüggő gombok -->
 	{#if $algorithmStatus === 'idle'}
 		<button class="play-button" on:click={handleStart}>Start</button>
 	{:else if $algorithmStatus === 'running'}
-		<button class="play-button" on:click={handlePause}>Pause</button>
+		<button class="play-button" on:click={handlePause}>Szünet</button>
 	{:else if $algorithmStatus === 'paused'}
-		<button class="play-button" on:click={handleResume}>Resume</button>
+		<button class="play-button" on:click={handleResume}>Folytatás</button>
 	{:else if $algorithmStatus === 'finished'}
-		<button class="play-button" on:click={handleReset}>Reset</button>
+		<button class="play-button" on:click={handleReset}>Visszaállítás</button>
 	{/if}
 
 	<!-- Léptetési információ -->
@@ -67,7 +65,7 @@
 
 	<!-- Sebességcsúszka -->
 	<div class="speed-slider">
-		<label for="speed-range">Speed</label>
+		<label for="speed-range">Sebesség</label>
 		<input
 			type="range"
 			class="slider"
@@ -86,21 +84,11 @@
 		border-bottom: 3px solid #505050;
 		position: relative;
 		display: flex;
-		padding-left: 100px;
 		align-items: center;
 		justify-content: center;
 		gap: 20px;
 	}
-	.tag {
-		display: inline-block;
-		position: absolute;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-		font-size: px;
-	}
+
 	.play-button {
 		background-color: #484848;
 		border: none;

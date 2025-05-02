@@ -176,7 +176,7 @@ function moveDisk(from, to) {
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="tower-visual">
 		{#each towers as tower, towerIndex}
 			<div class="tower">
