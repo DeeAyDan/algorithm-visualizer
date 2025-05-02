@@ -7,11 +7,15 @@
 </script>
 
 <div class="canvas-container">
-	<svelte:component this={algorithmComponents[$selectedAlgorithm]} />
+<svelte:component this={algorithmComponents[$selectedAlgorithm]} />
+
 </div>
+
 
 <style>
 	.canvas-container {
 		border-bottom: 3px solid #505050;
+		border-left: 3px solid #505050;
+		height: 100%;
 	}
 </style>
