@@ -9,7 +9,8 @@
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal
+		resumeSignal,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -23,6 +24,8 @@
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 	let inputNumber = 5;
 	let steps: number[] = [];
+	activeLine.set(-1);
+
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
@@ -98,16 +101,21 @@
 		let result = await recursiveFactorial(inputNumber);
 		consoleLog.update((logs) => [...logs, `Végeredmény: ${inputNumber}! = ${result}`]);
 
+
+		activeLine.set(-1);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
 	async function recursiveFactorial(n: number): Promise<number> {
+
+		activeLine.set(4);
 		log(`Belépés: factorial(${n})`);
 		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
 
 		if (n === 0 || n === 1) {
+			activeLine.set(2);
 			log(`Alapeset: ${n}! = 1`);
 			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
@@ -117,6 +125,7 @@
 		const partial = await recursiveFactorial(n - 1);
 		const result = n * partial;
 
+		activeLine.set(4);
 		log(`Visszatérés: ${n}! = ${n} * ${partial} = ${result}`);
 		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
@@ -126,17 +135,7 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-	async function recursiveFactorial(n: number): Promise<number> {
-		
-		if (n === 0 || n === 1) {
-			return 1;
-		}
-
-		const partial = await recursiveFactorial(n - 1);
-		const result = n * partial;
-
-		return result;
-	}
+		`function recursiveFactorial(n) {\n   if (n === 0 || n === 1) {\n      return 1;\n   }\n   return n * recursiveFactorial(n - 1);\n}`
 	);
 </script>
 
