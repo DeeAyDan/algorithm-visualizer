@@ -269,7 +269,7 @@
 	button {
 		padding: 0.5rem 1rem;
 		background-color: #444;
-		color: white;
+		color: aliceblue;
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;
