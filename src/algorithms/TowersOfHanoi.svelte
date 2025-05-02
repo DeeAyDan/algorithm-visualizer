@@ -9,7 +9,8 @@
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal
+		resumeSignal,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -21,6 +22,7 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	activeLine.set(-1);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 
@@ -75,6 +77,7 @@
 					consoleLog.set([]);
 					currentStep.set(0);
 					data = [...initArr];
+					activeLine.set(-1);
 
 					unsub();
 					resolve();
@@ -101,7 +104,9 @@
 		initializeTowers();
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
+		totalSteps.set(Math.pow(2, numDisks) - 1);
 		await hanoi(numDisks, 0, 2, 1);
+		activeLine.set(-1);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -111,28 +116,62 @@
 	async function hanoi(n: number, from: number, to: number, aux: number) {
 		if (n === 0) return;
 
+		activeLine.set(3);
+		await delay(600 - get(speed) * 8);
 		await hanoi(n - 1, from, aux, to);
 
-		// Vizualizált lépés
+		activeLine.set(4);
+		await delay(600 - get(speed) * 8);
 		await moveDisk(from, to);
 
+		activeLine.set(5);
+		await delay(600 - get(speed) * 8);
 		await hanoi(n - 1, aux, to, from);
 	}
 
 	async function moveDisk(from: number, to: number) {
+		activeLine.set(8);
+		await delay(600 - get(speed) * 8);
 		let disk = towers[from].pop();
 		if (disk !== undefined) {
 			towers[to].push(disk);
 			log(`Lépés: ${disk} korong ${'ABC'[from]} → ${'ABC'[to]}`);
 			towers = towers.map((t) => [...t]);
+			activeLine.set(10);
 			await pauseIfNeeded();
-			await delay(900 - get(speed) * 8);
+			await delay(600 - get(speed) * 8);
 		}
 	}
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	selectedAlgorithmSourceCode.set(`
+function hanoi(n, from, to, aux) {
+   if (n === 0) return;
+   hanoi(n - 1, from, aux, to);
+   moveDisk(from, to);
+   hanoi(n - 1, aux, to, from);
+}
+function moveDisk(from, to) {
+   let disk = towers[from].pop();
+   if (disk !== undefined) {
+      towers[to].push(disk);
+      towers = towers.map((t) => [...t]); 
+   }
+}
+	`);
 </script>
+
+<!-- ===== Bemeneti mező a Controls alatt ===== -->
+<div class="custom-input">
+	<label for="inputNumber">Korongok száma:</label>
+	<input
+		id="inputNumber"
+		type="number"
+		bind:value={numDisks}
+		min="0"
+		placeholder="Adj meg egy számot"
+	/>
+</div>
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
@@ -144,7 +183,8 @@
 				{#each [...tower] as disk}
 					<div
 						class="disk"
-						style="width: {disk * 20 + 20}px; background-color: {getDiskColor(disk)}">
+						style="width: {disk * 20 + 20}px;">
+						{disk}
 					</div>
 				{/each}
 				<div class="bar"></div>
@@ -191,8 +231,24 @@
 
 	.disk {
 		height: 20px;
+		background-color: #2f4f4f;
 		border-radius: 4px;
 		margin-top: 5px;
 		z-index: 10;
+	}
+	.custom-input {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 10px;
+		padding: 1rem;
+		border-bottom: 3px solid #505050;
+	}
+	.custom-input input {
+		width: 60px;
+		padding: 5px;
+		font-size: 1rem;
+		background-color: #2f2f2f;
+		border: 3px solid #505050;
 	}
 </style>
