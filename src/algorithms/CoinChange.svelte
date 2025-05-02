@@ -43,6 +43,11 @@
 
 	function insertNewCoin() {
 		if (newCoin > 0) {
+			if (exchangeCoins.includes(Number(newCoin))) {
+				consoleLog.update((logs) => [...logs, 'Ez az érme már szerepel a listában!']);
+				showInsertForm = false;
+				return;
+			}
 			exchangeCoins = [...exchangeCoins, Number(newCoin)].sort((a, b) => a - b);
 			newCoin = 0;
 			showInsertForm = false;
@@ -55,8 +60,6 @@
 		exchangeCoins = newArray;
 		showDeleteList = false;
 	}
-
-	// ==== Vizualizációs indexek ====
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
