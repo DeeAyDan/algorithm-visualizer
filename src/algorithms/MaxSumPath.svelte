@@ -9,12 +9,12 @@
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal
+		resumeSignal,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
-
 
 	// ==== Alapadatok ====
 	const size = 4;
@@ -26,7 +26,7 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-
+	activeLine.set(-1);
 
 	// ==== Segédfüggvények ====
 	function generateMatrix(n) {
@@ -71,6 +71,7 @@
 						matrix = generateMatrix(size);
 						path = [];
 						solutionMatrix = [...matrix];
+						activeLine.set(-1);
 						unsub();
 						resolve();
 					}
@@ -81,61 +82,65 @@
 
 	// ==== Algoritmus ====
 	async function maxSumPath() {
-	for (let i = 0; i < size; i++) {
-		for (let j = 0; j < size; j++) {
-			activeCell = [i, j];
-			await pauseIfNeeded();
-			await delay(900 - get(speed) * 8);
+		for (let i = 0; i < size; i++) {
+			for (let j = 0; j < size; j++) {
+				activeCell = [i, j];
+				await pauseIfNeeded();
+				await delay(900 - get(speed) * 8);
 
-			let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
-			let fromLeft = j > 0 ? solutionMatrix[i][j - 1] : 0;
+				let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
+				let fromLeft = j > 0 ? solutionMatrix[i][j - 1] : 0;
 
-			let chosenFrom = '';
-			if (fromTop > fromLeft) {
-				chosenFrom = 'fentről';
-			} else if (fromLeft > fromTop) {
-				chosenFrom = 'balról';
-			} else {
-				chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
+				let chosenFrom = '';
+				if (fromTop > fromLeft) {
+					chosenFrom = 'fentről';
+				} else if (fromLeft > fromTop) {
+					chosenFrom = 'balról';
+				} else {
+					chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
+				}
+
+				solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
+
+				log(
+					`Megoldás [${i},${j}] = ${matrix[i][j]} + max(${fromTop}, ${fromLeft}) = ${solutionMatrix[i][j]} (${chosenFrom})`
+				);
 			}
-
-			solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
-
-			log(`Megoldás [${i},${j}] = ${matrix[i][j]} + max(${fromTop}, ${fromLeft}) = ${solutionMatrix[i][j]} (${chosenFrom})`);		}
+		}
+		activeCell = null;
 	}
-	activeCell = null;
-}
-
 
 	let path: [number, number][] = [];
 
-async function reconstructPath() {
-	let i = size - 1;
-	let j = size - 1;
+	async function reconstructPath() {
+		let i = size - 1;
+		let j = size - 1;
 
-	path = [[i, j]];
+		path = [[i, j]];
 
-	while (i > 0 || j > 0) {
-		const fromTop = i > 0 ? solutionMatrix[i - 1][j] : -1;
-		const fromLeft = j > 0 ? solutionMatrix[i][j - 1] : -1;
+		while (i > 0 || j > 0) {
+			const fromTop = i > 0 ? solutionMatrix[i - 1][j] : -1;
+			const fromLeft = j > 0 ? solutionMatrix[i][j - 1] : -1;
 
-		if (fromTop > fromLeft) {
-			i--;
-		} else {
-			j--;
+			if (fromTop > fromLeft) {
+				i--;
+			} else {
+				j--;
+			}
+
+			path.unshift([i, j]);
 		}
-
-		path.unshift([i, j]);
 	}
-}
-
 
 	// ==== Start ====
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+		
 		await maxSumPath();
+		activeLine.set(-1);
+
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		reconstructPath();
@@ -148,13 +153,30 @@ async function reconstructPath() {
 	});
 
 	// ==== Forráskód beállítás ====
-	selectedAlgorithmSourceCode.set(`Max sum path`);
+	selectedAlgorithmSourceCode.set(
+`function maxSumPath() {
+   for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+         let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
+         let fromLeft = j > 0 ? solutionMatrix[i][j - 1] : 0;
+         let chosenFrom = '';
+         if (fromTop > fromLeft) {
+            chosenFrom = 'fentről';
+         } else if (fromLeft > fromTop) {
+            chosenFrom = 'balról';
+         } else {
+            chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
+    	 }
+         solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
+      }
+   }
+}`);
 </script>
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="matrix-container">
 		<!-- Bemeneti mátrix -->
 		<div class="matrix">
@@ -162,14 +184,13 @@ async function reconstructPath() {
 			{#each matrix as row, i}
 				<div class="row">
 					{#each row as cell, j}
-					<div
-					class="cell 
+						<div
+							class="cell
 						{activeCell?.[0] === i && activeCell?.[1] === j ? 'active' : ''}
 						{path.some(([pi, pj]) => pi === i && pj === j) ? 'path' : ''}"
-				>
-					{cell}
-				</div>
-				
+						>
+							{cell}
+						</div>
 					{/each}
 				</div>
 			{/each}
@@ -181,14 +202,13 @@ async function reconstructPath() {
 			{#each solutionMatrix as row, i}
 				<div class="row">
 					{#each row as cell, j}
-					<div
-					class="cell 
+						<div
+							class="cell
 						{activeCell?.[0] === i && activeCell?.[1] === j ? 'active' : ''}
 						{path.some(([pi, pj]) => pi === i && pj === j) ? 'path' : ''}"
-				>
-					{cell}
-				</div>
-				
+						>
+							{cell}
+						</div>
 					{/each}
 				</div>
 			{/each}
@@ -217,6 +237,7 @@ async function reconstructPath() {
 		display: flex;
 		flex-direction: column;
 		gap: 5px;
+		margin: 1rem;
 	}
 
 	.row {
@@ -249,8 +270,7 @@ async function reconstructPath() {
 		font-size: 0.9rem;
 	}
 	.cell.path {
-	background-color: limegreen;
-	color: black;
-}
-
+		background-color: limegreen;
+		color: black;
+	}
 </style>
