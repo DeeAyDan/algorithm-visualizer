@@ -89,7 +89,6 @@
 					currentStep.set(0);
 
 					usedCoins = [];
-					exchangeCoins = [1, 4, 6, 10];
 					dpTable = [];
 
 					unsub();
@@ -406,12 +405,14 @@
 		flex-direction: column;
 		align-items: center;
 		width: 200px;
+
 	}
 	.right-container {
 		width: 200px;
 	}
 	.used-coins {
 		display: flex;
+		flex-wrap: wrap;
 		margin-top: 1rem;
 		gap: 4px;
 	}
