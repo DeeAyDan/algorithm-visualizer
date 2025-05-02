@@ -217,7 +217,7 @@ function getHilbertPoint(index: number, order: number) {
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		<canvas bind:this={canvas} width={size} height={size}></canvas>
 	</div>
