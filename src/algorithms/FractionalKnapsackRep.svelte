@@ -79,6 +79,16 @@
 			const randomColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
 			const ratio = newItemValue / newItemWeight;
 
+			if (newItemWeight > 24) {
+				consoleLog.update((logs) => [...logs, `A súly nem lehet nagyobb, mint 24!`]);
+				return;
+			}
+			if (items.length > 4) {
+				consoleLog.update((logs) => [...logs, `Túl sok tárgy van! Maximum 4 lehet!`]);
+				showInsertForm = false;
+				return;
+			}
+
 			items = [
 				...items,
 				{
@@ -133,8 +143,8 @@
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-
-					// adatok vissza allitasa ide
+					sack = Array(sackSize).fill(null);
+					sackValue = 0
 
 					unsub();
 					resolve();
@@ -155,60 +165,95 @@
 
 	// ==== InsersionSort futás ====
 	async function startAlgorithm(event) {
-	consoleLog.set([]);
-	currentStep.set(0);
-	consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+		consoleLog.set([]);
+		currentStep.set(0);
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-	// Reset zsák
-	sack = Array(sackSize).fill(null);
-	sackFilled = 0;
-	sackValue = 0;
+		await knapSackRep();
 
-	// Frissítjük a ratio-kat (ha változott pl. kézi beírásnál)
-	items = items.map((item) => ({
-		...item,
-		ratio: item.value / item.weight
-	}));
-
-	// Beállítjuk a total steps-t
-	totalSteps.set(sackSize); // minden berakott cella egy lépés lesz
-
-	// Rendezzük a tárgyakat arány szerint
-	let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
-
-	while (sackFilled < sackSize) {
-
-		const bestItem = sortedItems[0];
-
-		let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
-		let fraction = canTake / bestItem.weight;
-
-		// Töltsük ki a zsákot a legjobb item-mel
-		for (let i = 0; i < sack.length && canTake > 0; i++) {
-			if (sack[i] === null) {
-				sack[i] = bestItem;
-				canTake--;
-				await pauseIfNeeded();
-				await delay(200 - get(speed) * 8);
-				currentStep.update((n) => n + 1);
-			}
-		}
-
-		sackValue += bestItem.value * fraction;
-		sackFilled = sack.filter((x) => x !== null).length;
-
-
-		consoleLog.update((logs) => [...logs, `${bestItem.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`]);
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+		algorithmStatus.set('finished');
+		await restartAlgorithm();
 	}
 
-	consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
-	algorithmStatus.set('finished');
-	await restartAlgorithm();
-}
+	async function knapSackRep() {
+		sack = Array(sackSize).fill(null);
+		sackFilled = 0;
+		sackValue = 0;
 
+		items = items.map((item) => ({
+			...item,
+			ratio: item.value / item.weight
+		}));
+
+		totalSteps.set(sackSize);
+
+		let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
+
+		for (let item of sortedItems) {
+			let canTake = Math.min(item.weight, sackSize - sackFilled);
+			let filledWeight = 0;
+
+			while (sackFilled < sackSize) {
+				const bestItem = sortedItems[0];
+
+				let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
+				let fraction = canTake / bestItem.weight;
+
+				// Töltsük ki a zsákot a legjobb item-mel
+				for (let i = 0; i < sack.length && canTake > 0; i++) {
+					if (sack[i] === null) {
+						sack[i] = bestItem;
+						canTake--;
+						await pauseIfNeeded();
+						await delay(200 - get(speed) * 8);
+						currentStep.update((n) => n + 1);
+					}
+				}
+
+				sackValue += bestItem.value * fraction;
+				sackFilled = sack.filter((x) => x !== null).length;
+
+				consoleLog.update((logs) => [
+					...logs,
+					`${bestItem.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`
+				]);
+			}
+
+			let fraction = filledWeight / item.weight;
+			sackValue += item.value * fraction;
+			consoleLog.update((logs) => [
+				...logs,
+				`${item.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`
+			]);
+
+			if (sackFilled >= sackSize) break;
+			sackFilled = sack.filter((x) => x !== null).length;
+		}
+	}
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	selectedAlgorithmSourceCode.set(
+`function knapSack() {
+   sack = Array(sackSize).fill(null);
+   sackFilled = 0;
+   sackValue = 0;
+   items = items.map((item) => ({...item, ratio: item.value / item.weight}));
+   let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
+   while (sackFilled < sackSize) {
+      const bestItem = sortedItems[0];
+      let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
+      let fraction = canTake / bestItem.weight;
+      for (let i = 0; i < sack.length && canTake > 0; i++) {
+         if (sack[i] === null) {
+            sack[i] = bestItem;
+            canTake--;
+            }
+         }
+         sackValue += bestItem.value * fraction;
+         sackFilled = sack.filter((x) => x !== null).length;
+      }
+   }`);
 </script>
 
 <div class="custom-input">
@@ -302,39 +347,6 @@
 		height: 100%;
 		margin: 1rem 1rem 1rem 2rem;
 	}
-	.custom-input {
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
-		gap: 10px;
-		padding: 1rem;
-		border-bottom: 3px solid #505050;
-	}
-	.custom-input input {
-		text-align: center;
-		width: 60px;
-		padding: 5px;
-		font-size: 1rem;
-		background-color: #2f2f2f;
-		border: 3px solid #505050;
-	}
-	.custom-input button {
-		width: 150px;
-		text-align: center;
-		padding: 5px;
-		font-size: 1rem;
-		background-color: #2f2f2f;
-		cursor: pointer;
-	}
-	.custom-input label {
-		width: 150px;
-		text-align: center;
-		padding: 5px;
-		font-size: 1rem;
-		background-color: #2f2f2f;
-		cursor: pointer;
-	}
 	.sack-container {
 		display: flex;
 		height: 100%;
@@ -385,21 +397,56 @@
 		height: 10px;
 		background-color: white;
 	}
+	.insert-dropdown {
+		align-items: center;
+	}
+	.custom-input {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		gap: 10px;
+		padding: 1rem;
+		border-bottom: 3px solid #505050;
+	}
+	.custom-input input {
+		text-align: center;
+		width: 60px;
+		padding: 5px;
+		font-size: 1rem;
+		background-color: #2f2f2f;
+		border: 3px solid #505050;
+	}
+	.custom-input button {
+		padding: 0.5rem 1rem;
+		background-color: #444;
+		color: aliceblue;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+	.custom-input button:hover {
+		background-color: #5cb85c;
+	}
+	.custom-input label {
+		width: 150px;
+		text-align: center;
+		padding: 5px;
+		font-size: 1rem;
+		background-color: #2f2f2f;
+		cursor: pointer;
+	}
 	.custom-buttons {
 		display: flex;
 		gap: 20px;
 		position: relative;
 	}
-
 	.button-group {
 		position: relative;
 	}
-	.insert-dropdown {
-		align-items: center;
-	}
 	.dropdown {
 		position: absolute;
-		top: 110%; /* a gomb alá helyezzük */
+		top: 110%;
 		left: 0;
 		background-color: #2f2f2f;
 		border: 2px solid #505050;
@@ -410,33 +457,28 @@
 		min-width: 200px;
 		z-index: 10;
 	}
-
-	.dropdown input,
 	.dropdown button {
+		width: 100%;
+		padding: 5px;
+		background-color: #3a3a3a;
+		color: white;
+		border: 1px solid #666;
+	}
+	.dropdown input {
+		align-self: center;
 		width: 90%;
 		padding: 5px;
 		background-color: #3a3a3a;
 		color: white;
 		border: 1px solid #666;
 	}
-
 	.delete-item {
 		display: flex;
+		flex-direction: column;
 		justify-content: space-between;
 		align-items: center;
 		background-color: #3a3a3a;
 		padding: 5px;
 		border-radius: 4px;
-	}
-
-	.delete-item {
-		display: flex;
-		flex-direction: column;
-		gap: 5px;
-		justify-content: space-between;
-		align-items: center;
-		background-color: #2f2f2f;
-		padding: 5px;
-		border: 1px solid #484848;
 	}
 </style>
