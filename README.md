@@ -7,6 +7,7 @@
 	- #2f4f4f - visual default
 	- #ffd700 - visual highlight yellow
 	- #dc143c - visual pivot
+	- aliceblue - text color
 
 ## General TODO
     - Maradék algoritmusok megvalósítása

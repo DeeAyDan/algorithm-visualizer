@@ -8,14 +8,16 @@
 
 <div class="source-container">
 	<div class="tag">{formattedAlgorithmName}</div>
-	<div>
-		{$selectedAlgorithmSourceCode}
-	</div>
+
+		<code>
+			{$selectedAlgorithmSourceCode}
+		</code>
+
 </div>
 
 <style>
 	.source-container {
-		width: 70%;
+		width: 100%;
 		background-color: #484848;
 	}
 	.tag {

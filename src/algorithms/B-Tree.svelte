@@ -2,189 +2,234 @@
 	// @ts-nocheck
 	import { onMount } from 'svelte';
 	import {
-		selectedAlgorithmSourceCode,
 		currentStep,
 		totalSteps,
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal,
-		selectedAlgorithm
+		resumeSignal
 	} from '../stores/store.svelte.js';
+
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
-	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
-	// ==== Alapadatok ====
+	let maxDegree = 3; // alapértelmezett
+	let elementValue: number;
+	let highlightedNode = null;
 
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	let root = createNode();
 
-	let elementValue;
-	// ==== Vizualizációs indexek ====
+	function createNode() {
+		return {
+			keys: [],
+			children: [],
+			isLeaf: true,
+			x: 250,
+			y: 50
+		};
+	}
 
-	function validateInput() {
-		if (!elementValue) {
+	onMount(() => {
+		totalSteps.set(0);
+		consoleLog.set([]);
+	});
+
+	function log(msg: string) {
+		consoleLog.update((logs) => [...logs, msg]);
+		currentStep.update((n) => n + 1);
+	}
+
+	function validateInput(): boolean {
+		if (elementValue === undefined || elementValue === null) {
 			log('Kérlek adj meg egy értéket!');
+			return false;
+		}
+		if (typeof elementValue !== 'number') {
+			log('Kérlek számot adj meg!');
+			return false;
+		}
+		if (elementValue < 0 || elementValue > 100) {
+			log('0 és 100 közötti szám legyen!');
 			return false;
 		}
 		return true;
 	}
 
-	// Elem beszúrása
 	function insertElement() {
-		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem beszúrása: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra módosítása ide
-			log(`Elem hozzáadva: ${elementValue}`);
+		if (!validateInput()) return;
+		log(`Beszúrás: ${elementValue}`);
+		insert(root, elementValue);
+		elementValue = undefined;
+	}
+
+	function insert(node, key) {
+		if (node.keys.length === 2 * maxDegree - 1) {
+			const newRoot = createNode();
+			newRoot.children.push(node);
+			newRoot.isLeaf = false;
+			splitChild(newRoot, 0);
+			root = newRoot;
+			insertNonFull(newRoot, key);
+		} else {
+			insertNonFull(node, key);
 		}
 	}
 
-	// Elem törlése
-	function deleteElement() {
-		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem törlése: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra módosítása ide
-			log(`Elem törölve: ${elementValue}`);
-		}
-	}
+	async function searchElement() {
+		if (!validateInput()) return;
 
-	// Elem keresés
-	function searchElement() {
-		if (validateInput()) {
-			consoleLog.update((logs) => [...logs, `Elem keresése: ${elementValue}`]);
-			// Az AVL fa vagy más struktúra keresés logikája ide
-			log(`Elem megtalálva: ${elementValue}`);
-		}
-	}
-
-	// ==== Előkalkulált lépésszám ====
-	onMount(() => {
-		totalSteps.set(0);
-	});
-
-	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-
-					// adatok vissza allitasa ide
-
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
-	async function restartAlgorithm() {
-		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
-		}
-	}
-
-	// ==== Algoritmus futás ====
-	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
-		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+		algorithmStatus.set('running');
 
-		// Algoritmust indito fuggveny ide
+		log(`Keresés indítása: ${elementValue}`);
+		await bTreeSearch(bTreeRoot, elementValue);
 
-		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+		log('Keresés vége!');
+		highlightedNode = null;
 		algorithmStatus.set('finished');
-		await restartAlgorithm();
 	}
 
-	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`Algoritmus neve`);
+	async function bTreeSearch(node: BTreeNode | null, value: number): Promise<boolean> {
+		if (!node) return false;
+
+		highlightedNode = node;
+		log(`Vizsgált csomópont: ${node.keys.join(', ')}`);
+		await pauseIfNeeded();
+		await delay(900 - get(speed) * 8);
+
+		let i = 0;
+		while (i < node.keys.length && value > node.keys[i]) {
+			i++;
+		}
+
+		if (i < node.keys.length && value === node.keys[i]) {
+			log(`Érték megtalálva: ${value}`);
+			return true;
+		}
+
+		if (node.leaf) {
+			log(`Nem találtuk meg a ${value} értéket - levélszint.`);
+			return false;
+		}
+
+		log(`Tovább a(z) ${i}. gyerekbe...`);
+		return await bTreeSearch(node.children[i], value);
+	}
+
+	function insertNonFull(node, key) {
+		let i = node.keys.length - 1;
+		if (node.isLeaf) {
+			node.keys.push(0);
+			while (i >= 0 && key < node.keys[i]) {
+				node.keys[i + 1] = node.keys[i];
+				i--;
+			}
+			node.keys[i + 1] = key;
+		} else {
+			while (i >= 0 && key < node.keys[i]) {
+				i--;
+			}
+			i++;
+			if (node.children[i].keys.length === 2 * maxDegree - 1) {
+				splitChild(node, i);
+				if (key > node.keys[i]) {
+					i++;
+				}
+			}
+			insertNonFull(node.children[i], key);
+		}
+	}
+
+	function splitChild(parent, index) {
+		const t = maxDegree;
+		const fullChild = parent.children[index];
+		const newNode = createNode();
+		newNode.isLeaf = fullChild.isLeaf;
+		newNode.keys = fullChild.keys.slice(t);
+		if (!fullChild.isLeaf) {
+			newNode.children = fullChild.children.slice(t);
+		}
+		fullChild.keys = fullChild.keys.slice(0, t - 1);
+		fullChild.children = fullChild.children.slice(0, t);
+		parent.children.splice(index + 1, 0, newNode);
+		parent.keys.splice(index, 0, fullChild.keys[t - 1]);
+	}
 </script>
 
 <div class="control-buttons">
 	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Elem értéke" />
 	<button on:click={insertElement}>Elem beszúrás</button>
-	<button on:click={deleteElement}>Elem törlés</button>
-	<button on:click={searchElement}>Elem keresés</button>
+	<label
+		><input
+			type="radio"
+			name="degree"
+			value="2"
+			on:change={() => (maxDegree = 2)}
+			checked={maxDegree === 2}
+		/>Fok: 2</label
+	>
+	<label
+		><input
+			type="radio"
+			name="degree"
+			value="3"
+			on:change={() => (maxDegree = 3)}
+			checked={maxDegree === 3}
+		/>Fok: 3</label
+	>
+	<label
+		><input
+			type="radio"
+			name="degree"
+			value="4"
+			on:change={() => (maxDegree = 4)}
+			checked={maxDegree === 4}
+		/>Fok: 4</label
+	>
 </div>
 
-<!-- ==== Komponens markup ==== -->
-<div class="algorithm-container">
-	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
-	<div class="array-visual"></div>
-</div>
+<!-- Fa vizualizáció (egyszerű placeholder) -->
+<div class="tag">B-fa</div>
+<svg width="600" height="300" style="background: #fff; border: 1px solid #ccc;">
+	{#if root}
+		{#each root.keys as key, i}
+			<circle cx={100 + i * 50} cy={50} r="18" fill="lightblue" />
+			<text x={100 + i * 50} y={55} text-anchor="middle" fill="black">{key}</text>
+		{/each}
+	{/if}
+</svg>
 
-<!-- ==== Stílus ==== -->
 <style>
 	.tag {
 		display: inline-block;
-		top: 0;
-		left: 0;
 		background-color: #484848;
 		color: white;
 		padding: 3px;
 	}
-	.array-visual {
-		display: flex;
-		gap: 4px;
-		justify-content: center;
-		align-items: flex-end;
-		height: 200px;
-		margin: 1rem 0 0 0;
-	}
 	.control-buttons {
 		display: flex;
-		justify-content: space-around;
-		padding: 1rem;
-		margin-bottom: 1rem;
+		gap: 1rem;
+		align-items: center;
+		margin: 1rem 0;
 	}
-
-	.control-buttons input {
-		width: 150px;
+	input.custom-input {
+		width: 120px;
 		padding: 0.5rem;
-		margin-right: 10px;
-		border-radius: 5px;
-		background-color: #2f2f2f;
-		border: 3px solid #505050;
+		border-radius: 4px;
+		border: 2px solid #555;
+		background: #2e2e2e;
+		color: white;
 	}
-
-	.control-buttons button {
-		padding: 0.5rem 1rem;
+	button {
 		background-color: #505050;
 		color: white;
+		padding: 0.5rem 1rem;
 		border: none;
-		border-radius: 5px;
+		border-radius: 4px;
 		cursor: pointer;
 	}
-
-	.control-buttons button:hover {
+	button:hover {
 		background-color: #45a049;
 	}
-
 </style>

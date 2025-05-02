@@ -45,7 +45,7 @@
 </script>
 
 <div class="controls-bar">
-	<div class="tag">Controls</div>
+	<div class="tag">Irányítások</div>
 
 	<!-- Állapotfüggő gombok -->
 	{#if $algorithmStatus === 'idle'}

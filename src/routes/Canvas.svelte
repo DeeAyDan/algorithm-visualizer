@@ -14,8 +14,7 @@
 
 <style>
 	.canvas-container {
-		border-bottom: 3px solid #505050;
 		border-left: 3px solid #505050;
-		height: 100%;
+		border-top: 3px solid #505050;
 	}
 </style>

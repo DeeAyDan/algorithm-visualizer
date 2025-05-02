@@ -123,6 +123,21 @@
 
 		return result;
 	}
+
+	// ==== Forráskód megjelenítés ====
+	selectedAlgorithmSourceCode.set(
+	async function recursiveFactorial(n: number): Promise<number> {
+		
+		if (n === 0 || n === 1) {
+			return 1;
+		}
+
+		const partial = await recursiveFactorial(n - 1);
+		const result = n * partial;
+
+		return result;
+	}
+	);
 </script>
 
 <!-- ===== Bemeneti mező a Controls alatt ===== -->
