@@ -69,7 +69,7 @@
 			<button class="algorithm-button" on:click={() => selectAlgorithm('mergeSort')}>Összefésüléses rendezés</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('insertionSort')}>Beszúrásos rendezés</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('heapSort')}>Kupacrendezés</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('quickSort')}>Gyorsrendezés</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('quickSort')}>Gyorsrendezés</button>
 		</div>
 	</div>
 	<div class="algorithm-group">
@@ -91,7 +91,7 @@
 			Sztring algoritmusok
 		</button>
 		<div class="algorithm-list {algorithmGroups.stringAlgorithms ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('rabinKarp')}>Rabin-Karp algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('rabinKarp')}>Rabin-Karp algoritmus</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('knuthMorrisPratt')}>Knuth-Morris-Pratt algoritmus</button>
 		</div>
 	</div>
