@@ -9,20 +9,23 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
+	// ==== Alapadatok ====
+
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	activeLine.set(-1);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	let edges = [
-		{ from: 0, to: 1, weight: 4 },
-		{ from: 0, to: 2, weight: 4 },
+		{ from: 0, to: 1, weight: 2 },
 		{ from: 1, to: 2, weight: 2 },
 		{ from: 1, to: 3, weight: 5 },
 		{ from: 2, to: 3, weight: 5 },
@@ -32,6 +35,24 @@
 
 	let numVertices = 5;
 	let mstEdges = [];
+
+	function randomizeEdgeWeights() {
+		edges = edges.map(({ from, to }) => ({
+			from,
+			to,
+			weight: Math.floor(Math.random() * 20) + 1 // 1–20 közötti súly
+		}));
+	}
+
+	let highlightedEdge = null;
+
+	// ==== Előkalkulált lépésszám ====
+
+	onMount(() => {
+		totalSteps.set(edges.length * 2);
+	});
+
+	// ==== Késleltetés és vezérlés ====
 
 	function log(message: string) {
 		consoleLog.update((logs) => [...logs, message]);
@@ -60,12 +81,66 @@
 						consoleLog.set([]);
 						currentStep.set(0);
 						mstEdges = [];
+						randomizeEdgeWeights();
 						unsub();
 						resolve();
 					}
 				});
 			});
 		}
+	}
+
+	async function startAlgorithm() {
+		consoleLog.set([]);
+		currentStep.set(0);
+		mstEdges = [];
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+
+		await kruskal();
+		activeLine.set(-1);
+
+
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+		algorithmStatus.set('finished');
+		await restartAlgorithm();
+	}
+
+	async function kruskal() {
+		edges.sort((a, b) => a.weight - b.weight);
+		let parent = Array(numVertices)
+			.fill(0)
+			.map((_, i) => i);
+		let rank = Array(numVertices).fill(0);
+		let result = [];
+
+		for (let i = 0; i < edges.length; i++) {
+			let { from, to, weight } = edges[i];
+			let x = find(parent, from);
+			let y = find(parent, to);
+
+			log(`Él vizsgálata: (${from}, ${to}) súly: ${weight}`);
+			activeLine.set(9);
+			highlightedEdge = { from, to };
+			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
+
+			if (x !== y) {
+				log(`Hozzáadás az feszítőfához: (${from}, ${to})`);
+				activeLine.set(15);
+				result.push(edges[i]);
+				mstEdges = [...result];
+				union(parent, rank, x, y);
+			} else {
+				log(`Ciklust alkotna, kihagyva: (${from}, ${to})`);
+				activeLine.set(-1);
+			}
+
+			highlightedEdge = null;
+
+			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
+		}
+		mstEdges = result;
 	}
 
 	function find(parent, i) {
@@ -86,74 +161,51 @@
 		}
 	}
 
-	async function kruskal() {
-		edges.sort((a, b) => a.weight - b.weight);
-		let parent = Array(numVertices).fill(0).map((_, i) => i);
-		let rank = Array(numVertices).fill(0);
-		let result = [];
-
-		for (let i = 0; i < edges.length; i++) {
-			let { from, to, weight } = edges[i];
-			let x = find(parent, from);
-			let y = find(parent, to);
-
-			log(`Él vizsgálata: (${from}, ${to}) súly: ${weight}`);
-			await delay(get(speed));
-			await pauseIfNeeded();
-
-			if (x !== y) {
-				log(`Hozzáadás az MST-hez: (${from}, ${to})`);
-				result.push(edges[i]);
-				union(parent, rank, x, y);
-			} else {
-				log(`Ciklust alkotna, kihagyva: (${from}, ${to})`);
-			}
-
-			await delay(get(speed));
-			await pauseIfNeeded();
-		}
-
-		mstEdges = result;
-	}
-
-	async function startAlgorithm() {
-		consoleLog.set([]);
-		currentStep.set(0);
-		mstEdges = [];
-		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
-		await kruskal();
-		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
-		algorithmStatus.set('finished');
-		await restartAlgorithm();
-	}
-
-	onMount(() => {
-		totalSteps.set(edges.length * 2); // durva becslés
-	});
-
-	selectedAlgorithmSourceCode.set(`Kruskal algoritmus`);
+	selectedAlgorithmSourceCode.set(
+`function kruskal() {
+   edges.sort((a, b) => a.weight - b.weight);
+   let parent = Array(numVertices)
+                .fill(0).map((_, i) => i);
+   let rank = Array(numVertices).fill(0);
+   let result = [];
+ \n
+   for (let i = 0; i < edges.length; i++) {
+      let { from, to, weight } = edges[i];
+      let x = find(parent, from);
+      let y = find(parent, to);
+ \n
+      if (x !== y) {
+         result.push(edges[i]);
+         union(parent, rank, x, y);
+      }
+   }
+   mstEdges = result;
+}
+ \n
+function find(parent, i) {
+   if (parent[i] === i) return i;
+   return find(parent, parent[i]);
+}
+ \n
+function union(parent, rank, x, y) {
+   let xroot = find(parent, x);
+   let yroot = find(parent, y);
+   if (rank[xroot] < rank[yroot]) {
+      parent[xroot] = yroot;
+   } else if (rank[xroot] > rank[yroot]) {
+      parent[yroot] = xroot;
+   } else {
+      parent[yroot] = xroot;
+      rank[xroot]++;
+   }
+}`);
 </script>
 
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
+<div class="tag">Vászon</div>
 
 <div class="graph-container">
-	<svg width="500" height="300">
-		<!-- Csúcsok -->
-		{#each Array(numVertices) as _, i}
-			<circle
-				cx={100 + 80 * i}
-				cy={100 + (i % 2) * 50}
-				r="15"
-				fill="lightblue"
-				stroke="black" />
-			<text
-				x={100 + 80 * i}
-				y={105 + (i % 2) * 50}
-				text-anchor="middle"
-				fill="black"
-				font-size="12">{i}</text>
-		{/each}
-
+	<svg class="svg" width="500" height="300">
 		<!-- Élek -->
 		{#each edges as { from, to, weight }}
 			<line
@@ -161,22 +213,53 @@
 				y1={100 + (from % 2) * 50}
 				x2={100 + 80 * to}
 				y2={100 + (to % 2) * 50}
-				stroke={mstEdges.find(e => e.from === from && e.to === to || e.from === to && e.to === from) ? 'green' : '#999'}
-				stroke-width="2" />
+				stroke={highlightedEdge &&
+				((highlightedEdge.from === from && highlightedEdge.to === to) ||
+					(highlightedEdge.to === from && highlightedEdge.from === to))
+					? '#ffd700'
+					: mstEdges.find(
+								(e) => (e.from === from && e.to === to) || (e.from === to && e.to === from)
+						  )
+						? '#45a049'
+						: '#484848'}
+				stroke-width="2"
+			/>
 			<text
 				x={(100 + 80 * from + 100 + 80 * to) / 2}
 				y={(100 + (from % 2) * 50 + 100 + (to % 2) * 50) / 2 - 5}
 				text-anchor="middle"
 				font-size="12"
-				fill="black">{weight}</text>
+				fill="aliceblue">{weight}</text
+			>
+		{/each}
+		<!-- Csúcsok -->
+		{#each Array(numVertices) as _, i}
+			<circle cx={100 + 80 * i} cy={100 + (i % 2) * 50} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
+			<text x={100 + 80 * i} y={105 + (i % 2) * 50} text-anchor="middle" fill="black" font-size="12"
+				>{i}</text
+			>
 		{/each}
 	</svg>
 </div>
 
 <style>
 	.graph-container {
-		margin-top: 2rem;
+		margin: 1rem;
 		display: flex;
 		justify-content: center;
+		align-items: center;
+	}
+	.tag {
+		display: block;
+		width: fit-content;
+		top: 0;
+		left: 0;
+		background-color: #484848;
+		color: white;
+		padding: 3px;
+	}
+	.svg {
+		border: 1px solid #ccc;
+		border-radius: 4px;
 	}
 </style>

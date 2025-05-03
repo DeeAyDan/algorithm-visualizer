@@ -109,8 +109,8 @@
 			Minimális feszítőfák
 		</button>
 		<div class="algorithm-list {algorithmGroups.minimumSpanningTree ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('primMinimumSpanningTree')}>Prim algoritmus</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('kruskalMinimumSpanningTree')}>Kruskal algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('primMinimumSpanningTree')}>Prim algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('kruskalMinimumSpanningTree')}>Kruskal algoritmus</button>
 		</div>
 	</div>
 	<div class="algorithm-group">
