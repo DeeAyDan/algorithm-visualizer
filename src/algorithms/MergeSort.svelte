@@ -9,12 +9,12 @@
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal
+		resumeSignal,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
-
 
 	// ==== Adattömb randomizálása ====
 	function shuffle(array) {
@@ -35,8 +35,8 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	activeLine.set(-1);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-
 
 	// ==== Vizualizációs indexek ====
 	let activeIndices: number[] = [];
@@ -161,14 +161,17 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+
 		await mergeSort(data);
+		activeLine.set(-1);
+
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
 	async function mergeSort(array: number[], startIndex = 0): Promise<void> {
-		if (array.length < 2){
+		if (array.length < 2) {
 			return;
 		}
 
@@ -183,78 +186,126 @@
 	}
 
 	async function merge(left: number[], right: number[], merged: number[], startIndex: number) {
-	let i = 0,
-		l = 0,
-		r = 0;
+		let i = 0,
+			l = 0,
+			r = 0;
 
-	activeIndices = Array.from({ length: merged.length }, (_, idx) => startIndex + idx);
+		activeIndices = Array.from({ length: merged.length }, (_, idx) => startIndex + idx);
 
-	while (l < left.length && r < right.length) {
-		log(`Összehasonlítás: ${left[l]} <= ${right[r]}`);
+		while (l < left.length && r < right.length) {
+			log(`Összehasonlítás: ${left[l]} <= ${right[r]}`);
 
-		swapIndices = [startIndex + i];
+			swapIndices = [startIndex + i];
 
+			if (left[l] <= right[r]) {
+				merged[i] = left[l++];
+				activeLine.set(31)
+			} else {
+				merged[i] = right[r++];
+				activeLine.set(33)
+			}
+			await pauseIfNeeded();
+			await delay(900 - get(speed) * 8);
 
-		if (left[l] <= right[r]) {
-			merged[i] = left[l++];
-		} else {
-			merged[i] = right[r++];
+			data[startIndex + i] = merged[i];
+			data = [...data];
+			i++;
+			swapIndices = null;
 		}
 
-		await pauseIfNeeded();
-		await delay(900 - get(speed) * 8);
+		while (l < left.length) {
+			log(`Másolás balról: ${left[l]}`);
+			swapIndices = [startIndex + i];
 
-		data[startIndex + i] = merged[i];
-		data = [...data];
-		i++;
+			activeLine.set(42)
+			await pauseIfNeeded();
+			await delay(900 - get(speed) * 8);
+			merged[i] = left[l++];
+			data[startIndex + i] = merged[i];
+			data = [...data];
+			i++;
+		}
+
+		while (r < right.length) {
+			log(`Másolás jobbról: ${right[r]}`);
+			swapIndices = [startIndex + i];
+
+			activeLine.set(50)
+			await pauseIfNeeded();
+			await delay(900 - get(speed) * 8);
+			merged[i] = right[r++];
+			data[startIndex + i] = merged[i];
+			data = [...data];
+			i++;
+		}
 		swapIndices = null;
+		activeIndices = [];
 	}
-
-	while (l < left.length) {
-		log(`Másolás balról: ${left[l]}`);
-		swapIndices = [startIndex + i];
-
-		await pauseIfNeeded();
-		await delay(900 - get(speed) * 8);
-		merged[i] = left[l++];
-		data[startIndex + i] = merged[i];
-		data = [...data];
-		i++;
-	}
-
-	while (r < right.length) {
-		log(`Másolás jobbról: ${right[r]}`);
-		swapIndices = [startIndex + i];
-
-		await pauseIfNeeded();
-		await delay(900 - get(speed) * 8);
-		merged[i] = right[r++];
-		data[startIndex + i] = merged[i];
-		data = [...data];
-		i++;
-	}
-	swapIndices = null;
-	activeIndices = [];
-}
-
-
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`
-Merge Sort`);
+	selectedAlgorithmSourceCode.set(
+`function mergeSort(array, startIndex = 0){
+ \n
+   if (array.length < 2){
+      return;
+   }
+	   \n
+   const middle = Math.floor(array.length / 2);
+   const left = array.slice(0, middle);
+   const right = array.slice(middle);
+ \n
+   mergeSort(left, startIndex);
+   mergeSort(right, startIndex + middle);
+ \n
+   merge(left, right, array, startIndex);
+}
+ \n
+function merge(left, right, merged, startIndex){
+ \n
+   let i = 0,
+   l = 0,
+   r = 0;
+ \n
+   while (l < left.length && r < right.length){
+      if (left[l] <= right[r]) {
+         merged[i] = left[l++];
+      } else {
+         merged[i] = right[r++];
+      }
+      data[startIndex + i] = merged[i];
+      data = [...data];
+      i++;
+   }
+ \n 
+   while (l < left.length) {
+      merged[i] = left[l++];
+      data[startIndex + i] = merged[i];
+      data = [...data];
+      i++;
+   }
+ \n
+   while (r < right.length) {
+      merged[i] = right[r++];
+      data[startIndex + i] = merged[i];
+      data = [...data];
+      i++;
+   }
+}`);
 </script>
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		{#each data as num, index}
-			<div class="bar {activeIndices.includes(index)
-					? 'active'
-					: ''} {swapIndices && (index === swapIndices[0] || index === swapIndices[1])
+			<div
+				class="bar {activeIndices.includes(index) ? 'active' : ''} {swapIndices &&
+				(index === swapIndices[0] || index === swapIndices[1])
 					? 'swap'
-					: ''}" style="height: {(num / maxValue) * 100}%">
+					: ''}"
+				style="height: {(num / maxValue) * 100}%"
+			>
 				{num}
 			</div>
 		{/each}
