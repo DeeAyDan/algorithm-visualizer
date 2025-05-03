@@ -112,8 +112,6 @@
 		showDeleteList = false;
 	}
 
-	// ==== Vizualizációs indexek ====
-
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalSteps.set(0);
@@ -170,6 +168,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await knapSackRep();
+		sackValue = sackValue.toFixed(2);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -200,11 +199,11 @@
 				let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
 				let fraction = canTake / bestItem.weight;
 
-				// Töltsük ki a zsákot a legjobb item-mel
 				for (let i = 0; i < sack.length && canTake > 0; i++) {
 					if (sack[i] === null) {
 						sack[i] = bestItem;
 						canTake--;
+
 						await pauseIfNeeded();
 						await delay(200 - get(speed) * 8);
 						currentStep.update((n) => n + 1);
@@ -294,7 +293,7 @@
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="sack-visual">
 		<div class="sack-container">
 			<div>Táska mérete</div>

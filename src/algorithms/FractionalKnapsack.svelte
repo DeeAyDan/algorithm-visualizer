@@ -170,6 +170,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await knapSack();
+		sackValue = sackValue.toFixed(2);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -206,6 +207,7 @@
 					filledWeight++;
 
 					let percentFilled = (filledWeight / item.weight) * 100;
+					sackValue += item.value * (percentFilled / 100);
 
 					await pauseIfNeeded();
 					await delay(900 - get(speed) * 8);
@@ -214,7 +216,6 @@
 			}
 
 			let fraction = filledWeight / item.weight;
-			sackValue += item.value * fraction;
 			consoleLog.update((logs) => [
 				...logs,
 				`${item.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`
@@ -290,7 +291,7 @@
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="sack-visual">
 		<div class="sack-container">
 			<div>Táska mérete</div>
