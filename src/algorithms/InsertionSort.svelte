@@ -169,7 +169,7 @@
             insertedIndex = j + 1;
 
             log(`Elem visszaillesztése: ${temp}`)
-			activeLine.set(17)
+			activeLine.set(16)
             await pauseIfNeeded();
             await delay(900 - get(speed) * 8);
 
@@ -191,12 +191,10 @@
  \n
       while (j >= 0 && array[j] > temp){
          array[j + 1] = array[j];
-         data = [...array];
          j--;
       }
  \n
       array[j + 1] = temp;
-      data = [...array];
    }
 }`);
 </script>

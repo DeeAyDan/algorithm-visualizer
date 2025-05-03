@@ -9,7 +9,8 @@
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal
+		resumeSignal,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -35,6 +36,7 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	activeLine.set(-1);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 
@@ -127,7 +129,10 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+
 		await quickSort(data, 0, data.length - 1);
+		activeLine.set(-1);
+
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
@@ -144,17 +149,21 @@
 		let pivot = arr[right];
 		pivotIndex = right;
 		log(`Pivot kiválasztva: ${pivot}`);
+		activeLine.set(14)
+		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
 		let i = left - 1;
 		for (let j = left; j < right; j++) {
 			activeIndex = j;
 			log(`Összehasonlítás: ${arr[j]} <= ${pivot}`);
+			activeLine.set(20)
 			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
 			if (arr[j] <= pivot) {
 				i++;
 				[arr[i], arr[j]] = [arr[j], arr[i]];
 				log(`Csere: ${arr[i]} <-> ${arr[j]}`);
+				activeLine.set(22)
 				data = [...arr];
 				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
@@ -163,6 +172,7 @@
 		[arr[i + 1], arr[right]] = [arr[right], arr[i + 1]];
 		swapIndices = [i + 1, right];
 		log(`Pivot helyre rakása: ${arr[i + 1]} <-> ${arr[right]}`);
+		activeLine.set(27)
 		data = [...arr];
 		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
@@ -173,20 +183,39 @@
 	}
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`
-function quickSort(arr, left, right) {
-	if (left < right) {
-		let pivotIndex = partition(arr, left, right);
-		quickSort(arr, left, pivotIndex - 1);
-		quickSort(arr, pivotIndex + 1, right);
-	}
+	selectedAlgorithmSourceCode.set(
+`function quickSort(arr, left, right){
+ \n
+   if (left < right){
+      let pivotIndex = partition(arr, left, right);
+      quickSort(arr, left, pivotIndex - 1);
+      quickSort(arr, pivotIndex + 1, right);
+   }
+}
+ \n
+function partition(arr, left, right){
+ \n
+   let pivot = arr[right];
+   let i = left - 1;
+ \n
+   for (let j = left; j < right; j++){
+      activeIndex = j;
+      if (arr[j] <= pivot){
+         i++;
+         [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+   }
+ \n
+   [arr[i + 1], arr[right]] = [arr[right], arr[i + 1]];
+   pivotIndex = null;
+   return i + 1;
 }`);
 </script>
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		{#each data as num, index}
 			<div
