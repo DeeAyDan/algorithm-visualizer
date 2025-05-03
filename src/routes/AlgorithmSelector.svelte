@@ -100,7 +100,7 @@
 			Legrövidebb út keresése
 		</button>
 		<div class="algorithm-list {algorithmGroups.shortestPath ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('dijkstraShortestPath')}>Dijkstra algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('dijkstraShortestPath')}>Dijkstra algoritmus</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('bellmanFordShortestPath')}>Bellman-Ford algoritmus</button>
 		</div>
 	</div>

@@ -9,50 +9,61 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	// ==== Alapadatok ====
+
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	activeLine.set(-1);
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
-	// ==== Gráf definiálása (fix gráf) ====
-	const nodes = [
-		{ id: 0, x: 100, y: 100 },
-		{ id: 1, x: 300, y: 100 },
-		{ id: 2, x: 200, y: 200 },
-		{ id: 3, x: 100, y: 300 },
-		{ id: 4, x: 300, y: 300 }
-	];
-
-	const edges = [
-		{ from: 0, to: 1, weight: 4 },
-		{ from: 0, to: 2, weight: 2 },
-		{ from: 1, to: 2, weight: 5 },
-		{ from: 1, to: 4, weight: 1 },
-		{ from: 2, to: 3, weight: 8 },
-		{ from: 2, to: 4, weight: 10 },
+	let edges = [
+		{ from: 0, to: 1, weight: 2 },
+		{ from: 1, to: 2, weight: 2 },
+		{ from: 1, to: 3, weight: 5 },
+		{ from: 2, to: 3, weight: 5 },
+		{ from: 2, to: 4, weight: 11 },
 		{ from: 3, to: 4, weight: 2 }
 	];
 
-	let distances = Array(nodes.length).fill(Infinity);
-	let visited = new Set();
+	const nodes = [
+		{ id: 0, x: 450, y: 50 },
+		{ id: 1, x: 50, y: 50 },
+		{ id: 2, x: 250, y: 150 },
+		{ id: 3, x: 50, y: 250 },
+		{ id: 4, x: 450, y: 250 }
+	];
 
-	// ==== Megjelenítési segédfüggvények ====
-	function getNodeColor(id) {
-		return visited.has(id) ? '#3f3' : '#eee';
-	}
-	function getEdgeColor(from, to) {
-		return visited.has(from) && visited.has(to) ? '#3f3' : '#aaa';
+	let numVertices = 5;
+	let mstEdges = [];
+
+	let highlightedEdge = null;
+
+	function randomizeEdgeWeights() {
+		edges = edges.map(({ from, to }) => ({
+			from,
+			to,
+			weight: Math.floor(Math.random() * 20) + 1 // 1–20 közötti súly
+		}));
 	}
 
-	// ==== Vezérlőfüggvények ====
-	function log(msg: string) {
-		consoleLog.update((logs) => [...logs, msg]);
+	// ==== Előkalkulált lépésszám ====
+
+	onMount(() => {
+		totalSteps.set(5);
+	});
+
+	// ==== Késleltetés és vezérlés ====
+
+	function log(message: string) {
+		consoleLog.update((logs) => [...logs, message]);
 		currentStep.update((n) => n + 1);
 	}
 	function delay(ms: number) {
@@ -77,8 +88,9 @@
 					if (get(algorithmStatus) === 'idle') {
 						consoleLog.set([]);
 						currentStep.set(0);
-						distances.fill(Infinity);
-						visited.clear();
+						mstEdges = [];
+						distances = []
+						randomizeEdgeWeights();
 						unsub();
 						resolve();
 					}
@@ -87,92 +99,163 @@
 		}
 	}
 
-	// ==== Algoritmus futtatása ====
 	async function startAlgorithm() {
 		consoleLog.set([]);
 		currentStep.set(0);
-		distances.fill(Infinity);
-		visited.clear();
-
-		const start = 0;
-		distances[start] = 0;
-
-		let unvisited = new Set(nodes.map(n => n.id));
-
-		while (unvisited.size > 0) {
-			await pauseIfNeeded();
-
-			let current = Array.from(unvisited).reduce((minNode, nodeId) => {
-				return distances[nodeId] < distances[minNode] ? nodeId : minNode;
-			}, Array.from(unvisited)[0]);
-
-			unvisited.delete(current);
-			visited.add(current);
-			log(`Aktuális csúcs: ${current}`);
-
-			for (const edge of edges) {
-				if (edge.from === current && unvisited.has(edge.to)) {
-					const alt = distances[current] + edge.weight;
-					if (alt < distances[edge.to]) {
-						log(`Távolság frissítése: ${edge.to}, új érték: ${alt}`);
-						distances[edge.to] = alt;
-					}
-				}
-				if (edge.to === current && unvisited.has(edge.from)) {
-					const alt = distances[current] + edge.weight;
-					if (alt < distances[edge.from]) {
-						log(`Távolság frissítése: ${edge.from}, új érték: ${alt}`);
-						distances[edge.from] = alt;
-					}
-				}
-			}
-			await delay(get(speed));
-		}
-
-		log('Algoritmus lefutott.');
+		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+		await dijkstra(0);
+		activeLine.set(-1);
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
-	onMount(() => totalSteps.set(0));
-	selectedAlgorithmSourceCode.set(`// Dijkstra algoritmus implementációja...`);
+	let distances = Array(numVertices).fill(Infinity);
+	let previous = Array(numVertices).fill(null);
+	let visited = Array(numVertices).fill(false);
+
+	async function dijkstra(start: number) {
+		distances = Array(numVertices).fill(Infinity);
+		previous = Array(numVertices).fill(null);
+		visited = Array(numVertices).fill(false);
+		distances[start] = 0;
+
+		while (true) {
+			let minDist = Infinity;
+			let current = -1;
+
+			for (let i = 0; i < numVertices; i++) {
+				if (!visited[i] && distances[i] < minDist) {
+					minDist = distances[i];
+					current = i;
+				}
+			}
+
+			if (current === -1) break;
+			visited[current] = true;
+
+			for (const edge of edges) {
+				const { from, to, weight } = edge;
+				const neighbor = from === current ? to : to === current ? from : -1;
+				if (neighbor === -1 || visited[neighbor]) continue;
+
+				if (distances[current] + weight < distances[neighbor]) {
+					distances[neighbor] = distances[current] + weight;
+					previous[neighbor] = current;
+					highlightedEdge = { from: current, to: neighbor };
+					log(`Távolság frissítése: ${current} → ${neighbor}, új távolság: ${distances[neighbor]}`);
+					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
+				}
+			}
+		}
+
+		highlightedEdge = null;
+	}
+
+	selectedAlgorithmSourceCode.set(`
+function dijkstra(start: number) {
+   const distances = Array(numVertices)
+                     .fill(Infinity);
+   const previous = Array(numVertices)
+                     .fill(null);
+   const visited = Array(numVertices)
+                     .fill(false);
+   distances[start] = 0;
+ \n
+   while (true) {
+      let minDist = Infinity;
+      let current = -1;
+ \n
+   for (let i = 0; i < numVertices; i++) {
+      if (!visited[i] && distances[i] < minDist) {
+         minDist = distances[i];
+         current = i;
+      }
+   }
+ \n
+   if (current === -1) break;
+   visited[current] = true;
+ \n
+   for (const edge of edges) {
+      const { from, to, weight } = edge;
+      const neighbor = from === current ? to : to === current ? from : -1;
+      if (neighbor === -1 || visited[neighbor]) continue;
+
+      const newDist = distances[current] + weight;
+      if (newDist < distances[neighbor]) {
+         distances[neighbor] = newDist;
+         previous[neighbor] = current;
+         highlightedEdge = { from: current, to: neighbor };
+         }
+      }
+   }
+}
+`);
 </script>
 
-<!-- ==== UI ==== -->
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
+<div class="tag">Vászon</div>
 
-<svg width="400" height="400" style="border: 1px solid #ccc;">
-	<!-- Élek -->
-	{#each edges as { from, to, weight }}
-		<line
-			x1={nodes[from].x}
-			y1={nodes[from].y}
-			x2={nodes[to].x}
-			y2={nodes[to].y}
-			stroke={getEdgeColor(from, to)}
-			stroke-width="2"
-		/>
-		<text
-			x={(nodes[from].x + nodes[to].x) / 2}
-			y={(nodes[from].y + nodes[to].y) / 2 - 5}
-			font-size="12"
-			text-anchor="middle"
-			fill="black"
-		>
-			{weight}
-		</text>
-	{/each}
-
-	<!-- Csúcsok -->
-	{#each nodes as { id, x, y }}
-		<circle cx={x} cy={y} r="20" fill={getNodeColor(id)} stroke="black" />
-		<text x={x} y={y + 5} text-anchor="middle" font-size="14" fill="black">{id}</text>
-	{/each}
-</svg>
+<div class="graph-container">
+	<svg class="svg" width="500" height="300">
+		<!-- Élek -->
+		{#each edges as { from, to, weight }}
+			<line
+				x1={nodes[from].x}
+				y1={nodes[from].y}
+				x2={nodes[to].x}
+				y2={nodes[to].y}
+				stroke={highlightedEdge &&
+				((highlightedEdge.from === from && highlightedEdge.to === to) ||
+					(highlightedEdge.to === from && highlightedEdge.from === to))
+					? '#ffd700'
+					: mstEdges.find(
+								(e) => (e.from === from && e.to === to) || (e.from === to && e.to === from)
+						  )
+						? '#45a049'
+						: '#484848'}
+				stroke-width="2"
+			/>
+			<text
+				x={(nodes[from].x + nodes[to].x) / 2}
+				y={(nodes[from].y + nodes[to].y) / 2 - 5}
+				text-anchor="middle"
+				font-size="12"
+				fill="aliceblue">{weight}</text
+			>
+		{/each}
+		<!-- Csúcsok -->
+		{#each nodes as { id, x, y }}
+			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
+			<text {x} y={y + 5} text-anchor="middle" fill="black" font-size="12">{id}</text>
+			<text {x} y={y + 22} text-anchor="middle" font-size="10" fill="white">
+				{#if distances[id] !== Infinity}
+					{distances[id]}
+				{/if}
+			</text>
+		{/each}
+	</svg>
+</div>
 
 <style>
-	svg {
+	.graph-container {
+		margin: 1rem;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+	.tag {
 		display: block;
-		margin: 1rem auto;
+		width: fit-content;
+		top: 0;
+		left: 0;
+		background-color: #484848;
+		color: white;
+		padding: 3px;
+	}
+	.svg {
+		border: 1px solid #ccc;
+		border-radius: 4px;
 	}
 </style>

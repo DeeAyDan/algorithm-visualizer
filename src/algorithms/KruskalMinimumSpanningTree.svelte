@@ -33,6 +33,14 @@
 		{ from: 3, to: 4, weight: 2 }
 	];
 
+	const nodes = [
+		{ id: 0, x: 450, y: 50 },
+		{ id: 1, x: 50, y: 50 },
+		{ id: 2, x: 250, y: 150 },
+		{ id: 3, x: 50, y: 250 },
+		{ id: 4, x: 450, y: 250 }
+	];
+
 	let numVertices = 5;
 	let mstEdges = [];
 
@@ -209,10 +217,10 @@ function union(parent, rank, x, y) {
 		<!-- Élek -->
 		{#each edges as { from, to, weight }}
 			<line
-				x1={100 + 80 * from}
-				y1={100 + (from % 2) * 50}
-				x2={100 + 80 * to}
-				y2={100 + (to % 2) * 50}
+				x1={nodes[from].x}
+				y1={nodes[from].y}
+				x2={nodes[to].x}
+				y2={nodes[to].y}
 				stroke={highlightedEdge &&
 				((highlightedEdge.from === from && highlightedEdge.to === to) ||
 					(highlightedEdge.to === from && highlightedEdge.from === to))
@@ -225,18 +233,18 @@ function union(parent, rank, x, y) {
 				stroke-width="2"
 			/>
 			<text
-				x={(100 + 80 * from + 100 + 80 * to) / 2}
-				y={(100 + (from % 2) * 50 + 100 + (to % 2) * 50) / 2 - 5}
+			x={(nodes[from].x + nodes[to].x) / 2}
+			y={(nodes[from].y + nodes[to].y) / 2 - 5}
 				text-anchor="middle"
 				font-size="12"
 				fill="aliceblue">{weight}</text
 			>
 		{/each}
 		<!-- Csúcsok -->
-		{#each Array(numVertices) as _, i}
-			<circle cx={100 + 80 * i} cy={100 + (i % 2) * 50} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
-			<text x={100 + 80 * i} y={105 + (i % 2) * 50} text-anchor="middle" fill="black" font-size="12"
-				>{i}</text
+		{#each nodes as { id, x, y }}
+			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
+			<text x={x} y={y + 5} text-anchor="middle" fill="black" font-size="12"
+				>{id}</text
 			>
 		{/each}
 	</svg>
