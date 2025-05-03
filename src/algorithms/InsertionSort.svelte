@@ -9,7 +9,8 @@
 		consoleLog,
 		speed,
 		algorithmStatus,
-		resumeSignal
+		resumeSignal,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -36,6 +37,7 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	activeLine.set(-1);
 
 
 	// ==== Vizualizációs indexek ====
@@ -120,7 +122,11 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+
 		await insersionSort(data);
+		activeLine.set(-1);
+
+
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
@@ -129,26 +135,27 @@
     async function insersionSort(array){
 
         for (let index = 1; index < array.length; index++) {
-            // insert
-            let temp = array[index];
+            
+			let temp = array[index];
 
             activeIndex = index;
             insertedIndex = null;
 
             log(`Elem kivétele: ${temp}`)
+			activeLine.set(6)
             await pauseIfNeeded();
             await delay(900 - get(speed) * 8);
 
             let j = index - 1;
 
             while (j >= 0 && array[j] > temp) {
-                // move left to right
                 array[j + 1] = array[j];
                 data = [...array];
 
                 swapIndices = [j + 1, j];
 
                 log(`Mozgatás: ${array[j]} < - > ${temp}`);
+				activeLine.set(11)
                 await pauseIfNeeded();
                 await delay(900 - get(speed) * 8);
 
@@ -162,6 +169,7 @@
             insertedIndex = j + 1;
 
             log(`Elem visszaillesztése: ${temp}`)
+			activeLine.set(17)
             await pauseIfNeeded();
             await delay(900 - get(speed) * 8);
 
@@ -173,14 +181,30 @@
     }
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`
-Insert Sort`);
+	selectedAlgorithmSourceCode.set(
+`function insersionSort(array){
+ \n
+   for (let index = 1; index < array.length; index++){
+ \n
+      let temp = array[index];
+      let j = index - 1;
+ \n
+      while (j >= 0 && array[j] > temp){
+         array[j + 1] = array[j];
+         data = [...array];
+         j--;
+      }
+ \n
+      array[j + 1] = temp;
+      data = [...array];
+   }
+}`);
 </script>
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		{#each data as num, index}
 			<div
