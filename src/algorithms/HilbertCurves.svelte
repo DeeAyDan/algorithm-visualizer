@@ -66,7 +66,6 @@
 					currentStep.set(0);
 					ctx.clearRect(0, 0, size, size);
 					points = [];
-					activeLine.set(-1);
 
 					unsub();
 					resolve();
@@ -101,15 +100,17 @@
 
 	async function hilbertCurves(count) {
 		for (let i = 0; i < count; i++) {
-			await delay(200 - get(speed) * 8);
-			const p = getHilbertPoint(i, order);
+			activeLine.set(17);
+			await delay(130 - get(speed) * 8);
+			const p = await getHilbertPoint(i, order);
 			points.push(p);
 			if (i > 0) {
-				
 				ctx.strokeStyle = `hsl(${(i / count) * 360}, 100%, 50%)`;
 				ctx.beginPath();
 				ctx.moveTo(points[i - 1].x, points[i - 1].y);
 				ctx.lineTo(p.x, p.y);
+				activeLine.set(10);
+				await delay(130 - get(speed) * 8);
 				ctx.stroke();
 			}
 			log(`Lépés ${i + 1}: (${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
@@ -117,7 +118,7 @@
 		}
 	}
 
-	function getHilbertPoint(index: number, order: number) {
+	async function getHilbertPoint(index: number, order: number) {
 		let v = { x: 0, y: 0 };
 		let n = Math.pow(2, order);
 		let tmp,
@@ -129,6 +130,8 @@
 		for (s = 1; s < n; s *= 2) {
 			rx = 1 & (t >> 1);
 			ry = 1 & (t ^ rx);
+			activeLine.set(40);
+			await delay(130 - get(speed) * 8);
 			tmp = rotate(rx, ry, v.x, v.y, s);
 			v.x = tmp.x;
 			v.y = tmp.y;
@@ -157,7 +160,6 @@
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
 		`function hilbertCurves(count){
-
    for (let i = 0; i < count; i++) {
       const p = getHilbertPoint(i, order);
       points.push(p);
@@ -173,7 +175,7 @@
 }
  \n
 
-function getHilbertPoint(index: number, order: number) {
+function getHilbertPoint(index, order) {
    let v = { x: 0, y: 0 };
    let n = Math.pow(2, order);
    let tmp, rx, ry, s, t = index;
@@ -195,7 +197,7 @@ function getHilbertPoint(index: number, order: number) {
       };
    }
  \n
-   function rotate(rx, ry, x, y, s) {
+function rotate(rx, ry, x, y, s) {
       if (ry === 0) {
          if (rx === 1) {
             x = s - 1 - x;

@@ -9,7 +9,8 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -21,6 +22,7 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	activeLine.set(-1);
 
 	let items = [
 		{ name: 'Tárgy 1', value: 10, weight: 5, color: getRandomColor(), ratio: 2 },
@@ -142,7 +144,7 @@
 					consoleLog.set([]);
 					currentStep.set(0);
 					sack = Array(sackSize).fill(null);
-					sackValue = 0
+					sackValue = 0;
 
 					unsub();
 					resolve();
@@ -169,6 +171,7 @@
 
 		await knapSackRep();
 		sackValue = sackValue.toFixed(2);
+		activeLine.set(-1);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -199,13 +202,17 @@
 				let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
 				let fraction = canTake / bestItem.weight;
 
+				activeLine.set(12);
+				await pauseIfNeeded();
+				await delay(900 - get(speed) * 8);
 				for (let i = 0; i < sack.length && canTake > 0; i++) {
 					if (sack[i] === null) {
 						sack[i] = bestItem;
 						canTake--;
 
+						activeLine.set(14);
 						await pauseIfNeeded();
-						await delay(200 - get(speed) * 8);
+						await delay(900 - get(speed) * 8);
 						currentStep.update((n) => n + 1);
 					}
 				}
@@ -217,6 +224,9 @@
 					...logs,
 					`${bestItem.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`
 				]);
+				activeLine.set(18);
+				await pauseIfNeeded();
+				await delay(900 - get(speed) * 8);
 			}
 
 			let fraction = filledWeight / item.weight;
@@ -233,7 +243,7 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-`function knapSack() {
+		`function knapSack() {
    sack = Array(sackSize).fill(null);
    sackFilled = 0;
    sackValue = 0;
@@ -243,7 +253,8 @@
       const bestItem = sortedItems[0];
       let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
       let fraction = canTake / bestItem.weight;
-      for (let i = 0; i < sack.length && canTake > 0; i++) {
+      \n
+	  for (let i = 0; i < sack.length && canTake > 0; i++) {
          if (sack[i] === null) {
             sack[i] = bestItem;
             canTake--;
@@ -252,7 +263,8 @@
          sackValue += bestItem.value * fraction;
          sackFilled = sack.filter((x) => x !== null).length;
       }
-   }`);
+   }`
+	);
 </script>
 
 <div class="custom-input">

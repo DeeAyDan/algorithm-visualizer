@@ -9,7 +9,8 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -20,6 +21,7 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	activeLine.set(-1);
 	let exchangeCoins = [1, 4, 6, 10];
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 	let dpTable: { index: number; value: number; coin: number }[] = [];
@@ -119,6 +121,9 @@
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
+		showInsertForm = false;
+		showDeleteList = false;
+
 		let amount = Math.floor(moneyToExchange);
 		let coins = exchangeCoins.map((c) => Math.floor(c));
 		dpTable = [];
@@ -142,17 +147,27 @@
 		totalSteps.set(amount);
 
 		for (let i = 1; i <= amount; i++) {
+			activeLine.set(6);
+			await pauseIfNeeded();
+			await delay(700 - get(speed) * 8);
 			for (let coin of coins) {
+				activeLine.set(7);
+				await pauseIfNeeded();
+				await delay(700 - get(speed) * 8);
 				if (i - coin >= 0 && dp[i - coin] + 1 < dp[i]) {
 					dp[i] = dp[i - coin] + 1;
 					lastCoin[i] = coin;
+					activeLine.set(9);
+					await pauseIfNeeded();
+					await delay(700 - get(speed) * 8);
 				}
 			}
 
 			dpTable = [...dpTable, { index: i, value: dp[i], coin: lastCoin[i] }];
 
+			activeLine.set(12);
 			await pauseIfNeeded();
-			await delay(900 - get(speed) * 8);
+			await delay(700 - get(speed) * 8);
 			log(`Összeg: ${i}, Minimum érme: ${dp[i]}, Utolsó érme: ${lastCoin[i]}`);
 		}
 
@@ -161,6 +176,9 @@
 		while (current > 0) {
 			let coin = lastCoin[current];
 			if (coin === -1) {
+				activeLine.set(20);
+				await pauseIfNeeded();
+				await delay(700 - get(speed) * 8);
 				consoleLog.update((logs) => [...logs, 'Nem lehet pontosan felváltani!']);
 				break;
 			}
@@ -168,13 +186,15 @@
 			current -= coin;
 		}
 
+		activeLine.set(-1);
+
 		consoleLog.update((logs) => [...logs, `Minimum érme szám: ${usedCoins.length}`]);
 		consoleLog.update((logs) => [...logs, `Felhasznált érmék: ${usedCoins}`]);
 	}
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-`function coinExchange(amount, coins) {
+		`function coinExchange(amount, coins) {
    lastCoinTable = Array(amount + 1).fill(-1);
    let dp = Array(amount + 1).fill(Infinity);
    let lastCoin = Array(amount + 1).fill(-1);
@@ -199,7 +219,8 @@
          usedCoins.push(coin);
          current -= coin;
       }
-   }`);
+   }`
+	);
 </script>
 
 <!-- Controls -->
@@ -408,7 +429,6 @@
 		flex-direction: column;
 		align-items: center;
 		width: 200px;
-
 	}
 	.right-container {
 		width: 200px;

@@ -9,7 +9,8 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -21,6 +22,7 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	activeLine.set(-1);
 
 	let items = [
 		{ name: 'Tárgy 1', value: 10, weight: 5, color: getRandomColor(), ratio: 2 },
@@ -112,8 +114,6 @@
 		showDeleteList = false;
 	}
 
-	// ==== Vizualizációs indexek ====
-
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalSteps.set(0);
@@ -144,7 +144,7 @@
 					consoleLog.set([]);
 					currentStep.set(0);
 					sack = Array(sackSize).fill(null);
-					sackValue = 0
+					sackValue = 0;
 
 					unsub();
 					resolve();
@@ -171,6 +171,7 @@
 
 		await knapSack();
 		sackValue = sackValue.toFixed(2);
+		activeLine.set(-1);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -200,6 +201,9 @@
 			let canTake = Math.min(item.weight, sackSize - sackFilled);
 			let filledWeight = 0;
 
+			activeLine.set(12);
+			await pauseIfNeeded();
+			await delay(1500 - get(speed) * 8);
 			for (let i = 0; i < sack.length && canTake > 0; i++) {
 				if (sack[i] === null) {
 					sack[i] = item;
@@ -209,6 +213,7 @@
 					let percentFilled = (filledWeight / item.weight) * 100;
 					sackValue += item.value * (percentFilled / 100);
 
+					activeLine.set(19);
 					await pauseIfNeeded();
 					await delay(900 - get(speed) * 8);
 					log(`Hozzáadva: ${item.name} (${percentFilled.toFixed(1)}%)`);
@@ -228,29 +233,35 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-`function knapSack() {
-      sack = Array(sackSize).fill(null);
-      sackFilled = 0;
-      sackValue = 0;
-      items = items.map((item) => ({...item, ratio: item.value / item.weight}));
-      let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
-      for (let item of sortedItems) {
-         let canTake = Math.min(item.weight, sackSize - sackFilled);
-         let filledWeight = 0;
-         for (let i = 0; i < sack.length && canTake > 0; i++) {
-            if (sack[i] === null) {
-               sack[i] = item;
-               canTake--;
-               filledWeight++;
-            }
-         }
-         let fraction = filledWeight / item.weight;
-         sackValue += item.value * fraction;
-
-         if (sackFilled >= sackSize) break;
-         sackFilled = sack.filter((x) => x !== null).length;
+		`function knapSack() {
+  sack = Array(sackSize).fill(null);
+  sackFilled = 0;
+  sackValue = 0;
+  items = items.map((item) => ({...item, ratio: item.value / item.weight}));
+  let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
+ \n   
+  for (let item of sortedItems) {
+    let canTake = Math.min(item.weight,
+                  sackSize - sackFilled);
+    let filledWeight = 0;
+    for (let i = 0; i < sack.length && canTake > 0; i++) {
+      if (sack[i] === null) {
+        sack[i] = item;
+        canTake--;
+        filledWeight++;
+        let percentFilled = (filledWeight 
+                    / item.weight) * 100;
+        sackValue += item.value * (percentFilled / 100);
       }
-   }`);
+    }
+    let fraction = filledWeight / item.weight;
+    sackValue += item.value * fraction;
+
+    if (sackFilled >= sackSize) break;
+    sackFilled = sack.filter((x) => x !== null).length;
+    }
+}`
+	);
 </script>
 
 <div class="custom-input">

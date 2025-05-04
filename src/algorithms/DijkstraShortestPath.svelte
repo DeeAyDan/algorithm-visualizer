@@ -103,55 +103,59 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
-		await dijkstra(0);
+
+		console.log(await dijkstra(0));
+		
 		activeLine.set(-1);
+
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
 	let distances = Array(numVertices).fill(Infinity);
-	let previous = Array(numVertices).fill(null);
-	let visited = Array(numVertices).fill(false);
+	let visited = [];
 
 	async function dijkstra(start: number) {
 		distances = Array(numVertices).fill(Infinity);
-		previous = Array(numVertices).fill(null);
-		visited = Array(numVertices).fill(false);
+		visited = new Set();
 		distances[start] = 0;
 
-		while (true) {
-			let minDist = Infinity;
-			let current = -1;
+		while (nodes.length) {
 
-			for (let i = 0; i < numVertices; i++) {
-				if (!visited[i] && distances[i] < minDist) {
-					minDist = distances[i];
-					current = i;
-				}
-			}
 
-			if (current === -1) break;
-			visited[current] = true;
+			edges.sort((a, b) => a.weight - b.weight);
+			let closestEdge = edges.shift();
 
-			for (const edge of edges) {
-				const { from, to, weight } = edge;
-				const neighbor = from === current ? to : to === current ? from : -1;
-				if (neighbor === -1 || visited[neighbor]) continue;
+			if (distances[closestEdge] === Infinity) break;
 
-				if (distances[current] + weight < distances[neighbor]) {
-					distances[neighbor] = distances[current] + weight;
-					previous[neighbor] = current;
-					highlightedEdge = { from: current, to: neighbor };
-					log(`Távolság frissítése: ${current} → ${neighbor}, új távolság: ${distances[neighbor]}`);
-					await delay(900 - get(speed) * 8);
-					await pauseIfNeeded();
-				}
+			visited.add(closestEdge.from);
+			
+			for (let neighbor in edges[closestEdge]) {
+
+
+				if (!visited.has(neighbor)) {
+                let newDistance = distances[closestEdge] + edges[closestEdge][neighbor];
+                
+                if (newDistance < distances[neighbor]) {
+                    distances[neighbor] = newDistance;
+                }
+            }
+
+				// if (distances[current] + weight < distances[neighbor]) {
+				// 	distances[neighbor] = distances[current] + weight;
+				// 	highlightedEdge = { from: current, to: neighbor };
+				// 	log(`Távolság frissítése: ${current} → ${neighbor}, új távolság: ${distances[neighbor]}`);
+				// 	await delay(900 - get(speed) * 8);
+				// 	await pauseIfNeeded();
+				// }
 			}
 		}
 
 		highlightedEdge = null;
+		return distances;
 	}
+
 
 	selectedAlgorithmSourceCode.set(`
 function dijkstra(start: number) {

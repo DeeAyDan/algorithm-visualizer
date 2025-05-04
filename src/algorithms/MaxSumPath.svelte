@@ -71,7 +71,6 @@
 						matrix = generateMatrix(size);
 						path = [];
 						solutionMatrix = [...matrix];
-						activeLine.set(-1);
 						unsub();
 						resolve();
 					}
@@ -85,19 +84,32 @@
 		for (let i = 0; i < size; i++) {
 			for (let j = 0; j < size; j++) {
 				activeCell = [i, j];
-				await pauseIfNeeded();
-				await delay(900 - get(speed) * 8);
 
 				let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
 				let fromLeft = j > 0 ? solutionMatrix[i][j - 1] : 0;
 
 				let chosenFrom = '';
+
+				activeLine.set(6);
+				await pauseIfNeeded();
+				await delay(300 - get(speed) * 8);
 				if (fromTop > fromLeft) {
 					chosenFrom = 'fentről';
+					activeLine.set(7);
+					await pauseIfNeeded();
+					await delay(300 - get(speed) * 8);
 				} else if (fromLeft > fromTop) {
 					chosenFrom = 'balról';
+
+					activeLine.set(9);
+					await pauseIfNeeded();
+					await delay(300 - get(speed) * 8);
 				} else {
 					chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
+
+					activeLine.set(12);
+					await pauseIfNeeded();
+					await delay(300 - get(speed) * 8);
 				}
 
 				solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
@@ -105,6 +117,9 @@
 				log(
 					`Megoldás [${i},${j}] = ${matrix[i][j]} + max(${fromTop}, ${fromLeft}) = ${solutionMatrix[i][j]} (${chosenFrom})`
 				);
+				activeLine.set(13);
+				await pauseIfNeeded();
+				await delay(300 - get(speed) * 8);
 			}
 		}
 		activeCell = null;
@@ -137,7 +152,7 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
-		
+
 		await maxSumPath();
 		activeLine.set(-1);
 
@@ -154,7 +169,7 @@
 
 	// ==== Forráskód beállítás ====
 	selectedAlgorithmSourceCode.set(
-`function maxSumPath() {
+		`function maxSumPath() {
    for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
          let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
@@ -170,7 +185,8 @@
          solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
       }
    }
-}`);
+}`
+	);
 </script>
 
 <!-- ==== Komponens markup ==== -->
