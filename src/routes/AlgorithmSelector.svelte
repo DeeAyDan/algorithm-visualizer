@@ -68,7 +68,7 @@
 		<div class="algorithm-list {algorithmGroups.sortingAlgorithms ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('mergeSort')}>Összefésüléses rendezés</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('insertionSort')}>Beszúrásos rendezés</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('heapSort')}>Kupacrendezés</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('heapSort')}>Kupacrendezés</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('quickSort')}>Gyorsrendezés</button>
 		</div>
 	</div>

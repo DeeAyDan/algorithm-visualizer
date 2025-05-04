@@ -21,21 +21,69 @@
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	let points = [
-		{ x: 100, y: 100 },
-		{ x: 200, y: 50 },
-		{ x: 300, y: 150 },
-		{ x: 250, y: 250 },
-		{ x: 150, y: 300 },
-		{ x: 80, y: 200 }
+		{ x: 50, y: 50 },
+		{ x: 450, y: 50 },
+		{ x: 250, y: 100 },
+		{ x: 400, y: 250 },
+		{ x: 100, y: 200 },
+		{ x: 250, y: 280 }
 	];
 
 	let highlightedEdge: [Point, Point] | null = null;
 	let hullEdges: [Point, Point][] = [];
 
+	type Point = {
+		x: number;
+		y: number;
+	};
+
+	function generateRandomPoints(n = 20, width = 500, height = 300): Point[] {
+		const margin = 20;
+		const points: Point[] = [];
+		for (let i = 0; i < n; i++) {
+			points.push({
+				x: Math.floor(Math.random() * (width - 2 * margin)) + margin,
+				y: Math.floor(Math.random() * (height - 2 * margin)) + margin
+			});
+		}
+		return points;
+	}
 
 	onMount(() => {
-		totalSteps.set(0);
+		generateRandomPoints();
+		totalSteps.set(convexHullCounter(points));
 	});
+
+	function convexHullCounter(points: Point[]): number {
+		let steps = 0;
+		for (let i = 0; i < points.length; i++) {
+			for (let j = i + 1; j < points.length; j++) {
+				steps++; // vizsgálat logolása
+				let a = points[i];
+				let b = points[j];
+				let allOnOneSide = true;
+				let side = null;
+
+				for (let k = 0; k < points.length; k++) {
+					if (k === i || k === j) continue;
+					let p = points[k];
+					let val = crossProduct(a, b, p);
+					if (val !== 0) {
+						if (side === null) side = val > 0;
+						else if (val > 0 !== side) {
+							allOnOneSide = false;
+							break;
+						}
+					}
+				}
+
+				if (allOnOneSide) {
+					steps++; // él hozzáadása logolva lenne
+				}
+			}
+		}
+		return steps;
+	}
 
 	function log(message: string) {
 		consoleLog.update((logs) => [...logs, message]);
@@ -61,6 +109,10 @@
 					consoleLog.set([]);
 					currentStep.set(0);
 					hullEdges = [];
+					hullEdges = [...hullEdges];
+					points = generateRandomPoints();
+					totalSteps.set(convexHullCounter(points));
+
 					unsub();
 					resolve();
 				}
@@ -84,14 +136,22 @@
 		hullEdges = [];
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
+		convexHull(points);
+
+		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+		algorithmStatus.set('finished');
+		await restartAlgorithm();
+	}
+
+	async function convexHull(points: Point[]) {
 		for (let i = 0; i < points.length; i++) {
 			for (let j = i + 1; j < points.length; j++) {
 				let a = points[i];
 				let b = points[j];
-				highlightedEdge = [a, b]; // <-- aktuális él vizuálisan
+				highlightedEdge = [a, b];
 				log(`Vizsgálat: él (${a.x}, ${a.y}) → (${b.x}, ${b.y})`);
 				await pauseIfNeeded();
-				await delay(900 - get(speed) * 8);
+				await delay(Math.max(100, 900 - get(speed) * 8));
 
 				let allOnOneSide = true;
 				let side = null;
@@ -111,34 +171,31 @@
 
 				if (allOnOneSide) {
 					log(`Él hozzáadva a konvex burokhoz`);
-					hullEdges.push([a, b]); // <-- megőrizzük a konvex burok részeit
+					hullEdges.push([a, b]);
+					hullEdges = [...hullEdges];
 				}
 			}
 		}
 		highlightedEdge = null;
-
-		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
-		algorithmStatus.set('finished');
-		await restartAlgorithm();
 	}
 
 	function crossProduct(a: Point, b: Point, c: Point): number {
-	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-}
-
+		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+	}
 
 	selectedAlgorithmSourceCode.set(`Brute Force Convex Hull`);
 </script>
 
-<div class="algorithm-container">
-	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
-	<svg width="500" height="500" style="background: #fff; border: 1px solid #ccc;">
+<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
+<div class="tag">Vászon</div>
+
+<div class="graph-container">
+	<svg class="svg" width="500" height="300">
 		<!-- Összes pont -->
 		{#each points as p}
 			<circle cx={p.x} cy={p.y} r="5" fill="black" />
 		{/each}
-	
+
 		<!-- Aktuálisan vizsgált él -->
 		{#if highlightedEdge}
 			<line
@@ -150,29 +207,32 @@
 				stroke-width="2"
 			/>
 		{/if}
-	
+
 		<!-- Konvex burok élek -->
 		{#each hullEdges as [a, b]}
-			<line
-				x1={a.x}
-				y1={a.y}
-				x2={b.x}
-				y2={b.y}
-				stroke="green"
-				stroke-width="2"
-			/>
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="green" stroke-width="2" />
 		{/each}
 	</svg>
-	
 </div>
 
 <style>
+	.graph-container {
+		margin: 1rem;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
 	.tag {
-		display: inline-block;
+		display: block;
+		width: fit-content;
 		top: 0;
 		left: 0;
 		background-color: #484848;
 		color: white;
 		padding: 3px;
+	}
+	.svg {
+		border: 1px solid #ccc;
+		border-radius: 4px;
 	}
 </style>
