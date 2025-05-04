@@ -316,8 +316,8 @@ function dijkstra(start) {
 		<!-- Csúcsok -->
 		{#each nodes as { id, x, y }}
 			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
-			<text {x} y={y + 5} text-anchor="middle" fill="black" font-size="12">{id}</text>
-			<text {x} y={y + 22} text-anchor="middle" font-size="10" fill="white">
+			<text {x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12">{id}</text>
+			<text {x} y={y + 22} text-anchor="middle" font-size="10" fill="aliceblue">
 				{distances[id] === Infinity ? '∞' : distances[id]}
 			</text>
 		{/each}
