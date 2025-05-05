@@ -18,6 +18,7 @@
 	- tagek kivétele
 	- recolor app
 	- code cleanup
+	- await delay(Math.max(100, 900 - get(speed) * 8));
     - Dokumentáció
 
 ## Algoritmus Checklist

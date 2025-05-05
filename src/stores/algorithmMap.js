@@ -6,7 +6,7 @@ export const algorithmDisplayNames = {
 	binaryTree: 'Bináris fa',
 	jarvisMarch: "Jarvis menetelés",
 	coinChange: 'Pénzváltó algoritmus',
-	convexHull: 'Convex burok (brute force)',
+	convexHull: 'Konvex burok (brute force)',
 	dijkstraShortestPath: 'Dijkstra legrövidebb út',
 	factorialCalculator: 'Faktoriális számítás',
 	fractionalKnapsack: 'Töredekes hátizsák (ismétlés nélkül)',

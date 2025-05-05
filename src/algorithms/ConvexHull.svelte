@@ -9,7 +9,8 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -19,6 +20,9 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	activeLine.set(-1);
+
+	let elementValue = 6;
 
 	let points = [
 		{ x: 50, y: 50 },
@@ -37,7 +41,9 @@
 		y: number;
 	};
 
-	function generateRandomPoints(n = 20, width = 500, height = 300): Point[] {
+	function generateRandomPoints(n): Point[] {
+		const width = 500;
+		const height = 300;
 		const margin = 20;
 		const points: Point[] = [];
 		for (let i = 0; i < n; i++) {
@@ -50,7 +56,6 @@
 	}
 
 	onMount(() => {
-		generateRandomPoints();
 		totalSteps.set(convexHullCounter(points));
 	});
 
@@ -110,8 +115,6 @@
 					currentStep.set(0);
 					hullEdges = [];
 					hullEdges = [...hullEdges];
-					points = generateRandomPoints();
-					totalSteps.set(convexHullCounter(points));
 
 					unsub();
 					resolve();
@@ -136,7 +139,10 @@
 		hullEdges = [];
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		convexHull(points);
+		points = generateRandomPoints(elementValue);
+		totalSteps.set(convexHullCounter(points));
+		await convexHull(points);
+		activeLine.set(-1);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -148,6 +154,7 @@
 			for (let j = i + 1; j < points.length; j++) {
 				let a = points[i];
 				let b = points[j];
+
 				highlightedEdge = [a, b];
 				log(`Vizsgálat: él (${a.x}, ${a.y}) → (${b.x}, ${b.y})`);
 				await pauseIfNeeded();
@@ -157,12 +164,23 @@
 				let side = null;
 
 				for (let k = 0; k < points.length; k++) {
-					if (k === i || k === j) continue;
+					activeLine.set(17);
+					await delay(Math.max(100, 900 - get(speed) * 8));
+					if (k === i || k === j) {
+						activeLine.set(18);
+						await delay(Math.max(100, 900 - get(speed) * 8));
+						continue;
+					}
 					let p = points[k];
 					let val = crossProduct(a, b, p);
 					if (val !== 0) {
-						if (side === null) side = val > 0;
-						else if (val > 0 !== side) {
+						if (side === null) {
+							activeLine.set(22);
+							await delay(Math.max(100, 900 - get(speed) * 8));
+							side = val > 0;
+						} else if (val > 0 !== side) {
+							activeLine.set(23);
+							await delay(Math.max(100, 900 - get(speed) * 8));
 							allOnOneSide = false;
 							break;
 						}
@@ -170,6 +188,8 @@
 				}
 
 				if (allOnOneSide) {
+					activeLine.set(32);
+					await delay(Math.max(200, 900 - get(speed) * 8));
 					log(`Él hozzáadva a konvex burokhoz`);
 					hullEdges.push([a, b]);
 					hullEdges = [...hullEdges];
@@ -183,8 +203,43 @@
 		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	}
 
-	selectedAlgorithmSourceCode.set(`Brute Force Convex Hull`);
+	selectedAlgorithmSourceCode.set(`
+function convexHull(points) {
+  let hullEdges = [];
+ \n
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++){
+	\n
+      let a = points[i];
+      let b = points[j];
+ \n
+      let allOnOneSide = true;
+      let side = null;
+ \n
+      for (let k = 0; k < points.length; k++){
+        if (k === i || k === j) continue;
+        let p = points[k];
+        let val = crossProduct(a, b, p);
+        if (val !== 0) {
+          if (side === null) side = val > 0;
+          else if (val > 0 !== side) {
+            allOnOneSide = false;
+            break;
+          }
+        }
+     }
+ \n
+      if (allOnOneSide) {
+        hullEdges.push([a, b]);
+      }
+    }
+  }
+}`);
 </script>
+
+<div class="control-buttons">
+	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Pontok száma" />
+</div>
 
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 <div class="tag">Vászon</div>
@@ -234,5 +289,20 @@
 	.svg {
 		border: 1px solid #ccc;
 		border-radius: 4px;
+	}
+	.control-buttons {
+		display: flex;
+		justify-content: space-around;
+		padding: 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.control-buttons input {
+		width: 150px;
+		padding: 0.5rem;
+		margin-right: 10px;
+		border-radius: 5px;
+		background-color: #2f2f2f;
+		border: 3px solid #505050;
 	}
 </style>
