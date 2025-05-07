@@ -144,8 +144,8 @@
 	}
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(`
-function hanoi(n, from, to, aux) {
+	selectedAlgorithmSourceCode.set(
+`function hanoi(n, from, to, aux) {
    if (n === 0) return;
    hanoi(n - 1, from, aux, to);
    moveDisk(from, to);
@@ -157,8 +157,7 @@ function moveDisk(from, to) {
       towers[to].push(disk);
       towers = towers.map((t) => [...t]); 
    }
-}
-	`);
+}`);
 </script>
 
 <!-- ===== Bemeneti mező a Controls alatt ===== -->
