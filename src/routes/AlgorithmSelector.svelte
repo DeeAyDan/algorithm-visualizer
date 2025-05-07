@@ -58,7 +58,7 @@
 		<div class="algorithm-list {algorithmGroups.greedyAlgorithms ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('fractionalKnapsack')}>Tört hátizsák probléma</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('fractionalKnapsackRep')}>Tört hátizsák probléma (ismétléssel)</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('travelingProblem')}>Utazási probléma</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('travelingProblem')}>Utazási probléma</button>
 		</div>
 	</div>
 	<div class="algorithm-group">
@@ -118,7 +118,7 @@
 			Geometriai algoritmusok
 		</button>
 		<div class="algorithm-list {algorithmGroups.geometryAlgorithms ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('convexHull')}>Konvex burok (Brute Force)</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('convexHull')}>Konvex burok (Brute Force)</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('jarvisMarch')}>Jarvis menetelés</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('grahamScan')}>Graham pásztázás</button>
 		</div>

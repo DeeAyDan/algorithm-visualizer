@@ -12,7 +12,7 @@
 	<div class="source-code">
 		<code>
 			{#each codeLines as line, i}
-			<div class="{ i === $activeLine ? 'active-line' : ''}">{line}</div>
+			<div class="{ i === $activeLine ? 'active-line' : ''}">{i}  {line}</div>
 		{/each}
 		</code>
 	</div>

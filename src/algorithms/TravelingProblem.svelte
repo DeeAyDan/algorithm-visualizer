@@ -171,6 +171,8 @@
 			let minDist = Infinity;
 
 			for (let i = 0; i < n; i++) {
+				activeLine.set(17);
+				await delay(900 - get(speed) * 8);
 				if (!visited.has(i)) {
 					checkingEdge = { from: current, to: i };
 					log(`Távolság ellenőrzés: ${current} → ${i}`);
@@ -179,6 +181,8 @@
 
 					let dist = euclideanDistance(cities[current], cities[i]);
 					if (dist < minDist) {
+						activeLine.set(18);
+				await delay(900 - get(speed) * 8);
 						minDist = dist;
 						nearest = i;
 					}
@@ -189,9 +193,11 @@
 				currentCityIndex = current;
 				nextCityIndex = nearest;
 
+				activeLine.set(26);
 				log(`Lépés: ${current} → ${nearest}, távolság: ${minDist.toFixed(2)}`);
 				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
+				checkingEdge = null;
 
 				tspEdges.push({ from: current, to: nearest });
 
@@ -209,6 +215,7 @@
 		log(
 			`Visszatérés: ${current} → ${tspPath[0]}, távolság: ${euclideanDistance(cities[current], cities[0]).toFixed(2)}`
 		);
+		activeLine.set(35);
 		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
 
@@ -239,36 +246,30 @@
   visited.add(current);
  \n
   while (visited.size < n) {
-		let nearest = null;
-		let minDist = Infinity;
+    let nearest = null;
+    let minDist = Infinity;
+ \n
+    for (let i = 0; i < n; i++) {
+      if (!visited.has(i)) {
+        let dist = euclideanDistance(cities[current], cities[i]);
+        if (dist < minDist) {
+          minDist = dist;
+          nearest = i;
+        }
+      }
+    }
+ \n
+    if (nearest !== null) {
+      tspEdges.push({ from: current, to: nearest });
 
-		for (let i = 0; i < n; i++) {
-			if (!visited.has(i)) {
-				let dist = euclideanDistance(cities[current], cities[i]);
-				if (dist < minDist) {
-					minDist = dist;
-					nearest = i;
-				}
-			}
-		}
-
-		if (nearest !== null) {
-			currentCityIndex = current;
-			nextCityIndex = nearest;
-
-			tspEdges.push({ from: current, to: nearest });
-
-			current = nearest;
-			tspPath.push(current);
-			visited.add(current);
-		}
-	}
-
-	currentCityIndex = current;
-	nextCityIndex = tspPath[0];
-
-	tspEdges.push({ from: current, to: tspPath[0] });
-	tspPath.push(tspPath[0]);
+      current = nearest;
+      tspPath.push(current);
+      visited.add(current);
+    }
+  }
+ \n
+  tspEdges.push({ from: current, to: tspPath[0] });
+  tspPath.push(tspPath[0]);
 }`);
 </script>
 
