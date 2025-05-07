@@ -8,7 +8,8 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithmSourceCode
+		selectedAlgorithmSourceCode,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -25,6 +26,12 @@
 	let root: Node | null = null;
 	let highlightedNode: Node | null = null;
 	let elementValue: number = 0;
+	activeLine.set(-1);
+
+	const startX = 250;
+	const startY = 25;
+	const levelGapY = 80;
+	const offsetX = 240;
 
 	onMount(() => {
 		currentStep.set(0);
@@ -148,16 +155,16 @@
 		algorithmStatus.set('running');
 		root = await insert(root, elementValue);
 		highlightedNode = null;
-		positionTree(root, 250, 50, 100);
+		positionTree(root);
 		algorithmStatus.set('finished');
 	}
 
-	function positionTree(node: Node | null, x: number, y: number, offset: number) {
+	function positionTree(node: TreeNode | null, depth = 0, index = 0, parentX = startX): void {
 		if (!node) return;
-		node.x = x;
-		node.y = y;
-		positionTree(node.left || null, x - offset, y + 80, offset / 1.5);
-		positionTree(node.right || null, x + offset, y + 80, offset / 1.5);
+		node.x = parentX + (index * offsetX) / Math.pow(1.5, depth + 1);
+		node.y = startY + depth * levelGapY;
+		positionTree(node.left, depth + 1, -1, node.x);
+		positionTree(node.right, depth + 1, 1, node.x);
 	}
 
 	async function searchElement() {
@@ -191,7 +198,7 @@
 		algorithmStatus.set('running');
 		root = await remove(root, elementValue);
 		highlightedNode = null;
-		positionTree(root, 250, 50, 100);
+		positionTree(root);
 		algorithmStatus.set('finished');
 	}
 
@@ -236,8 +243,8 @@
 </div>
 
 <div class="algorithm-container">
-	<Controls {currentStep} {totalSteps} />
-	<svg width="600" height="400" style="background: #fff; border: 1px solid #ccc;">
+ <div class="tag">Vászon</div>
+	<svg class="svg" width="500" height="300">
 		{#if root}
 			{#each flatten(root) as node (node.value)}
 				{#if node.left}
@@ -257,24 +264,45 @@
 </div>
 
 <style>
+	.tag {
+		display: inline-block;
+		background-color: #484848;
+		color: white;
+		padding: 3px;
+	}
 	.control-buttons {
 		display: flex;
 		justify-content: space-around;
-		margin-bottom: 1rem;
+		padding: 1rem;
+		border-bottom: 3px solid #505050;
 	}
-	input {
-		width: 100px;
-		padding: 0.4rem;
+	.control-buttons input {
+		width: 150px;
+		padding: 0.5rem;
+		margin-right: 10px;
+		border-radius: 5px;
+		background-color: #2f2f2f;
+		border: 3px solid #505050;
+		color: white;
 	}
-	button {
+
+	.control-buttons button {
 		padding: 0.5rem 1rem;
-		background-color: #444;
-		color: aliceblue;
+		background-color: #505050;
+		color: white;
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;
 	}
-	button:hover {
-		background-color: #5cb85c;
+
+	.control-buttons button:hover {
+		background-color: #45a049;
+	}
+	.svg {
+		margin: 1rem auto;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		display: block;
+		background-color: #2f2f2f;
 	}
 </style>

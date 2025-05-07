@@ -119,7 +119,6 @@
   };
 
   tree = insert(tree, elementValue);
-  calculatePositions(tree);
 }`
 		);
 
@@ -401,14 +400,6 @@ function deleteElement(tree, value) {
 		padding: 1rem;
 		border-bottom: 3px solid #505050;
 	}
-	.svg {
-		margin: 1rem auto;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		display: block;
-		background-color: #2f2f2f;
-	}
-
 	.control-buttons input {
 		width: 150px;
 		padding: 0.5rem;
@@ -430,5 +421,12 @@ function deleteElement(tree, value) {
 
 	.control-buttons button:hover {
 		background-color: #45a049;
+	}
+	.svg {
+		margin: 1rem auto;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		display: block;
+		background-color: #2f2f2f;
 	}
 </style>
