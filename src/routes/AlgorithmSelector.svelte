@@ -119,8 +119,8 @@
 		</button>
 		<div class="algorithm-list {algorithmGroups.geometryAlgorithms ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('convexHull')}>Konvex burok (Brute Force)</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('jarvisMarch')}>Jarvis menetelés</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('grahamScan')}>Graham pásztázás</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('jarvisMarch')}>Jarvis menetelés</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('grahamScan')}>Graham pásztázás</button>
 		</div>
 	</div>
 </div>

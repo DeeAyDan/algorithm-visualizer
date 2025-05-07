@@ -17,9 +17,11 @@
     - Source Code implementálása eval-al
 	- tagek kivétele
 	- recolor app
-	- code cleanup
-	- await delay(Math.max(100, 900 - get(speed) * 8));
+	- limitek hozzáadása az algoritmusok
 	- jarvis step counter
+	- await delay(Math.max(100, 900 - get(speed) * 8));
+	- restart - start work properly
+	- code cleanup
     - Dokumentáció
 
 ## Algoritmus Checklist
@@ -38,10 +40,8 @@
 	- Prios Fekete Fa
 	- 2-3 fa
 	- 2-3-4 fa
-	- graham pásztázás
 
 Updatere szorul:
-Factorial - source code kijeloles
 Penzvalto: - progress bar, canvas display, log tweak
 heapsort: - alkalmaazni rá a többi rendező algoritmus elemeit: random start input, stb
 		  - vizualizálás javitás + css
@@ -61,58 +61,20 @@ Megvalósítás-------
 
 
 Tesztelés--------
+- viualizálás tesztelés
+- korlátok tesztelése
+- source code line tesztelése
+- sebesség megvalósítás / reális / kiegyensúlyozott futás idö minden algoritmusnál
+- start - resume - restart sorrend tesztelés (convek hull pl ne startkor, hanem restartkor randomizáljon)
 
 
 Megvalósítási ötletek amik nem valósultak meg---------
-- sourcecode highlight
 - lépegetö megvalosítás
 
 Összegzés---------
 
 
 	
-
-
------- inputs -------
-
-- Money change algoritmus:
-	- felvaltando penz
-	- valtopenz tombbe beillesztes
-	- valtopenz tombbol kivetel
-
-- Toredekes hatizsak (ismetlesel)
-- Toredekes hatizsak (ismetles nelkul)
-	- hatizsak merete
-	- item hozzaadasa
-	- item modositasa
-	- item torlese
-
-
-
-- Binary Tree
-- AVL tree
-- B-tree
-- red-black tree
-- 2-3 tree
-- 2-3-4 tree
-	- elem beszuras
-	- elem torles
-	- elem kereses
-
-
-- binary head
-- Rabin Karp algoritmus
-- Dijkstra legrovidebb ut
-- Bellman-Ford's legrovidebb ut
-- Prim legrovidebb ut
-- Kruskal algoritmus
-- Convex Hull
-- Chan's algorithm
-- Graham's Scan
-- Knuth-Morris-Pratt algoritmus
-- Utazas probléma
-- Kupacrendezés
-
 
 ## Doku:
 

@@ -231,7 +231,7 @@ function crossProduct(a, b, c){
 
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
+	<div class="tag">Vászon</div>
 	<svg class="svg" width="500" height="300">
 		{#each selectedEdges as [a, b]}
 			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#45a049" stroke-width="2" />

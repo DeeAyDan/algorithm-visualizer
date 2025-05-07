@@ -9,7 +9,8 @@
 		speed,
 		algorithmStatus,
 		resumeSignal,
-		selectedAlgorithm
+		selectedAlgorithm,
+		activeLine
 	} from '../stores/store.svelte.js';
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
@@ -19,24 +20,95 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	let elementValue = 6;
+	activeLine.set(-1);
+	let selectedEdges = [];
 
-	let points = [
-		{ x: 100, y: 100 },
-		{ x: 200, y: 50 },
-		{ x: 300, y: 150 },
-		{ x: 250, y: 250 },
-		{ x: 150, y: 300 },
-		{ x: 80, y: 200 },
-		{ x: 180, y: 200 },
-		{ x: 220, y: 120 }
-	];
+	let highlightedEdge: [Point, Point] | null = null; // piros
+	let stackEdges: [Point, Point][] = []; // sárga (aktuális burok)
+	let finalHullEdges: [Point, Point][] = []; // zöld (végső burok)
 
-	let hullPoints = [];
-	let highlightedEdge = null;
+	let points = [];
+	let arr = [];
+
+	function generatePoints(count) {
+		let minDistance = 50;
+		points = [];
+		while (points.length < count) {
+			const newPoint = {
+				x: Math.random() * 400 + 50,
+				y: Math.random() * 200 + 50
+			};
+
+			if (points.every((point) => euclideanDistance(point, newPoint) >= minDistance)) {
+				points.push(newPoint);
+			}
+		}
+	}
+
+	function euclideanDistance(p1, p2) {
+		return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+	}
+
+	let hullEdges: [Point, Point][] = [];
 
 	onMount(() => {
-		totalSteps.set(0);
+		generatePoints(elementValue);
+		arr = [...points];
+		totalSteps.set(grahamScanCounter(arr));
 	});
+
+	function grahamScanCounter(points: Point[]) {
+		let steps = 0;
+		if (points.length < 3) return;
+
+		const lowest = points.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x < b.x) ? a : b));
+		steps++;
+
+		const sorted = points
+			.filter((p) => p !== lowest)
+			.sort((a, b) => {
+				const cp = crossProduct(lowest, a, b);
+				if (cp === 0) {
+					return euclideanDistance(lowest, a) - euclideanDistance(lowest, b);
+				}
+				return -cp;
+			});
+		steps++;
+
+		const stack: Point[] = [lowest, sorted[0]];
+
+		steps++;
+
+		for (let i = 1; i < sorted.length; i++) {
+			const current = sorted[i];
+			let top = stack[stack.length - 1];
+			let nextToTop = stack[stack.length - 2];
+
+			steps++;
+
+			while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
+				steps++;
+				stack.pop();
+				top = stack[stack.length - 1];
+				nextToTop = stack[stack.length - 2];
+			}
+
+			stack.push(current);
+			steps++;
+		}
+
+		const last = stack[stack.length - 1];
+		const first = stack[0];
+
+		steps++;
+
+		for (let i = 0; i < stack.length; i++) {
+			const a = stack[i];
+			const b = stack[(i + 1) % stack.length];
+		}
+		return steps;
+	}
 
 	function log(message: string) {
 		consoleLog.update((logs) => [...logs, message]);
@@ -61,7 +133,13 @@
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-					hullPoints = [];
+					hullEdges = [];
+					finalHullEdges = [];
+					selectedEdges = [];
+					selectedEdges = [...selectedEdges];
+					generatePoints(elementValue);
+					arr = [...points];
+					totalSteps.set(grahamScanCounter(arr));
 					unsub();
 					resolve();
 				}
@@ -79,124 +157,249 @@
 		}
 	}
 
-	function cross(a, b, c) {
-		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-	}
-
 	async function startAlgorithm() {
 		consoleLog.set([]);
 		currentStep.set(0);
-		hullPoints = [];
+		hullEdges = [];
+		selectedEdges = [];
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		// 1. Legalacsonyabb pont
-		let start = points.reduce((lowest, p) =>
-			p.y < lowest.y || (p.y === lowest.y && p.x < lowest.x) ? p : lowest
-		);
+		generatePoints(elementValue);
+		arr = [...points];
+		totalSteps.set(grahamScanCounter(arr));
+		await grahamScan(points);
 
-		log(`Kezdőpont: (${start.x}, ${start.y})`);
-		await delay(800 - get(speed) * 8);
-		await pauseIfNeeded();
-
-		// 2. Szög szerinti rendezés
-		let sorted = [...points].sort((a, b) => {
-			if (a === start) return -1;
-			if (b === start) return 1;
-			let angleA = Math.atan2(a.y - start.y, a.x - start.x);
-			let angleB = Math.atan2(b.y - start.y, b.x - start.x);
-			return angleA - angleB;
-		});
-
-		log(`Pontok szög szerinti rendezése...`);
-		await delay(800 - get(speed) * 8);
-		await pauseIfNeeded();
-
-		// 3. Verem inicializálása
-		hullPoints.push(sorted[0], sorted[1]);
-
-		// 4. Graham-scan
-		for (let i = 2; i < sorted.length; i++) {
-			let top = hullPoints[hullPoints.length - 1];
-			let nextToTop = hullPoints[hullPoints.length - 2];
-			let current = sorted[i];
-
-			highlightedEdge = [top, current];
-			log(`Él vizsgálata: (${top.x}, ${top.y}) → (${current.x}, ${current.y})`);
-			await delay(800 - get(speed) * 8);
-			await pauseIfNeeded();
-
-			while (
-				hullPoints.length >= 2 &&
-				cross(nextToTop, top, current) <= 0
-			) {
-				log(`Jobbra fordulás → visszalépés`);
-				hullPoints.pop();
-				top = hullPoints[hullPoints.length - 1];
-				nextToTop = hullPoints[hullPoints.length - 2];
-				highlightedEdge = [top, current];
-				await delay(600 - get(speed) * 8);
-				await pauseIfNeeded();
-			}
-			hullPoints.push(current);
-			log(`Hozzáadás a burokhoz: (${current.x}, ${current.y})`);
-			await delay(600 - get(speed) * 8);
-			await pauseIfNeeded();
-		}
-
-		highlightedEdge = null;
-
+		activeLine.set(-1);
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
-	selectedAlgorithmSourceCode.set(`Graham pásztázás algoritmus`);
+	async function grahamScan(points: Point[]) {
+		if (points.length < 3) return;
+
+		finalHullEdges = [];
+		stackEdges = [];
+		highlightedEdge = null;
+
+		// 1. Legalsó pont kiválasztása
+		const lowest = points.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x < b.x) ? a : b));
+		activeLine.set(2);
+		log(`Legalsó pont: index: ${points.indexOf(lowest)}`);
+		await delay(1000 - get(speed) * 8);
+
+		// 2. Polárszög szerint rendezés
+		const sorted = points
+			.filter((p) => p !== lowest)
+			.sort((a, b) => {
+				const cp = crossProduct(lowest, a, b);
+				if (cp === 0) {
+					return euclideanDistance(lowest, a) - euclideanDistance(lowest, b);
+				}
+				return -cp;
+			});
+		activeLine.set(4);
+		log(
+			`Rendezett pontok indexei: ${[lowest, ...sorted].map((p) => points.indexOf(p)).join(', ')}`
+		);
+		await delay(1000 - get(speed) * 8);
+
+		// 3. Stack inicializálása
+		const stack: Point[] = [lowest, sorted[0]];
+		stackEdges = [[lowest, sorted[0]]];
+		stackEdges = [...stackEdges];
+
+		activeLine.set(14);
+		log(
+			`🟡 Kezdő él: (${lowest.x.toFixed(2)}, ${lowest.y.toFixed(2)}) → (${sorted[0].x.toFixed(2)}, ${sorted[0].y.toFixed(2)})`
+		);
+		await delay(1000 - get(speed) * 8);
+
+		for (let i = 1; i < sorted.length; i++) {
+			const current = sorted[i];
+			let top = stack[stack.length - 1];
+			let nextToTop = stack[stack.length - 2];
+
+			activeLine.set(17);
+			log(`Vizsgált pont indexe: ${points.indexOf(current)}`);
+			highlightedEdge = [top, current];
+			await pauseIfNeeded();
+			await delay(1000 - get(speed) * 8);
+
+			while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
+				activeLine.set(22);
+				log(`❌ Nem balra fordul → töröljük: (${top.x.toFixed(2)}, ${top.y.toFixed(2)})`);
+				stack.pop();
+				highlightedEdge = null;
+
+				stackEdges.pop();
+				stackEdges = [...stackEdges];
+				top = stack[stack.length - 1];
+				nextToTop = stack[stack.length - 2];
+				await pauseIfNeeded();
+				await delay(1000 - get(speed) * 8);
+			}
+
+			stack.push(current);
+			stackEdges.push([top, current]);
+			stackEdges = [...stackEdges];
+
+			activeLine.set(26);
+			log(
+				`✅ Hozzáadva a burokhoz: (${top.x.toFixed(2)}, ${top.y.toFixed(2)}) → (${current.x.toFixed(2)}, ${current.y.toFixed(2)})`
+			);
+
+			await pauseIfNeeded();
+			await delay(1000 - get(speed) * 8);
+		}
+
+		highlightedEdge = null;
+		// Hozzáadjuk az utolsó élt is a stackEdges-hez, hogy ne "ugorjon" a vizualizáció
+		const last = stack[stack.length - 1];
+		const first = stack[0];
+		stackEdges.push([last, first]);
+		stackEdges = [...stackEdges];
+		activeLine.set(29);
+		log(
+			`🔚 Záró él: (${last.x.toFixed(2)}, ${last.y.toFixed(2)}) → (${first.x.toFixed(2)}, ${first.y.toFixed(2)})`
+		);
+
+		await pauseIfNeeded();
+		await delay(1000 - get(speed) * 6);
+
+		// 4. Végső burok összeállítása
+		for (let i = 0; i < stack.length; i++) {
+			const a = stack[i];
+			const b = stack[(i + 1) % stack.length];
+			stackEdges.shift();
+			stackEdges = [...stackEdges];
+			finalHullEdges.push([a, b]);
+			finalHullEdges = [...finalHullEdges];
+		}
+
+		// 5. Stack eltüntetése
+		stackEdges = [];
+	}
+
+	function crossProduct(a: Point, b: Point, c: Point): number {
+		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+	}
+
+	selectedAlgorithmSourceCode.set(
+		`function grahamScan(points) {
+  if (points.length < 3) return;
+  const lowest = points.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x < b.x) ? a : b));
+
+  const sorted = points
+    .filter((p) => p !== lowest)
+    .sort((a, b) => {
+      const cp = crossProduct(lowest, a, b);
+      if (cp === 0) {
+        return euclideanDistance(lowest, a) - euclideanDistance(lowest, b);
+      }
+      return -cp;
+    });
+
+  const stack: Point[] = [lowest, sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    let top = stack[stack.length - 1];
+    let nextToTop = stack[stack.length - 2];
+
+    while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
+      stack.pop();
+      top = stack[stack.length - 1];
+      nextToTop = stack[stack.length - 2];
+    }
+    stack.push(current);
+  }
+
+  const last = stack[stack.length - 1];
+  const first = stack[0];
+
+  for (let i = 0; i < stack.length; i++) {
+    const a = stack[i];
+    const b = stack[(i + 1) % stack.length];
+  }
+}
+
+function crossProduct(a: Point, b: Point, c: Point): number {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}`
+	);
 </script>
+
+<div class="control-buttons">
+	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Pontok száma" />
+</div>
 
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Canvas</div>
-	<svg width="500" height="500" style="background: #fff; border: 1px solid #ccc;">
-		<!-- Pontok -->
-		{#each points as p}
-			<circle cx={p.x} cy={p.y} r="5" fill="black" />
+	<div class="tag">Vászon</div>
+	<svg class="svg" width="500" height="300">
+		<!-- Zöld: végleges burok -->
+		{#each finalHullEdges as [a, b]}
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="green" stroke-width="2" />
 		{/each}
 
-		<!-- Aktuálisan vizsgált él -->
+		<!-- Sárga: aktuális stack-beli élek -->
+		{#each stackEdges as [a, b]}
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="gold" stroke-width="2" />
+		{/each}
+
+		<!-- Piros: aktuálisan vizsgált él -->
 		{#if highlightedEdge}
 			<line
 				x1={highlightedEdge[0].x}
 				y1={highlightedEdge[0].y}
 				x2={highlightedEdge[1].x}
 				y2={highlightedEdge[1].y}
-				stroke="red"
+				stroke="crimson"
 				stroke-width="2"
 			/>
 		{/if}
 
-		<!-- Burok élei -->
-		{#each hullPoints as p, i (p)}
-			{#if i > 0}
-				<line
-					x1={hullPoints[i - 1].x}
-					y1={hullPoints[i - 1].y}
-					x2={p.x}
-					y2={p.y}
-					stroke="green"
-					stroke-width="2"
-				/>
-			{/if}
+		{#each hullEdges as [a, b]}
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="green" stroke-width="2" />
+			<circle cx={a.x} cy={a.y} r="6" fill="limegreen" />
+		{/each}
+
+		{#each points as p, i}
+			<circle cx={p.x} cy={p.y} r="8" fill="#2f4f4f" />
+			<text x={p.x + 8} y={p.y - 8} font-size="12" fill="aliceblue">{i}</text>
 		{/each}
 	</svg>
 </div>
 
 <style>
 	.tag {
-		display: inline-block;
+		display: block;
+		width: fit-content;
 		top: 0;
 		left: 0;
 		background-color: #484848;
 		color: white;
 		padding: 3px;
+	}
+	.svg {
+		margin: 1rem auto;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		display: block;
+		background-color: #2f2f2f;
+	}
+	.control-buttons {
+		display: flex;
+		justify-content: space-around;
+		padding: 0.5rem;
+	}
+	.control-buttons input {
+		width: 150px;
+		padding: 0.5rem;
+		margin-right: 10px;
+		border-radius: 5px;
+		background-color: #2f2f2f;
+		border: 3px solid #505050;
 	}
 </style>
