@@ -344,8 +344,7 @@
 	.control-buttons {
 		display: flex;
 		justify-content: space-around;
-		padding: 1rem;
-		margin-bottom: 1rem;
+		padding: 0.5rem;
 	}
 	.control-buttons input {
 		width: 150px;

@@ -63,6 +63,7 @@
 		display: flex;
 		flex-direction: column;
 		width: 100%;
+		/* overflow-y:scroll; */
 	}
 	.left-panel {
 		padding: 0px;
