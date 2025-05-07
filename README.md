@@ -20,6 +20,7 @@
 	- limitek hozzáadása az algoritmusok
 	- jarvis step counter
 	- await delay(Math.max(100, 900 - get(speed) * 8));
+	- max 4 depth
 	- restart - start work properly
 	- code cleanup
     - Dokumentáció
@@ -66,6 +67,7 @@ Tesztelés--------
 - source code line tesztelése
 - sebesség megvalósítás / reális / kiegyensúlyozott futás idö minden algoritmusnál
 - start - resume - restart sorrend tesztelés (convek hull pl ne startkor, hanem restartkor randomizáljon)
+- fa algoritmusnál mélység limit
 
 
 Megvalósítási ötletek amik nem valósultak meg---------

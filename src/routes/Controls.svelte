@@ -29,13 +29,13 @@
 	// ▶️ Resume
 	function handleResume() {
 		algorithmStatus.set('running');
-		resumeSignal.update(n => n + 1);
+		resumeSignal.update((n) => n + 1);
 	}
 
 	// ▶️ Resume
 	function handleReset() {
 		algorithmStatus.set('idle');
-		resumeSignal.update(n => n + 1);
+		resumeSignal.update((n) => n + 1);
 	}
 
 	// Sebesség állítása
