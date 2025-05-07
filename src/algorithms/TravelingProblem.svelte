@@ -291,13 +291,6 @@
 				stroke="#45a049"
 				stroke-width="2"
 			/>
-			<!-- <text
-				x={(cities[edge.from].x + cities[edge.to].x) / 2}
-				y={(cities[edge.from].y + cities[edge.to].y) / 2 - 5}
-				text-anchor="middle"
-				font-size="12"
-				fill="aliceblue">{weight[i]}</text
-			> -->
 		{/each}
 		{#if checkingEdge}
 			<line
@@ -319,7 +312,7 @@
 				stroke="#2f2f2f"
 				fill={i === currentCityIndex ? '#dc143c' : i === nextCityIndex ? '#ffd700' : '#2f4f4f'}
 			/>
-			<text x={city.x + 8} y={city.y - 8} font-size="12" fill="white">{i}</text>
+			<text x={city.x + 8} y={city.y - 8} font-size="12" fill="aliceblue">{i}</text>
 		{/each}
 	</svg>
 </div>
