@@ -398,6 +398,7 @@ function deleteElement(tree, value) {
 	.control-buttons {
 		display: flex;
 		justify-content: space-around;
+		align-items: center;
 		padding: 1rem;
 		border-bottom: 3px solid #505050;
 	}
