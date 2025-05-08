@@ -6,13 +6,11 @@
 		currentStep,
 		totalSteps,
 		consoleLog,
-		speed,
 		algorithmStatus,
 		resumeSignal,
 		selectedAlgorithm,
 		activeLine
 	} from '../stores/store.svelte.js';
-	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
@@ -127,12 +125,12 @@
 				activeLine.set(5);
 				log('A fa mélysége nem lehet nagyobb, mint 4.');
 				await pauseIfNeeded();
-				await delay(900 - get(speed) * 8);
+				await delay(900);
 				return null;
 			}
 
 			await pauseIfNeeded();
-			await delay(900 - get(speed) * 8);
+			await delay(900);
 
 			if (!node) {
 				activeLine.set(9);
@@ -161,7 +159,7 @@
 		highlightedNode = null;
 		algorithmStatus.set('idle');
 		await pauseIfNeeded();
-		await delay(900 - get(speed) * 8);
+		await delay(900);
 		activeLine.set(-1);
 	}
 
@@ -204,13 +202,13 @@
 			activeLine.set(7);
 			log(`Vizsgált csúcs: ${node.value}`);
 			await pauseIfNeeded();
-			await delay(900 - get(speed) * 8);
+			await delay(900);
 
 			if (value === node.value) {
 				activeLine.set(8);
 				log(`Érték megtalálva: ${value}`);
 				await pauseIfNeeded();
-				await delay(900 - get(speed) * 8);
+				await delay(900);
 			} else if (value < node.value) {
 				activeLine.set(9);
 				await search(node.left, value);
@@ -282,37 +280,37 @@
 			activeLine.set(13);
 			log(`Vizsgált csúcs: ${node.value}`);
 			await pauseIfNeeded();
-			await delay(900 - get(speed) * 8);
+			await delay(900);
 
 			if (value < node.value) {
 				activeLine.set(14);
 				node.left = await remove(node.left, value);
 				await pauseIfNeeded();
-				await delay(900 - get(speed) * 8);
+				await delay(900);
 			} else if (value > node.value) {
 				activeLine.set(16);
 				node.right = await remove(node.right, value);
 				await pauseIfNeeded();
-				await delay(900 - get(speed) * 8);
+				await delay(900);
 			} else {
 				activeLine.set(19);
 				log(`Csúcs törölve: ${value}`);
 				if (!node.left) {
 					activeLine.set(18);
 					await pauseIfNeeded();
-					await delay(900 - get(speed) * 8);
+					await delay(900);
 					return node.right;
 				}
 				if (!node.right) {
 					activeLine.set(19);
 					await pauseIfNeeded();
-					await delay(900 - get(speed) * 8);
+					await delay(900);
 					return node.left;
 				}
 
 				activeLine.set(29);
 				await pauseIfNeeded();
-				await delay(900 - get(speed) * 8);
+				await delay(900);
 				const minLargerNode = findMin(node.right);
 				node.value = minLargerNode.value;
 				node.right = await remove(node.right, minLargerNode.value);
@@ -380,7 +378,7 @@ function deleteElement(tree, value) {
 					r="18"
 					fill={highlightedNode === node ? '#ffd700' : '#2f4f4f'}
 				/>
-				<text x={node.x} y={node.y + 5} text-anchor="middle" font-size="14" fill="black"
+				<text x={node.x} y={node.y + 5} text-anchor="middle" font-size="14" fill={highlightedNode === node ? 'black' : 'aliceblue'}
 					>{node.value}</text
 				>
 			{/each}

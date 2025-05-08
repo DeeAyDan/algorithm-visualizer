@@ -159,54 +159,54 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-		`function hilbertCurves(count){
-   for (let i = 0; i < count; i++) {
-      const p = getHilbertPoint(i, order);
-      points.push(p);
+		`function hilbertCurves(count) {
+  for (let i = 0; i < count; i++) {
+    const p = getHilbertPoint(i, order);
+    points.push(p);
 
-      if (i > 0) {
-         ctx.strokeStyle = \`hsl($\{(i / count) * 360}, 100%, 50%)\`;
-         ctx.beginPath();
-         ctx.moveTo(points[i - 1].x, points[i - 1].y);
-         ctx.lineTo(p.x, p.y);
-         ctx.stroke();
-      }
-   }
+    if (i > 0) {
+      ctx.strokeStyle = \`hsl($\{(i / count) * 360}, 100%, 50%)\`;
+      ctx.beginPath();
+      ctx.moveTo(points[i - 1].x, points[i - 1].y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+  }
 }
  \n
 
 function getHilbertPoint(index, order) {
-   let v = { x: 0, y: 0 };
-   let n = Math.pow(2, order);
-   let tmp, rx, ry, s, t = index;
+  let v = { x: 0, y: 0 };
+  let n = Math.pow(2, order);
+  let tmp, rx, ry, s, t = index;
 
-   for (s = 1; s < n; s *= 2) {
-      rx = 1 & (t >> 1);
-      ry = 1 & (t ^ rx);
-      tmp = rotate(rx, ry, v.x, v.y, s);
-      v.x = tmp.x;
-      v.y = tmp.y;
-      v.x += s * rx;
-      v.y += s * ry;
-      t >>= 2;
-   }
+  for (s = 1; s < n; s *= 2) {
+    rx = 1 & (t >> 1);
+    ry = 1 & (t ^ rx);
+    tmp = rotate(rx, ry, v.x, v.y, s);
+    v.x = tmp.x;
+    v.y = tmp.y;
+    v.x += s * rx;
+    v.y += s * ry;
+    t >>= 2;
+  }
 
-      return {
-         x: (v.x + 0.5) * (size / n),
-         y: (v.y + 0.5) * (size / n)
-      };
-   }
+    return {
+      x: (v.x + 0.5) * (size / n),
+      y: (v.y + 0.5) * (size / n)
+    };
+  }
  \n
 function rotate(rx, ry, x, y, s) {
-      if (ry === 0) {
-         if (rx === 1) {
-            x = s - 1 - x;
-            y = s - 1 - y;
-    	}
-        return { x: y, y: x };
-      }
-      return { x, y };
-   }`
+  if (ry === 0) {
+    if (rx === 1) {
+      x = s - 1 - x;
+      y = s - 1 - y;
+    }
+    return { x: y, y: x };
+  }
+  return { x, y };
+}`
 	);
 </script>
 

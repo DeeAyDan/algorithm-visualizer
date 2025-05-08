@@ -25,14 +25,20 @@
 	activeLine.set(-1);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
+	// ==== Algoritmus paraméterek ====
 
-	let numDisks = 6;
+	let numDisks = 5;
 	let towers: number[][] = [[], [], []];
 	let initTowers: number[][] = [[], [], []];
 	let initArr = [...towers];
 	let data;
 
 	function initializeTowers() {
+		if (numDisks < 0) {
+			numDisks = 0;
+		} else if (numDisks > 9) {
+			numDisks = 9;
+		}
 		towers = [[], [], []];
 		for (let i = numDisks; i >= 1; i--) {
 			towers[0].push(i);
@@ -40,16 +46,10 @@
 		initTowers = towers.map((t) => [...t]);
 	}
 
-	function getDiskColor(disk: number): string {
-		const colors = ['#a3e4db', '#6ddccf', '#3ec6c1', '#2a9caa', '#197889', '#10505f'];
-		return colors[disk - 1] || '#0b3c47';
-	}
-
-	initializeTowers();
-
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalSteps.set(Math.pow(2, numDisks) - 1);
+		initializeTowers();
 	});
 
 	// ==== Késleltetés és vezérlés ====
@@ -78,7 +78,6 @@
 					currentStep.set(0);
 					data = [...initArr];
 					activeLine.set(-1);
-
 					unsub();
 					resolve();
 				}
@@ -116,15 +115,15 @@
 	async function hanoi(n: number, from: number, to: number, aux: number) {
 		if (n === 0) return;
 
-		activeLine.set(3);
+		activeLine.set(2);
 		await delay(600 - get(speed) * 8);
 		await hanoi(n - 1, from, aux, to);
 
-		activeLine.set(4);
+		activeLine.set(3);
 		await delay(600 - get(speed) * 8);
 		await moveDisk(from, to);
 
-		activeLine.set(5);
+		activeLine.set(4);
 		await delay(600 - get(speed) * 8);
 		await hanoi(n - 1, aux, to, from);
 	}
@@ -146,17 +145,17 @@
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
 `function hanoi(n, from, to, aux) {
-   if (n === 0) return;
-   hanoi(n - 1, from, aux, to);
-   moveDisk(from, to);
-   hanoi(n - 1, aux, to, from);
+  if (n === 0) return;
+  hanoi(n - 1, from, aux, to);
+  moveDisk(from, to);
+  hanoi(n - 1, aux, to, from);
 }
 function moveDisk(from, to) {
-   let disk = towers[from].pop();
-   if (disk !== undefined) {
-      towers[to].push(disk);
-      towers = towers.map((t) => [...t]); 
-   }
+  let disk = towers[from].pop();
+  if (disk !== undefined) {
+    towers[to].push(disk);
+    towers = towers.map((t) => [...t]); 
+  }
 }`);
 </script>
 
@@ -168,7 +167,7 @@ function moveDisk(from, to) {
 		type="number"
 		bind:value={numDisks}
 		min="0"
-		placeholder="Adj meg egy számot"
+		max="9"
 	/>
 </div>
 

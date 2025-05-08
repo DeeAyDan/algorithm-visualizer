@@ -242,8 +242,8 @@ function union(parent, rank, x, y) {
 		{/each}
 		<!-- Csúcsok -->
 		{#each nodes as { id, x, y }}
-			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
-			<text x={x} y={y + 5} text-anchor="middle" fill="black" font-size="12"
+			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="aliceblue" stroke-width="2"/>
+			<text x={x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12"
 				>{id}</text
 			>
 		{/each}

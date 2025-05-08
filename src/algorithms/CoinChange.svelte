@@ -34,12 +34,12 @@
 	let showDeleteList = false;
 
 	function openInsertForm() {
-		showInsertForm = true;
+		showInsertForm = !showInsertForm;
 		showDeleteList = false;
 	}
 
 	function openDeleteList() {
-		showDeleteList = true;
+		showDeleteList = !showDeleteList;
 		showInsertForm = false;
 	}
 
@@ -195,31 +195,31 @@
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
 		`function coinExchange(amount, coins) {
-   lastCoinTable = Array(amount + 1).fill(-1);
-   let dp = Array(amount + 1).fill(Infinity);
-   let lastCoin = Array(amount + 1).fill(-1);
-   dp[0] = 0;
-      for (let i = 1; i <= amount; i++) {
-         for (let coin of coins) {
-            if (i - coin >= 0 && dp[i - coin] + 1 < dp[i]) {
-               dp[i] = dp[i - coin] + 1;
-               lastCoin[i] = coin;
-            }
-         }
-            dpTable = [...dpTable, { index: i, value: dp[i], coin: lastCoin[i] }];
+  lastCoinTable = Array(amount + 1).fill(-1);
+  let dp = Array(amount + 1).fill(Infinity);
+  let lastCoin = Array(amount + 1).fill(-1);
+  dp[0] = 0;
+    for (let i = 1; i <= amount; i++) {
+      for (let coin of coins) {
+        if (i - coin >= 0 && dp[i - coin] + 1 < dp[i]) {
+          dp[i] = dp[i - coin] + 1;
+          lastCoin[i] = coin;
+        }
       }
+      dpTable = [...dpTable, { index: i, value: dp[i], coin: lastCoin[i] }];
+    }
 
-      usedCoins = [];
-      let current = amount;
-      while (current > 0) {
-         let coin = lastCoin[current];
-         if (coin === -1) {
-            break;
-         }
-         usedCoins.push(coin);
-         current -= coin;
-      }
-   }`
+  usedCoins = [];
+  let current = amount;
+  while (current > 0) {
+    let coin = lastCoin[current];
+    if (coin === -1) {
+      break;
+    }
+    usedCoins.push(coin);
+    current -= coin;
+  }
+}`
 	);
 </script>
 

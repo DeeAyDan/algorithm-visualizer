@@ -114,9 +114,7 @@
 
 				solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
 
-				log(
-					`Megoldás [${i},${j}] = ${matrix[i][j]} + max(${fromTop}, ${fromLeft}) = ${solutionMatrix[i][j]} (${chosenFrom})`
-				);
+				log(`Megoldás [${i},${j}] = ${solutionMatrix[i][j]}`);
 				activeLine.set(13);
 				await pauseIfNeeded();
 				await delay(300 - get(speed) * 8);
@@ -170,21 +168,21 @@
 	// ==== Forráskód beállítás ====
 	selectedAlgorithmSourceCode.set(
 		`function maxSumPath() {
-   for (let i = 0; i < size; i++) {
-      for (let j = 0; j < size; j++) {
-         let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
-         let fromLeft = j > 0 ? solutionMatrix[i][j - 1] : 0;
-         let chosenFrom = '';
-         if (fromTop > fromLeft) {
-            chosenFrom = 'fentről';
-         } else if (fromLeft > fromTop) {
-            chosenFrom = 'balról';
-         } else {
-            chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
-    	 }
-         solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
-      }
-   }
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
+      let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
+      let fromLeft = j > 0 ? solutionMatrix[i][j - 1] : 0;
+      let chosenFrom = '';
+      if (fromTop > fromLeft) {
+        chosenFrom = 'fentről';
+      } else if (fromLeft > fromTop) {
+        chosenFrom = 'balról';
+      } else {
+        chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
+ 	 }
+      solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
+    }
+  }
 }`
 	);
 </script>

@@ -23,6 +23,8 @@
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 	activeLine.set(-1);
+	let selectedItem = null;
+	let removedAmountFromSelectedItem = 0;
 
 	let items = [
 		{ name: 'Tárgy 1', value: 10, weight: 5, color: getRandomColor(), ratio: 2 },
@@ -67,12 +69,12 @@
 	let selectedItemIndex = null;
 
 	function openInsertForm() {
-		showInsertForm = true;
+		showInsertForm = !showInsertForm;
 		showDeleteList = false;
 	}
 
 	function openDeleteList() {
-		showDeleteList = true;
+		showDeleteList = !showDeleteList;
 		showInsertForm = false;
 	}
 
@@ -106,6 +108,12 @@
 			newItemValue = 0;
 			newItemWeight = 0;
 			showInsertForm = false;
+			totalSteps.set(
+			Math.min(
+				sackSize,
+				items.reduce((acc, item) => acc + item.weight, 0)
+			)
+		);
 		}
 	}
 
@@ -116,8 +124,12 @@
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		totalSteps.set(0);
-	});
+		totalSteps.set(
+			Math.min(
+				sackSize,
+				items.reduce((acc, item) => acc + item.weight, 0)
+			)
+		);	});
 
 	// ==== Késleltetés és vezérlés ====
 	function log(message: string) {
@@ -146,6 +158,11 @@
 					sack = Array(sackSize).fill(null);
 					sackValue = 0;
 
+					items.forEach((item) => {
+						item.color = getRandomColor();
+					});
+					items = [...items];
+
 					unsub();
 					resolve();
 				}
@@ -170,7 +187,6 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await knapSack();
-		sackValue = sackValue.toFixed(2);
 		activeLine.set(-1);
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
@@ -188,30 +204,28 @@
 			ratio: item.value / item.weight
 		}));
 
-		totalSteps.set(
-			Math.min(
-				sackSize,
-				items.reduce((acc, item) => acc + item.weight, 0)
-			)
-		);
+
 
 		let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
 
 		for (let item of sortedItems) {
 			let canTake = Math.min(item.weight, sackSize - sackFilled);
 			let filledWeight = 0;
+			selectedItem = item;
+			removedAmountFromSelectedItem = 0;
 
 			activeLine.set(12);
 			await pauseIfNeeded();
-			await delay(1500 - get(speed) * 8);
+			await delay(900 - get(speed) * 8);
 			for (let i = 0; i < sack.length && canTake > 0; i++) {
 				if (sack[i] === null) {
-					sack[i] = item;
+					sack[i] = { ...item };
 					canTake--;
 					filledWeight++;
+					removedAmountFromSelectedItem++;
 
 					let percentFilled = (filledWeight / item.weight) * 100;
-					sackValue += item.value * (percentFilled / 100);
+					sackValue += item.value / item.weight;
 
 					activeLine.set(19);
 					await pauseIfNeeded();
@@ -219,6 +233,7 @@
 					log(`Hozzáadva: ${item.name} (${percentFilled.toFixed(1)}%)`);
 				}
 			}
+			item.color = `#484848`;
 
 			let fraction = filledWeight / item.weight;
 			consoleLog.update((logs) => [
@@ -229,6 +244,7 @@
 			if (sackFilled >= sackSize) break;
 			sackFilled = sack.filter((x) => x !== null).length;
 		}
+		selectedItem = null;
 	}
 
 	// ==== Forráskód megjelenítés ====
@@ -274,11 +290,11 @@
 			<button on:click={openInsertForm}>Beszúrás</button>
 			{#if showInsertForm}
 				<div class="dropdown insert-dropdown">
-					<input placeholder="Tárgy neve" bind:value={newItemName} />
+					<input placeholder="Tárgy neve" maxlength="12" bind:value={newItemName} />
 					<div>Tárgy értéke</div>
-					<input type="number" placeholder="Érték" bind:value={newItemValue} />
+					<input type="number" placeholder="Érték" max="1000" bind:value={newItemValue} />
 					<div>Tárgy súlya</div>
-					<input type="number" placeholder="Súly" bind:value={newItemWeight} />
+					<input type="number" placeholder="Súly" max="24" bind:value={newItemWeight} />
 					<button on:click={insertNewItem}>Hozzáadás</button>
 				</div>
 			{/if}
@@ -305,29 +321,43 @@
 	<div class="tag">Vászon</div>
 	<div class="sack-visual">
 		<div class="sack-container">
-			<div>Táska mérete</div>
+			<div class="sack-text">Táska mérete</div>
 			<div class="sack">
-				{#each sack as item}
-					<div class="sack-space" style="background-color: {item ? item.color : 'white'};"></div>
+				{#each sack as cell, i}
+					<div
+						class="sack-space {cell ? 'filled' : ''}"
+						style="background-color: {cell
+							? cell.color
+							: 'white'}; transition: background-color 0.4s ease;"
+					></div>
 				{/each}
 			</div>
 
-			<div>Táska értéke</div>
-			<div class="sack-value">
-				{sackValue}
+			<div class="sack-text">Táska értéke</div>
+			<div class="sack-text sack-value-text">
+				{sackValue.toFixed(2)}
 			</div>
 		</div>
 		<div class="items-container">
 			<div>Tárgyak</div>
 			<div class="item-cards">
 				{#each items as item}
-					<div class="item">
+					<div
+						class="item {selectedItem === item ? 'active' : ''}"
+						style=" border: {item === selectedItem ? '3px solid #ffd700' : '3px solid #484848;'};"
+					>
 						<div class="item-name">{item.name}</div>
 						<div class="item-value">Érték: {item.value}</div>
 						<div class="item-weight-text">Súly: {item.weight}</div>
 						<div class="item-weight">
 							{#each Array(item.weight) as _, j}
-								<div class="item-space" style="background-color: {item.color};"></div>
+								<div
+									class="item-space"
+									style="background-color: {item === selectedItem &&
+									removedAmountFromSelectedItem > j
+										? '#484848'
+										: item.color};"
+								></div>
 							{/each}
 						</div>
 						<div class="item-ratio">Arány: {item.ratio.toFixed(2)}</div>
@@ -355,6 +385,11 @@
 		height: 100%;
 		margin: 1rem 1rem 1rem 2rem;
 	}
+	.sack-text {
+		text-align: center;
+		font-weight: bold;
+		margin-bottom: 2px;
+	}
 	.sack-container {
 		display: flex;
 		height: 100%;
@@ -370,16 +405,24 @@
 	}
 	.item-cards {
 		width: 100%;
+		flex-wrap: wrap;
 		display: flex;
 		gap: 5px;
 		margin: 10px;
 	}
+	.item.active {
+		border: 3px solid #222;
+		transform: scale(1.05);
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+		transition: all 0.3s ease;
+	}
 	.item {
+		min-width: 140px;
+		min-height: 140px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		width: 23%;
-		border: 3px solid #484848;
 	}
 	.sack {
 		display: flex;
@@ -394,8 +437,9 @@
 		margin: 5px;
 		display: flex;
 		flex-wrap: wrap;
+		flex: 1;
 		justify-content: center;
-		align-items: center;
+		align-items: flex-start;
 		gap: 2px;
 		width: 50%;
 	}
@@ -404,6 +448,22 @@
 		width: 10px;
 		height: 10px;
 		background-color: white;
+		transition: transform 0.2s;
+	}
+	.sack-space.filled {
+		transform: scale(1.1);
+		animation: pop 0.3s ease;
+	}
+	@keyframes pop {
+		0% {
+			transform: scale(0.8);
+		}
+		50% {
+			transform: scale(1.1);
+		}
+		100% {
+			transform: scale(1);
+		}
 	}
 	.insert-dropdown {
 		align-items: center;

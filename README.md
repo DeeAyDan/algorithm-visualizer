@@ -11,11 +11,9 @@
 
 ## General TODO
     - Maradék algoritmusok megvalósítása
-	- timer válotozó külön kiszedése
 	- fa algoritmusnál start gomb kivétele
     - Hunglish javítása
     - Source Code implementálása eval-al
-	- tagek kivétele
 	- recolor app
 	- avl fa source code
 	- left side scrollable

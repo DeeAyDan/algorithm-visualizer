@@ -24,6 +24,6 @@ export const algorithmDisplayNames = {
 	rabinKarp: 'Rabin-Karp algoritmus',
 	redBlackTree: 'Piros-Fekete fa',
 	towersOfHanoi: 'Hanoi tornyai',
-	travelingProblem: 'Utazás probléma',
+	travelingProblem: 'Utazás probléma (Mohó)',
 	twoThreeTree: '2-3 fa'
 };
