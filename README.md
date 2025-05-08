@@ -17,6 +17,8 @@
     - Source Code implementálása eval-al
 	- tagek kivétele
 	- recolor app
+	- avl fa source code
+	- left side scrollable
 	- limitek hozzáadása az algoritmusok
 	- jarvis step counter
 	- await delay(Math.max(100, 900 - get(speed) * 8));
