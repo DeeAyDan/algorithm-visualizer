@@ -13,9 +13,10 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 
-	let maxDegree = 3; // alapértelmezett
+	let maxDegree = 3;
 	let elementValue: number;
 	let highlightedNode = null;
+	let svgNodes = [];
 
 	let root = createNode();
 
@@ -60,6 +61,9 @@
 		log(`Beszúrás: ${elementValue}`);
 		insert(root, elementValue);
 		elementValue = undefined;
+		
+		svgNodes = [];
+		drawTree(root);
 	}
 
 	function insert(node, key) {
@@ -83,7 +87,7 @@
 		algorithmStatus.set('running');
 
 		log(`Keresés indítása: ${elementValue}`);
-		await bTreeSearch(bTreeRoot, elementValue);
+		await bTreeSearch(root, elementValue);
 
 		log('Keresés vége!');
 		highlightedNode = null;
@@ -153,7 +157,41 @@
 		fullChild.keys = fullChild.keys.slice(0, t - 1);
 		fullChild.children = fullChild.children.slice(0, t);
 		parent.children.splice(index + 1, 0, newNode);
-		parent.keys.splice(index, 0, fullChild.keys[t - 1]);
+		const middleKey = fullChild.keys[t - 1]; // ezt előbb mentsd ki
+
+		fullChild.keys = fullChild.keys.slice(0, t - 1);
+		fullChild.children = fullChild.children.slice(0, t);
+
+		parent.children.splice(index + 1, 0, newNode);
+		parent.keys.splice(index, 0, middleKey); // most jó helyre kerül
+	}
+
+	function drawTree(node, depth = 0, xOffset = { value: 0 }) {
+		if (!node) return;
+
+		const NODE_WIDTH = 40;
+		const NODE_SPACING = 20;
+		const LEVEL_HEIGHT = 80;
+
+		let x = 0;
+
+		if (node.isLeaf) {
+			x = xOffset.value;
+			xOffset.value += node.keys.length * NODE_WIDTH + NODE_SPACING;
+		} else {
+			// Rajzoljuk le előbb a gyerekeket, hogy kiszámolhassuk az x pozíciót
+			for (let child of node.children) {
+				drawTree(child, depth + 1, xOffset);
+			}
+			const firstChild = node.children[0];
+			const lastChild = node.children[node.children.length - 1];
+			x = (firstChild.x + lastChild.x) / 2;
+		}
+
+		node.x = x;
+		node.y = depth * LEVEL_HEIGHT;
+
+		svgNodes.push({ node });
 	}
 </script>
 
@@ -190,13 +228,47 @@
 </div>
 
 <!-- Fa vizualizáció (egyszerű placeholder) -->
-<div class="tag">B-fa</div>
-<svg width="600" height="300" style="background: #fff; border: 1px solid #ccc;">
+<div class="tag">Vászon</div>
+<svg class="svg" width="500" height="300">
 	{#if root}
-		{#each root.keys as key, i}
-			<circle cx={100 + i * 50} cy={50} r="18" fill="lightblue" />
-			<text x={100 + i * 50} y={55} text-anchor="middle" fill="black">{key}</text>
-		{/each}
+		{#if root}
+			{#each svgNodes as { node }}
+				<!-- Rajzold meg az éleket a gyerekekhez -->
+				{#if !node.isLeaf}
+					{#each node.children as child}
+						<line
+							x1={node.x}
+							y1={node.y + 10}
+							x2={child.x}
+							y2={child.y - 10}
+							stroke="white"
+							stroke-width="2"
+						/>
+					{/each}
+				{/if}
+
+				<!-- Rajzold meg a csomópont kulcsait -->
+				{#each node.keys as key, i}
+					<rect
+						x={node.x + i * 20 - node.keys.length * 10}
+						y={node.y}
+						width="20"
+						height="20"
+						fill="lightblue"
+						rx="5"
+					/>
+					<text
+						x={node.x + i * 20 - node.keys.length * 10 + 10}
+						y={node.y + 15}
+						text-anchor="middle"
+						fill="black"
+						font-size="12"
+					>
+						{key}
+					</text>
+				{/each}
+			{/each}
+		{/if}
 	{/if}
 </svg>
 
@@ -209,27 +281,38 @@
 	}
 	.control-buttons {
 		display: flex;
-		gap: 1rem;
+		justify-content: space-around;
 		align-items: center;
-		margin: 1rem 0;
+		padding: 1rem;
+		border-bottom: 3px solid #505050;
 	}
-	input.custom-input {
-		width: 120px;
+	.control-buttons .custom-input {
+		width: 150px;
 		padding: 0.5rem;
-		border-radius: 4px;
-		border: 2px solid #555;
-		background: #2e2e2e;
+		margin-right: 10px;
+		border-radius: 5px;
+		background-color: #2f2f2f;
+		border: 3px solid #505050;
 		color: white;
 	}
-	button {
+
+	.control-buttons button {
+		padding: 0.5rem 1rem;
 		background-color: #505050;
 		color: white;
-		padding: 0.5rem 1rem;
 		border: none;
-		border-radius: 4px;
+		border-radius: 5px;
 		cursor: pointer;
 	}
-	button:hover {
+
+	.control-buttons button:hover {
 		background-color: #45a049;
+	}
+	.svg {
+		margin: 1rem auto;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		display: block;
+		background-color: #2f2f2f;
 	}
 </style>
