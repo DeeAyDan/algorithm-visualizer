@@ -37,7 +37,7 @@
 	const startX = 250;
 	const startY = 25;
 	const levelGapY = 80;
-	const offsetX = 240;
+	const offsetX = 500;
 
 	onMount(() => {
 		totalSteps.set(0);
@@ -82,7 +82,7 @@
 
 	function calculatePositions(node: TreeNode | null, depth = 0, index = 0, parentX = startX): void {
 		if (!node) return;
-		node.x = parentX + (index * offsetX) / Math.pow(1.5, depth + 1);
+		node.x = parentX + (index * offsetX) / Math.pow(2, depth + 1);
 		node.y = startY + depth * levelGapY;
 		calculatePositions(node.left, depth + 1, -1, node.x);
 		calculatePositions(node.right, depth + 1, 1, node.x);
@@ -123,10 +123,12 @@
 		);
 
 		const insert = async (node: TreeNode | null, value: number, depth = 0): Promise<TreeNode> => {
-			if (depth > 4) {
+			if (depth > 3) {
 				activeLine.set(5);
 				log('A fa mélysége nem lehet nagyobb, mint 4.');
-				return node || { value, x: 0, y: 0 };
+				await pauseIfNeeded();
+				await delay(900 - get(speed) * 8);
+				return null;
 			}
 
 			await pauseIfNeeded();
@@ -219,7 +221,6 @@
 		};
 
 		await search(tree, elementValue);
-		highlightedNode = null;
 		activeLine.set(-1);
 		algorithmStatus.set('idle');
 	}
