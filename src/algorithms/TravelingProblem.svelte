@@ -123,6 +123,8 @@
 					tspEdges = [...tspEdges];
 					weight = [];
 					weight = [...weight];
+					cities = [];
+					totalSteps.set(0);
 					currentCityIndex = null;
 					nextCityIndex = null;
 					unsub();
@@ -175,6 +177,8 @@
 				await delay(900 - get(speed) * 8);
 				if (!visited.has(i)) {
 					checkingEdge = { from: current, to: i };
+					currentCityIndex = current;
+					nextCityIndex = i;
 					log(`Távolság ellenőrzés: ${current} → ${i}`);
 					await pauseIfNeeded();
 					await delay(900 - get(speed) * 8);
@@ -190,8 +194,6 @@
 			}
 
 			if (nearest !== null) {
-				currentCityIndex = current;
-				nextCityIndex = nearest;
 
 				activeLine.set(26);
 				log(`Lépés: ${current} → ${nearest}, távolság: ${minDist.toFixed(2)}`);
