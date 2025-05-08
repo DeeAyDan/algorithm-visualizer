@@ -1,6 +1,10 @@
 <script lang="ts">
 	// @ts-nocheck
-	import { selectedAlgorithmSourceCode, selectedAlgorithm, activeLine } from '../stores/store.svelte';
+	import {
+		selectedAlgorithmSourceCode,
+		selectedAlgorithm,
+		activeLine
+	} from '../stores/store.svelte';
 	import { algorithmDisplayNames } from '../stores/algorithmMap';
 
 	$: formattedAlgorithmName = algorithmDisplayNames[$selectedAlgorithm];
@@ -12,8 +16,8 @@
 	<div class="source-code">
 		<code>
 			{#each codeLines as line, i}
-			<div class="{ i === $activeLine ? 'active-line' : ''}">{i}  {line}</div>
-		{/each}
+				<div class={i === $activeLine ? 'active-line' : ''}>{line}</div>
+			{/each}
 		</code>
 	</div>
 </div>
@@ -22,7 +26,6 @@
 	.source-container {
 		width: 100%;
 		background-color: #484848;
-		
 	}
 	.tag {
 		display: inline-block;
@@ -32,10 +35,10 @@
 		padding: 3px;
 		font-size: px;
 	}
-	.source-code{
+	.source-code {
 		padding: 10px;
-		}
-	code div{
+	}
+	code div {
 		white-space: pre-wrap;
 		font-size: 70%;
 	}
