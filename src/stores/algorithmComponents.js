@@ -54,6 +54,5 @@ export const algorithmComponents = {
     redBlackTree: RedBlackTree,
     towersOfHanoi: TowersOfHanoi,
     travelingProblem: TravelingProblem,
-    twoThreeFourTree: TwoThreeFourTree,
     twoThreeTree: TwoThreeTree,
   };
