@@ -244,52 +244,52 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-`function mergeSort(array, startIndex = 0){
+`function mergeSort(array, startIndex = 0) {
  \n
-   if (array.length < 2){
-      return;
-   }
+  if (array.length < 2){
+    return;
+  }
 	   \n
-   const middle = Math.floor(array.length / 2);
-   const left = array.slice(0, middle);
-   const right = array.slice(middle);
+  const middle = Math.floor(array.length / 2);
+  const left = array.slice(0, middle);
+  const right = array.slice(middle);
  \n
-   mergeSort(left, startIndex);
-   mergeSort(right, startIndex + middle);
+  mergeSort(left, startIndex);
+  mergeSort(right, startIndex + middle);
  \n
-   merge(left, right, array, startIndex);
+  merge(left, right, array, startIndex);
 }
  \n
-function merge(left, right, merged, startIndex){
+function merge(left, right, merged, startIndex) {
  \n
-   let i = 0,
-   l = 0,
-   r = 0;
+  let i = 0,
+  l = 0,
+  r = 0;
  \n
-   while (l < left.length && r < right.length){
-      if (left[l] <= right[r]) {
-         merged[i] = left[l++];
-      } else {
-         merged[i] = right[r++];
-      }
-      data[startIndex + i] = merged[i];
-      data = [...data];
-      i++;
-   }
- \n 
-   while (l < left.length) {
+  while (l < left.length && r < right.length) {
+    if (left[l] <= right[r]) {
       merged[i] = left[l++];
-      data[startIndex + i] = merged[i];
-      data = [...data];
-      i++;
-   }
- \n
-   while (r < right.length) {
+    } else {
       merged[i] = right[r++];
-      data[startIndex + i] = merged[i];
-      data = [...data];
-      i++;
-   }
+    }
+    data[startIndex + i] = merged[i];
+    data = [...data];
+    i++;
+  }
+ \n 
+  while (l < left.length) {
+    merged[i] = left[l++];
+    data[startIndex + i] = merged[i];
+    data = [...data];
+    i++;
+  }
+ \n
+  while (r < right.length) {
+    merged[i] = right[r++];
+    data[startIndex + i] = merged[i];
+    data = [...data];
+    i++;
+  }
 }`);
 </script>
 

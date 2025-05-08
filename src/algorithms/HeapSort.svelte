@@ -253,39 +253,39 @@
 
 	selectedAlgorithmSourceCode.set(`
 function heapSort() {
-   const n = nodes.length;
+  const n = nodes.length;
  \n
-   for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-      heapify(n, i);
-   }
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    heapify(n, i);
+  }
  \n
-   for (let i = n - 1; i > 0; i--) {
-      swap(0, i);
-      heapify(i, 0);
-   }
+  for (let i = n - 1; i > 0; i--) {
+    swap(0, i);
+    heapify(i, 0);
+  }
 }
  \n
 function swap(i, j) {
-   [nodes[i], nodes[j]] = [nodes[j], nodes[i]];
+  [nodes[i], nodes[j]] = [nodes[j], nodes[i]];
 }
  \n
 function heapify(n, i) {
-   let largest = i;
-   const l = 2 * i + 1;
-   const r = 2 * i + 2;
+  let largest = i;
+  const l = 2 * i + 1;
+  const r = 2 * i + 2;
  \n
-   if (l < n && nodes[l] > nodes[largest]) {
-      largest = l;
-   }
+  if (l < n && nodes[l] > nodes[largest]) {
+    largest = l;
+  }
  \n 
-   if (r < n && nodes[r] > nodes[largest]) {
-      largest = r;
-   }
+  if (r < n && nodes[r] > nodes[largest]) {
+    largest = r;
+  }
  \n
-   if (largest !== i) {
-      swap(i, largest);
-      heapify(n, largest);
-   }
+  if (largest !== i) {
+    swap(i, largest);
+    heapify(n, largest);
+  }
 }
 `);
 </script>
@@ -328,6 +328,8 @@ function heapify(n, i) {
 					: activeNodes.includes(node.index)
 						? '#ffd700'
 						: '#2f4f4f'}
+				stroke="aliceblue"
+				stroke-width="2"
 			/>
 			<text
 				x={node.x}

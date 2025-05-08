@@ -182,20 +182,20 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-`function insersionSort(array){
+`function insersionSort(array) {
  \n
-   for (let index = 1; index < array.length; index++){
+  for (let index = 1; index < array.length; index++){
  \n
-      let temp = array[index];
-      let j = index - 1;
+    let temp = array[index];
+    let j = index - 1;
  \n
-      while (j >= 0 && array[j] > temp){
-         array[j + 1] = array[j];
-         j--;
-      }
+    while (j >= 0 && array[j] > temp){
+      array[j + 1] = array[j];
+      j--;
+    }
  \n
-      array[j + 1] = temp;
-   }
+    array[j + 1] = temp;
+  }
 }`);
 </script>
 
