@@ -24,7 +24,6 @@ import RabinKarp from "../algorithms/Rabin-Karp.svelte";
 import RedBlackTree from "../algorithms/Red-BlackTree.svelte";
 import TowersOfHanoi from "../algorithms/TowersOfHanoi.svelte";
 import TravelingProblem from "../algorithms/TravelingProblem.svelte";
-import TwoThreeFourTree from "../algorithms/Two-Three-FourTree.svelte";
 import TwoThreeTree from "../algorithms/Two-ThreeTree.svelte";
 
 

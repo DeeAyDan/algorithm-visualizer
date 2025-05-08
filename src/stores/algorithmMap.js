@@ -25,6 +25,5 @@ export const algorithmDisplayNames = {
 	redBlackTree: 'Piros-Fekete fa',
 	towersOfHanoi: 'Hanoi tornyai',
 	travelingProblem: 'Utazás probléma',
-	twoThreeFourTree: '2-3-4 fa',
 	twoThreeTree: '2-3 fa'
 };
