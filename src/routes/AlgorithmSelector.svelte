@@ -79,7 +79,7 @@
 		<div class="algorithm-list {algorithmGroups.searchTrees ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('binaryTree')}>Bináris fa</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('avlTree')}>AVL-fa</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('bTree')}>B-fa</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('bTree')}>B-fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('redBlackTree')}>Piros-fekete fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('twoThreeTree')}>2-3 fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('binaryHeap')}>Bináris kupac</button>
