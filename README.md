@@ -19,10 +19,12 @@
 	- recolor app
 	- avl fa source code
 	- left side scrollable
+	- fix b fa visual
 	- limitek hozzáadása az algoritmusok
 	- jarvis step counter
 	- await delay(Math.max(100, 900 - get(speed) * 8));
 	- max 4 depth
+	- fix b fa source code
 	- restart - start work properly
 	- code cleanup
     - Dokumentáció
