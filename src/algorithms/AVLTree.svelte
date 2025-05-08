@@ -31,7 +31,7 @@
 	const startX = 250;
 	const startY = 25;
 	const levelGapY = 80;
-	const offsetX = 240;
+	const offsetX = 500;
 
 	onMount(() => {
 		currentStep.set(0);
@@ -42,16 +42,16 @@
 
 	function log(msg: string) {
 		consoleLog.update((logs) => [...logs, msg]);
-		currentStep.update(n => n + 1);
+		currentStep.update((n) => n + 1);
 	}
 
 	function delay(ms: number) {
-		return new Promise(res => setTimeout(res, ms));
+		return new Promise((res) => setTimeout(res, ms));
 	}
 
 	async function pauseIfNeeded() {
 		if (get(algorithmStatus) === 'paused') {
-			await new Promise(resolve => {
+			await new Promise((resolve) => {
 				const unsub = resumeSignal.subscribe(() => {
 					if (get(algorithmStatus) === 'running') {
 						unsub();
@@ -112,7 +112,8 @@
 		return n;
 	}
 
-	async function insert(node: Node | null, value: number): Promise<Node> {
+	async function insert(node: Node | null, value: number): Promise<Node | null> {
+		
 		if (!node) {
 			log(`Beszúrt érték: ${value}`);
 			await pauseIfNeeded();
@@ -125,9 +126,9 @@
 		await delay(900 - get(speed) * 8);
 
 		if (value < node.value) {
-			node.left = await insert(node.left || null, value);
+			node.left = await insert(node.left, value);
 		} else if (value > node.value) {
-			node.right = await insert(node.right || null, value);
+			node.right = await insert(node.right, value);
 		} else {
 			log('Már létezik ilyen érték!');
 			return node;
@@ -151,27 +152,39 @@
 	}
 
 	async function insertElement() {
+		consoleLog.set([]);
+
 		if (!validateInput()) return;
 		algorithmStatus.set('running');
-		root = await insert(root, elementValue);
+
+		let testRoot = await insert(root, elementValue);
 		highlightedNode = null;
+
+		if (testRoot === null || height(testRoot) > 4) {
+			log('A fa mélysége nem lehet nagyobb, mint 4. Az érték nem került beszúrásra.');
+			algorithmStatus.set('finished');
+			return;
+		}
+
+		root = testRoot;
 		positionTree(root);
 		algorithmStatus.set('finished');
 	}
 
 	function positionTree(node: TreeNode | null, depth = 0, index = 0, parentX = startX): void {
 		if (!node) return;
-		node.x = parentX + (index * offsetX) / Math.pow(1.5, depth + 1);
+		node.x = parentX + (index * offsetX) / Math.pow(2, depth + 1);
 		node.y = startY + depth * levelGapY;
 		positionTree(node.left, depth + 1, -1, node.x);
 		positionTree(node.right, depth + 1, 1, node.x);
 	}
 
 	async function searchElement() {
+		consoleLog.set([]);
+
 		if (!validateInput()) return;
 		algorithmStatus.set('running');
 		await search(root, elementValue);
-		highlightedNode = null;
 		algorithmStatus.set('finished');
 	}
 
@@ -194,6 +207,10 @@
 	}
 
 	async function deleteElement() {
+		consoleLog.set([]);
+
+		selectedAlgorithmSourceCode.set()
+		
 		if (!validateInput()) return;
 		algorithmStatus.set('running');
 		root = await remove(root, elementValue);
@@ -232,7 +249,19 @@
 		return [node, ...flatten(node.left || null), ...flatten(node.right || null)];
 	}
 
-	selectedAlgorithmSourceCode.set('AVL Fa (beszúrás, törlés, keresés)');
+	selectedAlgorithmSourceCode.set(
+		`function insertElement(tree, value) {
+  ...
+}
+\n
+function searchElement(tree, value) {
+  ...
+}
+\n
+function deleteElement(tree, value) {
+  ...
+}`
+	);
 </script>
 
 <div class="control-buttons">
@@ -243,7 +272,7 @@
 </div>
 
 <div class="algorithm-container">
- <div class="tag">Vászon</div>
+	<div class="tag">Vászon</div>
 	<svg class="svg" width="500" height="300">
 		{#if root}
 			{#each flatten(root) as node (node.value)}
@@ -254,7 +283,12 @@
 					<line x1={node.x} y1={node.y} x2={node.right.x} y2={node.right.y} stroke="black" />
 				{/if}
 
-				<circle cx={node.x} cy={node.y} r="18" fill={highlightedNode === node ? 'orange' : 'lightblue'} />
+				<circle
+					cx={node.x}
+					cy={node.y}
+					r="18"
+					fill={highlightedNode === node ? 'orange' : 'lightblue'}
+				/>
 				<text x={node.x} y={node.y + 5} text-anchor="middle" font-size="14" fill="black">
 					{node.value}
 				</text>
