@@ -226,6 +226,7 @@ function crossProduct(a, b, c){
 </script>
 
 <div class="control-buttons">
+	<div>Pontok száma:</div>
 	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Pontok száma" />
 </div>
 
@@ -279,11 +280,14 @@ function crossProduct(a, b, c){
 	}
 	.control-buttons {
 		display: flex;
-		justify-content: space-around;
+		justify-content: center;
+		align-items: center;
+		gap: 10px;
 		padding: 0.5rem;
+		border-bottom: 3px solid #484848;
 	}
 	.control-buttons input {
-		width: 150px;
+		width: 55px;
 		padding: 0.5rem;
 		margin-right: 10px;
 		border-radius: 5px;

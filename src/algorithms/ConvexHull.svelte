@@ -137,6 +137,13 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		hullEdges = [];
+
+		if (elementValue < 3) {
+			elementValue = 3;
+		} else if (elementValue > 20) {
+			elementValue = 20;
+		}
+
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		points = generateRandomPoints(elementValue);
@@ -238,7 +245,8 @@ function convexHull(points) {
 </script>
 
 <div class="control-buttons">
-	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Pontok száma" />
+	<div>Pontok száma:</div>
+	<input class="custom-input" type="number" bind:value={elementValue} max="20" min="3" />
 </div>
 
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
@@ -246,10 +254,7 @@ function convexHull(points) {
 
 <div class="graph-container">
 	<svg class="svg" width="500" height="300">
-		<!-- Összes pont -->
-		{#each points as p}
-			<circle cx={p.x} cy={p.y} r="5" fill="black" />
-		{/each}
+		
 
 		<!-- Aktuálisan vizsgált él -->
 		{#if highlightedEdge}
@@ -258,14 +263,20 @@ function convexHull(points) {
 				y1={highlightedEdge[0].y}
 				x2={highlightedEdge[1].x}
 				y2={highlightedEdge[1].y}
-				stroke="red"
+				stroke="#dc143c"
+				stroke-dasharray="4"
 				stroke-width="2"
 			/>
 		{/if}
 
 		<!-- Konvex burok élek -->
 		{#each hullEdges as [a, b]}
-			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="green" stroke-width="2" />
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#45a049" stroke-width="2" />
+		{/each}
+
+		<!-- Összes pont -->
+		{#each points as p}
+			<circle cx={p.x} cy={p.y} r="8" fill="#2f4f4f" />
 		{/each}
 	</svg>
 </div>
@@ -292,12 +303,15 @@ function convexHull(points) {
 	}
 	.control-buttons {
 		display: flex;
-		justify-content: space-around;
+		justify-content: center;
+		align-items: center;
+		gap: 10px;
 		padding: 0.5rem;
+		border-bottom: #484848 3px solid;
 	}
 
 	.control-buttons input {
-		width: 150px;
+		width: 55px;
 		padding: 0.5rem;
 		margin-right: 10px;
 		border-radius: 5px;

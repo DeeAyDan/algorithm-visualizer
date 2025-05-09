@@ -467,17 +467,18 @@
 	.custom-input {
 		display: flex;
 		flex-direction: row;
-		justify-content: space-between;
+		justify-content: space-around;
 		align-items: center;
 		gap: 10px;
-		padding: 1rem;
+		padding: 0.5rem;
 		border-bottom: 3px solid #505050;
 	}
 	.custom-input input {
 		text-align: center;
-		width: 60px;
-		padding: 5px;
 		font-size: 1rem;
+		width: 55px;
+		padding: 0.5rem;
+		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
 	}

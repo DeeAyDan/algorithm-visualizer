@@ -34,6 +34,7 @@
 	}
 	.console {
 		height: calc(100% - 1.5rem);
+		min-height: 400px;
 		position: relative;
 		overflow: auto;
 	}

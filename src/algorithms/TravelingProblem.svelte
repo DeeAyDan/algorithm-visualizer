@@ -150,6 +150,13 @@
 		currentStep.set(0);
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
+		if (elementValue < 3) {
+			elementValue = 3;
+		}
+		if (elementValue > 20) {
+			elementValue = 20;
+		}
+
 		generateCities(elementValue);
 		totalSteps.set(tspGreedyCounter(cities));
 		await tspGreedy(cities);
@@ -276,7 +283,8 @@
 </script>
 
 <div class="control-buttons">
-	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Pontok száma" />
+	<div>Városok száma:</div>
+	<input class="custom-input" type="number" min="3" max="20" bind:value={elementValue} placeholder="Pontok száma" />
 </div>
 
 <!-- ==== Komponens markup ==== -->
@@ -339,11 +347,14 @@
 	}
 	.control-buttons {
 		display: flex;
-		justify-content: space-around;
+		justify-content: center;
+		align-items: center;
+		gap: 10px;
 		padding: 0.5rem;
+		border-bottom: #484848 3px solid;
 	}
 	.control-buttons input {
-		width: 150px;
+		width: 50px;
 		padding: 0.5rem;
 		margin-right: 10px;
 		border-radius: 5px;

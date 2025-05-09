@@ -157,24 +157,24 @@
 
 	selectedAlgorithmSourceCode.set(`
 function prim(start) {
-   let visited = Array(numVertices).fill(false);
-   let result = [];
+  let visited = Array(numVertices).fill(false);
+  let result = [];
 
-   visited[start] = true;
+  visited[start] = true;
 
-   while (result.length < numVertices - 1) {
-      for (let edge of edges) {
-         let {from, to, weight} = edge;
-         if ((visited[from] && !visited[to]) || 
-             (visited[to] && !visited[from])) {
-            result.push(edge);
-            visited[from] = true;
-            visited[to] = true;
-            break;
-         }
+  while (result.length < numVertices - 1) {
+    for (let edge of edges) {
+      let {from, to, weight} = edge;
+      if ((visited[from] && !visited[to]) || 
+          (visited[to] && !visited[from])) {
+        result.push(edge);
+        visited[from] = true;
+        visited[to] = true;
+        break;
       }
-   }
-   mstEdges = result;
+    }
+  }
+  mstEdges = result;
 }`);
 </script>
 

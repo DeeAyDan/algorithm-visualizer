@@ -162,6 +162,13 @@
 		currentStep.set(0);
 		hullEdges = [];
 		selectedEdges = [];
+
+		if (elementValue < 3) {
+			elementValue = 3;
+		} else if (elementValue > 20) {
+			elementValue = 20;
+		}
+
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		generatePoints(elementValue);
@@ -211,7 +218,7 @@
 
 		activeLine.set(14);
 		log(
-			`🟡 Kezdő él: (${lowest.x.toFixed(2)}, ${lowest.y.toFixed(2)}) → (${sorted[0].x.toFixed(2)}, ${sorted[0].y.toFixed(2)})`
+			`Kezdő él: (${lowest.x.toFixed(2)}, ${lowest.y.toFixed(2)}) → (${sorted[0].x.toFixed(2)}, ${sorted[0].y.toFixed(2)})`
 		);
 		await delay(1000 - get(speed) * 8);
 
@@ -228,7 +235,7 @@
 
 			while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
 				activeLine.set(22);
-				log(`❌ Nem balra fordul → töröljük: (${top.x.toFixed(2)}, ${top.y.toFixed(2)})`);
+				log(`Nem balra fordul → töröljük: (${top.x.toFixed(2)}, ${top.y.toFixed(2)})`);
 				stack.pop();
 				highlightedEdge = null;
 
@@ -246,7 +253,7 @@
 
 			activeLine.set(26);
 			log(
-				`✅ Hozzáadva a burokhoz: (${top.x.toFixed(2)}, ${top.y.toFixed(2)}) → (${current.x.toFixed(2)}, ${current.y.toFixed(2)})`
+				`Hozzáadva a burokhoz: (${top.x.toFixed(2)}, ${top.y.toFixed(2)}) → (${current.x.toFixed(2)}, ${current.y.toFixed(2)})`
 			);
 
 			await pauseIfNeeded();
@@ -261,7 +268,7 @@
 		stackEdges = [...stackEdges];
 		activeLine.set(29);
 		log(
-			`🔚 Záró él: (${last.x.toFixed(2)}, ${last.y.toFixed(2)}) → (${first.x.toFixed(2)}, ${first.y.toFixed(2)})`
+			`Záró él: (${last.x.toFixed(2)}, ${last.y.toFixed(2)}) → (${first.x.toFixed(2)}, ${first.y.toFixed(2)})`
 		);
 
 		await pauseIfNeeded();
@@ -331,7 +338,8 @@ function crossProduct(a: Point, b: Point, c: Point): number {
 </script>
 
 <div class="control-buttons">
-	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Pontok száma" />
+	<div>Pontok száma:</div>
+	<input class="custom-input" type="number" bind:value={elementValue} max="20" min="3" />
 </div>
 
 <div class="algorithm-container">
@@ -391,11 +399,14 @@ function crossProduct(a: Point, b: Point, c: Point): number {
 	}
 	.control-buttons {
 		display: flex;
-		justify-content: space-around;
+		justify-content: center;
+		align-items: center;
+		gap: 10px;
 		padding: 0.5rem;
+		border-bottom:#484848 3px solid;
 	}
 	.control-buttons input {
-		width: 150px;
+		width: 55px;
 		padding: 0.5rem;
 		margin-right: 10px;
 		border-radius: 5px;

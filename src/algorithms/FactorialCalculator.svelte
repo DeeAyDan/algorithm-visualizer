@@ -164,13 +164,14 @@
 		justify-content: center;
 		align-items: center;
 		gap: 10px;
-		padding: 1rem;
+		padding: 0.5rem;
 		border-bottom: 6px solid #505050;
 	}
 	.custom-input input {
-		width: 60px;
-		padding: 5px;
-		font-size: 1rem;
+		width: 55px;
+		padding: 0.5rem;
+		margin-right: 10px;
+		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
 	}

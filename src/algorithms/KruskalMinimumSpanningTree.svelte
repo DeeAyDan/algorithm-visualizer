@@ -171,41 +171,41 @@
 
 	selectedAlgorithmSourceCode.set(
 `function kruskal() {
-   edges.sort((a, b) => a.weight - b.weight);
-   let parent = Array(numVertices)
-                .fill(0).map((_, i) => i);
-   let rank = Array(numVertices).fill(0);
-   let result = [];
+  edges.sort((a, b) => a.weight - b.weight);
+  let parent = Array(numVertices)
+               .fill(0).map((_, i) => i);
+  let rank = Array(numVertices).fill(0);
+  let result = [];
  \n
-   for (let i = 0; i < edges.length; i++) {
-      let { from, to, weight } = edges[i];
-      let x = find(parent, from);
-      let y = find(parent, to);
+  for (let i = 0; i < edges.length; i++) {
+    let { from, to, weight } = edges[i];
+    let x = find(parent, from);
+    let y = find(parent, to);
  \n
-      if (x !== y) {
-         result.push(edges[i]);
-         union(parent, rank, x, y);
-      }
-   }
-   mstEdges = result;
+    if (x !== y) {
+      result.push(edges[i]);
+      union(parent, rank, x, y);
+    }
+  }
+  mstEdges = result;
 }
  \n
 function find(parent, i) {
-   if (parent[i] === i) return i;
-   return find(parent, parent[i]);
+  if (parent[i] === i) return i;
+  return find(parent, parent[i]);
 }
  \n
 function union(parent, rank, x, y) {
-   let xroot = find(parent, x);
-   let yroot = find(parent, y);
-   if (rank[xroot] < rank[yroot]) {
-      parent[xroot] = yroot;
-   } else if (rank[xroot] > rank[yroot]) {
-      parent[yroot] = xroot;
-   } else {
-      parent[yroot] = xroot;
-      rank[xroot]++;
-   }
+  let xroot = find(parent, x);
+  let yroot = find(parent, y);
+  if (rank[xroot] < rank[yroot]) {
+    parent[xroot] = yroot;
+  } else if (rank[xroot] > rank[yroot]) {
+    parent[yroot] = xroot;
+  } else {
+    parent[yroot] = xroot;
+    rank[xroot]++;
+  }
 }`);
 </script>
 

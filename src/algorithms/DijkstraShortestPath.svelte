@@ -239,31 +239,31 @@
 
 	selectedAlgorithmSourceCode.set(`
 function dijkstra(start) {
-   const distances = Array(numVertices)
-                     .fill(Infinity);
-   const visited = Array(numVertices)
-                     .fill(false);
-   distances[start] = 0;
+  const distances = Array(numVertices)
+                    .fill(Infinity);
+  const visited = Array(numVertices)
+                    .fill(false);
+  distances[start] = 0;
  \n
-   while (true) {
-      let minDist = Infinity;
-      let current = -1;
+  while (true) {
+    let minDist = Infinity;
+    let current = -1;
  \n
-   for (let i = 0; i < numVertices; i++) {
+    for (let i = 0; i < numVertices; i++) {
       if (!visited[i] && distances[i] < minDist) {
-         minDist = distances[i];
-         current = j;
+        minDist = distances[i];
+        current = j;
       }
-   }
+    }
  \n
-   if (current === -1) break;
-   visited[current] = true;
+    if (current === -1) break;
+    visited[current] = true;
  \n
-   for (const edge of edges) {
+    for (const edge of edges) {
       const { from, to, weight } = edge;
       let neighbor = -1;
       if (from === current) {
-         neighbor = to;
+        neighbor = to;
       } else if (to === current) {
         neighbor = from;
       } else continue;
@@ -273,12 +273,11 @@ function dijkstra(start) {
       const newDist = distances[current] + weight;
 	\n
       if (newDist < distances[neighbor]) {
-         distances[neighbor] = newDist;
-         }
+        distances[neighbor] = newDist;
+        }
       }
-   }
-}
-`);
+    }
+}`);
 </script>
 
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
@@ -315,10 +314,10 @@ function dijkstra(start) {
 		{/each}
 		<!-- Csúcsok -->
 		{#each nodes as { id, x, y }}
-			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
+			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="aliceblue" stroke-width="2" />
 			<text {x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12">{id}</text>
-			<text {x} y={y + 22} text-anchor="middle" font-size="10" fill="aliceblue">
-				{distances[id] === Infinity ? '∞' : distances[id]}
+			<text {x} y={y + 35} text-anchor="middle" font-size="10" fill="aliceblue">
+				({distances[id] === Infinity ? '∞' : distances[id]})
 			</text>
 		{/each}
 	</svg>

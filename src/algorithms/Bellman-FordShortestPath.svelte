@@ -35,20 +35,20 @@
 
 	let edges = [
 		{ from: 0, to: 1, weight: 6 },
-		{ from: 0, to: 3, weight: 7 },
+		{ from: 0, to: 3, weight: 15 },
 		{ from: 0, to: 4, weight: 2 },
-		{ from: 1, to: 3, weight: 8 },
-		{ from: 1, to: 4, weight: -4 },
-		{ from: 2, to: 1, weight: -2 },
+		{ from: 1, to: 3, weight: 1 },
+		{ from: 1, to: 4, weight: 4 },
+		{ from: 2, to: 1, weight: 2 },
 		{ from: 3, to: 4, weight: 9 },
-		{ from: 4, to: 2, weight: -5 }
+		{ from: 4, to: 2, weight: 5 }
 	];
 
 	function randomizeEdgeWeights() {
 		edges = edges.map(({ from, to }) => ({
 			from,
 			to,
-			weight: Math.floor(Math.random() * 30) - 10 // 1–20 közötti súly
+			weight: Math.floor(Math.random() * 20) + 1
 		}));
 	}
 
@@ -152,6 +152,7 @@
 
 	async function bellmanFord(start: number) {
 		distances = Array(nodes.length).fill(Infinity);
+		const predecessor = Array(nodes.length).fill(null);
 		distances[start] = 0;
 
 		for (let i = 0; i < nodes.length - 1; i++) {
@@ -167,13 +168,22 @@
 				if (distances[from] + weight < distances[to]) {
 					distances[to] = distances[from] + weight;
 					pathEdges.push(highlightedEdge);
+					predecessor[to] = from;
 					activeLine.set(10);
 					log(`Távolság frissítése: ${from} → ${to}, új távolság: ${distances[to]}`);
 					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
 				}
 			}
+			pathEdges = [];
+	for (let i = 0; i < predecessor.length; i++) {
+		if (predecessor[i] !== null) {
+			pathEdges.push({ from: predecessor[i], to: i });
 		}
+	}
+		}
+
+
 
 		for (const { from, to, weight } of edges) {
 			let needToBreak = false;
@@ -214,8 +224,7 @@ async function bellmanFord(start) {
     if (needToBreak) break;
   }
   highlightedEdge = null;
-}
-`);
+}`);
 </script>
 
 <!-- ==== UI ==== -->
@@ -287,11 +296,11 @@ async function bellmanFord(start) {
 
 		<!-- Csúcsok -->
 		{#each nodes as { id, x, y }}
-			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="#2f2f2f" />
-			<text {x} y={y - 5} text-anchor="middle" fill="white" font-size="12">
+			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="aliceblue" stroke-width="2" />
+			<text {x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12">
 				{id}
 			</text>
-			<text {x} y={y + 10} text-anchor="middle" fill="white" font-size="12">
+			<text {x} y={y + 35} text-anchor="middle" fill="aliceblue" font-size="12">
 				({distances[id] === Infinity ? '∞' : distances[id]})
 			</text>
 		{/each}
