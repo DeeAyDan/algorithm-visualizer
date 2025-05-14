@@ -9,40 +9,47 @@
 		speed
 	} from '../stores/store.svelte.js';
 	import { get } from 'svelte/store';
+	import { tweened } from 'svelte/motion';
+	import { cubicOut } from 'svelte/easing';
 
 	const dispatch = createEventDispatcher();
 
-	// Progress bar érték kiszámítása
-	$: progressPercentage = ($currentStep / $totalSteps) * 100 + '%';
+	const progress = tweened(0, {
+	duration: 400,
+	easing: cubicOut
+});
 
-	// ▶️ Start
+
+	// Update tween when currentStep changes
+	$: progress.set($currentStep);
+
+	// Calculate percentage from tweened value
+	$: progressPercentage = ($progress / $totalSteps) * 100 + '%';
+
 	function handleStart() {
 		algorithmStatus.set('running');
 		dispatch('start', { speed });
 	}
 
-	// ⏸️ Pause
 	function handlePause() {
 		algorithmStatus.set('paused');
 	}
 
-	// ▶️ Resume
 	function handleResume() {
 		algorithmStatus.set('running');
 		resumeSignal.update((n) => n + 1);
 	}
 
-	// ▶️ Resume
 	function handleReset() {
 		algorithmStatus.set('idle');
 		resumeSignal.update((n) => n + 1);
 	}
 
-	// Sebesség állítása
 	function handleSpeedChange(newSpeed: number) {
 		speed.set(Number(newSpeed));
 	}
 </script>
+
 
 <div class="controls-bar">
 	<!-- Állapotfüggő gombok -->
@@ -98,11 +105,16 @@
 		height: 2em;
 		align-items: center;
 	}
+	.step-counter {
+		border-radius: 25%;
+	}
 	.progress {
 		height: 1.5em;
 		width: 200px;
 		background-color: #484848;
 		position: relative;
+		font-weight: bold;
+
 	}
 	.progress:before {
 		content: attr(data-label);
@@ -114,7 +126,7 @@
 		right: 0;
 	}
 	.progress .value {
-		background-color: #04aa6d;
+		background-color: #45a049;
 		width: var(--progress-percentage);
 		display: inline-block;
 		height: 100%;
@@ -137,7 +149,7 @@
 		appearance: none;
 		width: 10px;
 		height: 25px;
-		background: #04aa6d;
+		background: #45a049;
 		cursor: pointer;
 	}
 
@@ -146,7 +158,7 @@
 		appearance: none;
 		border-radius: 0;
 		border: none;
-		background: #04aa6d;
+		background: #45a049;
 		width: 10px;
 		height: 25px;
 		cursor: pointer;

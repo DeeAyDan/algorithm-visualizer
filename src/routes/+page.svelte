@@ -6,6 +6,7 @@
 	import Controls from './Controls.svelte';
 	import Canvas from './Canvas.svelte';
 	import ConsoleLog from './ConsoleLog.svelte';
+	import HomePage from './homePage.svelte';
 	import {
 		isOpen,
 		selectedAlgorithm,
@@ -23,11 +24,10 @@
 		<div class="display-container">
 			{#if $selectedAlgorithm}
 				<Canvas />
-				{#if $selectedAlgorithm !== 'hilbertCurves'}
 				<ConsoleLog />
-				{/if}
 			{:else}
-				<div class="tag">Válassz egy algoritmust!</div>
+
+			<HomePage />			  
 			{/if}
 		</div>
 		<div class="left-panel">
@@ -64,7 +64,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: calc(100vh - 35px);
-		overflow-y:scroll;
+		overflow-y: scroll;
 	}
 	.left-panel {
 		padding: 0px;

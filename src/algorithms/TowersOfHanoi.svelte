@@ -16,26 +16,33 @@
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 
-
-	// ==== Alapadatok ====
-
+	// ==== Basic Data ====
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
-	activeLine.set(-1);
+	activeLine.set({start: -1, end: -1});
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
-	// ==== Algoritmus paraméterek ====
-
+	// ==== Algorithm Parameters ====
 	let numDisks = 5;
 	let towers: number[][] = [[], [], []];
 	let initTowers: number[][] = [[], [], []];
-	let initArr = [...towers];
-	let data;
+	let movingDisk = null;
+	let sourcePosition = null;
+	let targetPosition = null;
+	let animationInProgress = false;
+	
+	// Configuration
+	const TOWER_NAMES = ['A', 'B', 'C'];
+	const DISK_COLORS = [
+		'#FF5252', '#FF7F50', '#FFEB3B', 
+		'#66BB6A', '#29B6F6', '#5C6BC0',
+		'#AB47BC', '#EC407A', '#26A69A'
+	];
 
 	function initializeTowers() {
-		if (numDisks < 0) {
-			numDisks = 0;
+		if (numDisks < 1) {
+			numDisks = 1;
 		} else if (numDisks > 9) {
 			numDisks = 9;
 		}
@@ -43,23 +50,25 @@
 		for (let i = numDisks; i >= 1; i--) {
 			towers[0].push(i);
 		}
-		initTowers = towers.map((t) => [...t]);
+		initTowers = JSON.parse(JSON.stringify(towers));
+		totalSteps.set(Math.pow(2, numDisks) - 1);
 	}
 
-	// ==== Előkalkulált lépésszám ====
+	// ==== Initialize on mount ====
 	onMount(() => {
-		totalSteps.set(Math.pow(2, numDisks) - 1);
 		initializeTowers();
 	});
 
-	// ==== Késleltetés és vezérlés ====
+	// ==== Delay and Control Functions ====
 	function log(message: string) {
 		consoleLog.update((logs) => [...logs, message]);
 		currentStep.update((n) => n + 1);
 	}
+	
 	function delay(ms: number) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
+	
 	function waitUntilResume(): Promise<void> {
 		return new Promise((resolve) => {
 			const unsub = resumeSignal.subscribe(() => {
@@ -70,13 +79,13 @@
 			});
 		});
 	}
+	
 	function waitUntilRestart(): Promise<void> {
 		return new Promise((resolve) => {
 			const unsub = resumeSignal.subscribe(() => {
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
 					currentStep.set(0);
-					data = [...initArr];
 					activeLine.set(-1);
 					unsub();
 					resolve();
@@ -84,65 +93,87 @@
 			});
 		});
 	}
+	
 	async function pauseIfNeeded() {
 		if (get(algorithmStatus) === 'paused') {
 			await waitUntilResume();
 		}
 	}
+	
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			await waitUntilRestart();
-			towers = initTowers.map((t) => [...t]);
+			towers = JSON.parse(JSON.stringify(initTowers));
 		}
 	}
 
-	// ==== Hanoi Futás futás ====
+	// ==== Hanoi Algorithm ====
 	async function startAlgorithm(event) {
 		consoleLog.set([]);
 		currentStep.set(0);
 		initializeTowers();
-		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
+		consoleLog.update((logs) => [...logs, `${displayName} algoritmus indítása ${numDisks} koronggal...`]);
 
-		totalSteps.set(Math.pow(2, numDisks) - 1);
 		await hanoi(numDisks, 0, 2, 1);
-		activeLine.set(-1);
+		activeLine.set({start: -1, end: -1});
 
-		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
+		consoleLog.update((logs) => [...logs, 'A futás sikeresen befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
 	async function hanoi(n: number, from: number, to: number, aux: number) {
 		if (n === 0) return;
+		
+		activeLine.set({start: 1, end: 1});
+		await pauseIfNeeded();
+		await delay(300 - get(speed) * 3);
 
-		activeLine.set(2);
-		await delay(600 - get(speed) * 8);
+		activeLine.set({start: 3, end: 3});
+		await pauseIfNeeded();
+		await delay(300 - get(speed) * 3);
 		await hanoi(n - 1, from, aux, to);
 
-		activeLine.set(3);
-		await delay(600 - get(speed) * 8);
+		activeLine.set({start: 4, end: 4});
+		await pauseIfNeeded();
+		await delay(300 - get(speed) * 3);
 		await moveDisk(from, to);
 
-		activeLine.set(4);
-		await delay(600 - get(speed) * 8);
+		activeLine.set({start: 5, end: 5});
+		await pauseIfNeeded();
+		await delay(300 - get(speed) * 3);
 		await hanoi(n - 1, aux, to, from);
 	}
 
 	async function moveDisk(from: number, to: number) {
-		activeLine.set(8);
-		await delay(600 - get(speed) * 8);
+		await pauseIfNeeded();
+		
 		let disk = towers[from].pop();
 		if (disk !== undefined) {
+			// Start animation
+			animationInProgress = true;
+			movingDisk = disk;
+			sourcePosition = from;
+			targetPosition = to;
+			
+			// Wait for animation
+			await delay(500 - get(speed) * 5);
+			
+			// End animation and update state
 			towers[to].push(disk);
-			log(`Lépés: ${disk} korong ${'ABC'[from]} → ${'ABC'[to]}`);
-			towers = towers.map((t) => [...t]);
-			activeLine.set(10);
-			await pauseIfNeeded();
-			await delay(600 - get(speed) * 8);
+			log(`Lépés: ${disk} korong ${TOWER_NAMES[from]} → ${TOWER_NAMES[to]}`);
+			animationInProgress = false;
+			movingDisk = null;
+			
+			// Update the reactive towers array
+			towers = [...towers]; 
+			
+			activeLine.set({start: 9, end: 12});
+			await delay(600 - get(speed) * 6);
 		}
 	}
 
-	// ==== Forráskód megjelenítés ====
+	// ==== Source Code Display ====
 	selectedAlgorithmSourceCode.set(
 `function hanoi(n, from, to, aux) {
   if (n === 0) return;
@@ -150,104 +181,195 @@
   moveDisk(from, to);
   hanoi(n - 1, aux, to, from);
 }
+
 function moveDisk(from, to) {
   let disk = towers[from].pop();
   if (disk !== undefined) {
     towers[to].push(disk);
-    towers = towers.map((t) => [...t]); 
   }
 }`);
+
+	// Helper function to get disk position for animation
+	function getDiskAnimationStyle(disk) {
+		if (!animationInProgress || movingDisk !== disk) return '';
+		
+		const fromTower = sourcePosition;
+		const toTower = targetPosition;
+		const direction = toTower - fromTower;
+		const moveDistance = direction * 33.3; // % of container width
+		
+		return `
+			position: absolute;
+			transform: translateY(-100px) translateX(${moveDistance}%);
+			transition: transform 0.5s ease-out;
+			z-index: 20;
+		`;
+	}
+	
+	// Helper function to determine disk color
+	function getDiskColor(diskSize) {
+		return DISK_COLORS[diskSize - 1] || '#2f4f4f';
+	}
 </script>
 
-<!-- ===== Bemeneti mező a Controls alatt ===== -->
+<!-- ===== Input Controls ===== -->
 <div class="custom-input">
 	<label for="inputNumber">Korongok száma:</label>
 	<input
 		id="inputNumber"
 		type="number"
 		bind:value={numDisks}
-		min="0"
+		min="1"
 		max="9"
+		on:change={() => initializeTowers()}
+		disabled={$algorithmStatus === 'running' || $algorithmStatus === 'paused'}
 	/>
 </div>
 
-<!-- ==== Komponens markup ==== -->
+<!-- ==== Component Markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
+	
 	<div class="tower-visual">
 		{#each towers as tower, towerIndex}
 			<div class="tower">
-				{#each [...tower] as disk}
+				<div class="base-plate"></div>
+				<div class="bar"></div>
+				
+				{#each tower as disk, diskIndex}
 					<div
 						class="disk"
-						style="width: {disk * 20 + 20}px;">
+						style="
+							width: {disk * 20 + 20}px; 
+							background-color: {getDiskColor(disk)};
+							{animationInProgress && movingDisk === disk ? getDiskAnimationStyle(disk) : ''}
+						"
+					>
 						{disk}
 					</div>
 				{/each}
-				<div class="bar"></div>
+				
+				{#if animationInProgress && sourcePosition === towerIndex && movingDisk !== null}
+					<div
+						class="disk moving-disk"
+						style="
+							width: {movingDisk * 20 + 20}px;
+							background-color: {getDiskColor(movingDisk)};
+							{getDiskAnimationStyle(movingDisk)}
+						"
+					>
+						{movingDisk}
+					</div>
+				{/if}
 			</div>
+		{/each}
+	</div>
+	<div class="tower-labels">
+		{#each TOWER_NAMES as name, index}
+			<div class="tower-label">{name} torony</div>
 		{/each}
 	</div>
 </div>
 
-<!-- ==== Stílus ==== -->
+<!-- ==== Styles ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
-
-	.bar {
-		width: 5%;
-		height: 100%;
-		background-color: #888;
-		position: absolute;
+	.algorithm-container {
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 1rem;
 	}
 
 	.tower-visual {
 		display: flex;
 		justify-content: space-around;
 		align-items: flex-end;
-		height: 250px;
-		margin-top: 1rem;
+		height: 300px;
+		position: relative;
 	}
 
 	.tower {
 		display: flex;
 		flex-direction: column-reverse;
 		align-items: center;
-		width: 30%;
+		width: 33.3%;
 		height: 100%;
-		padding-bottom: 10px;
 		position: relative;
 	}
 
-	.disk {
-		height: 20px;
-		background-color: #2f4f4f;
+	.bar {
+		width: 8px;
+		height: 80%;
+		background-color: #888;
+		position: absolute;
+		bottom: 10px;
+		z-index: 1;
 		border-radius: 4px;
+	}
+	
+	.base-plate {
+		width: 80%;
+		height: 10px;
+		background-color: #666;
+		position: absolute;
+		bottom: 0;
+		border-radius: 4px;
+		z-index: 1;
+	}
+
+	.disk {
+		height: 30px;
+		background-color: #2f4f4f;
+		border-radius: 8px;
 		margin-top: 5px;
 		z-index: 10;
-	}
-	.custom-input {
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 10px;
+		color: white;
+		font-weight: bold;
+		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	}
+	
+	.moving-disk {
+		position: absolute;
+		bottom: 0;
+	}
+
+	.custom-input {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 15px;
 		padding: 0.5rem;
 		border-bottom: 3px solid #505050;
 	}
+	
 	.custom-input input {
-		width: 55px;
+		width: 70px;
 		padding: 0.5rem;
-		margin-right: 10px;
 		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
+		color: white;
+		font-size: 1rem;
+		text-align: center;
+	}
+
+	.custom-input input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
+	}
+	
+	.tower-labels {
+		display: flex;
+		width: 100%;
+		justify-content: space-around;
+	}
+	
+	.tower-label {
+		font-weight: bold;
+		font-size: 1.2rem;
 	}
 </style>
