@@ -15,14 +15,15 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
 	// ==== Alapadatok ====
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
+	activeLine.set({ start: -1, end: -1 });
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	activeLine.set({ start: -1, end: -1 }); // Updated to use object format
 
 	let order = 4;
 	let canvas;
@@ -31,35 +32,12 @@
 	let points = [];
 	let totalPointCount = 0;
 
-	// ==== Vizualizációs indexek ====
-
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
 		totalPointCount = Math.pow(4, order);
 		totalSteps.set(totalPointCount);
 		ctx = canvas.getContext('2d');
 	});
-
-	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
 
 	function waitUntilRestart(): Promise<void> {
 		return new Promise((resolve) => {
@@ -69,18 +47,11 @@
 					currentStep.set(0);
 					ctx.clearRect(0, 0, size, size);
 					points = [];
-
 					unsub();
 					resolve();
 				}
 			});
 		});
-	}
-
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
 	}
 
 	async function restartAlgorithm() {
@@ -96,7 +67,7 @@
 		const count = Math.pow(4, order);
 		totalSteps.set(count);
 		await hilbertCurves(count);
-		activeLine.set({ start: -1, end: -1 }); // Reset line highlight when done
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -105,18 +76,18 @@
 
 	async function hilbertCurves(count) {
 		for (let i = 0; i < count; i++) {
-			activeLine.set({ start: 16, end: 18 }); // Highlight the loop iteration
-			await delay(130 - get(speed) * 8);
+			activeLine.set({ start: 3, end: 16 }); // Highlight the loop iteration
+			await delay(300 - get(speed) * 8);
 			const p = await getHilbertPoint(i, order);
 			points.push(p);
 
 			if (i > 0) {
-				activeLine.set({ start: 19, end: 24 }); // Highlight drawing section
+				activeLine.set({ start: 7, end: 14 }); // Highlight drawing section
 				ctx.strokeStyle = `hsl(${(i / count) * 360}, 100%, 50%)`;
 				ctx.beginPath();
 				ctx.moveTo(points[i - 1].x, points[i - 1].y);
 				ctx.lineTo(p.x, p.y);
-				await delay(130 - get(speed) * 8);
+				await delay(300 - get(speed) * 8);
 				ctx.stroke();
 			}
 
@@ -126,7 +97,7 @@
 	}
 
 	async function getHilbertPoint(index: number, order: number) {
-		activeLine.set({ start: 37, end: 40 }); // Highlight function initialization
+		activeLine.set({ start: 19, end: 19 }); // Highlight function initialization
 		let v = { x: 0, y: 0 };
 		let n = Math.pow(2, order);
 		let tmp,
@@ -135,29 +106,34 @@
 			s,
 			t = index;
 
-		await delay(130 - get(speed) * 8);
+		await delay(300 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		for (s = 1; s < n; s *= 2) {
-			activeLine.set({ start: 41, end: 43 }); // Highlight calculation of rx, ry
+			activeLine.set({ start: 25, end: 26 }); // Highlight calculation of rx, ry
 			rx = 1 & (t >> 1);
 			ry = 1 & (t ^ rx);
 
-			await delay(130 - get(speed) * 8);
+			await delay(300 - get(speed) * 8);
+			await pauseIfNeeded();
 
-			activeLine.set({ start: 44, end: 44 }); // Highlight rotation
+			activeLine.set({ start: 28, end: 29 }); // Highlight rotation
 			tmp = rotate(rx, ry, v.x, v.y, s);
+			await delay(300 - get(speed) * 8);
+			await pauseIfNeeded();
 
-			activeLine.set({ start: 45, end: 48 }); // Highlight coordinate updates
+			activeLine.set({ start: 31, end: 37 }); // Highlight coordinate updates
 			v.x = tmp.x;
 			v.y = tmp.y;
 			v.x += s * rx;
 			v.y += s * ry;
 			t >>= 2;
 
-			await delay(130 - get(speed) * 8);
+			await delay(300 - get(speed) * 8);
+			await pauseIfNeeded();
 		}
 
-		activeLine.set({ start: 51, end: 54 }); // Highlight return
+		activeLine.set({ start: 39, end: 42 }); // Highlight return
 		return {
 			x: (v.x + 0.5) * (size / n),
 			y: (v.y + 0.5) * (size / n)
@@ -165,7 +141,7 @@
 	}
 
 	function rotate(rx, ry, x, y, s) {
-		activeLine.set({ start: 57, end: 65 }); // Highlight rotation function
+		activeLine.set({ start: 45, end: 57 }); // Highlight rotation function
 		if (ry === 0) {
 			if (rx === 1) {
 				x = s - 1 - x;
@@ -184,6 +160,7 @@
     const p = getHilbertPoint(i, order);
     points.push(p);
 
+    //rajzolás
     if (i > 0) {
       ctx.strokeStyle = \`hsl($\{(i / count) * 360}, 100%, 50%)\`;
       ctx.beginPath();
@@ -203,7 +180,11 @@ function getHilbertPoint(index, order) {
   for (s = 1; s < n; s *= 2) {
     rx = 1 & (t >> 1);
     ry = 1 & (t ^ rx);
+
+    //forgatás
     tmp = rotate(rx, ry, v.x, v.y, s);
+
+    //koordináták frissítése
     v.x = tmp.x;
     v.y = tmp.y;
     v.x += s * rx;
@@ -216,7 +197,8 @@ function getHilbertPoint(index, order) {
       y: (v.y + 0.5) * (size / n)
     };
   }
- 
+
+//forgatás
 function rotate(rx, ry, x, y, s) {
 
   if (ry === 0) {
@@ -240,7 +222,7 @@ function rotate(rx, ry, x, y, s) {
 		type="number"
 		min="1"
 		max="8"
-		disabled={$algorithmStatus === 'running' || $algorithmStatus === 'paused'}
+		disabled={$algorithmStatus !== 'idle'}
 		bind:value={order}
 	/>
 </div>

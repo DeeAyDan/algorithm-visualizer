@@ -15,7 +15,9 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Adattömb randomizálása ====
 	function shuffle(array) {
@@ -26,18 +28,15 @@
 
 			[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
 		}
+		return array; // Return the shuffled array
 	}
 
 	// ==== Alapadatok ====
 	let data = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	shuffle(data);
 	let initArr = [...data];
+	let countArray = [...data];
 	let maxValue = Math.max(...data);
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	activeLine.set(-1);
 
 
 	// ==== Vizualizációs indexek ====
@@ -47,8 +46,30 @@
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		totalSteps.set(countInsersionSortSteps(data));
+		countArray = [...data];
+		totalSteps.set(countInsersionSortSteps(initArr));
+		resetParameters();
 	});
+
+	function reshuffleData() {
+		// Create a new array, shuffle it, and assign it to data
+		let shuffledData = shuffle([...initArr]);
+		data = [...shuffledData];
+		initArr = [...data];
+		countArray = [...data];
+		totalSteps.set(countInsersionSortSteps(countArray));
+		resetParameters();
+		consoleLog.update((logs) => [...logs, 'Adatok újrakeverve!']);
+	}
+
+	function resetParameters() {
+		currentStep.set(0);
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		data = [...initArr];
+	}
 
     function countInsersionSortSteps(){
         let steps = 0;
@@ -75,45 +96,17 @@
     }
 
 	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					data = [...initArr];
-
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+			const unsub = resumeSignal.subscribe(() => {
+				if (get(algorithmStatus) === 'idle') {
+					resetParameters();
+					unsub();
+					resolve();
+				}
+			});
+		});
 		}
 	}
 
@@ -124,7 +117,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await insersionSort(data);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
@@ -142,9 +135,9 @@
             insertedIndex = null;
 
             log(`Elem kivétele: ${temp}`)
-			activeLine.set(6)
-            await pauseIfNeeded();
+			activeLine.set({ start: 5, end: 6 });
             await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 
             let j = index - 1;
 
@@ -155,9 +148,9 @@
                 swapIndices = [j + 1, j];
 
                 log(`Mozgatás: ${array[j]} < - > ${temp}`);
-				activeLine.set(11)
-                await pauseIfNeeded();
-                await delay(900 - get(speed) * 8);
+				activeLine.set({ start: 9, end: 10 });
+				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 
                 j--;
             }
@@ -169,9 +162,9 @@
             insertedIndex = j + 1;
 
             log(`Elem visszaillesztése: ${temp}`)
-			activeLine.set(16)
-            await pauseIfNeeded();
+			activeLine.set({ start: 13, end: 13 });
             await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 
         }
 
@@ -183,26 +176,29 @@
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
 `function insersionSort(array) {
- \n
+ 
   for (let index = 1; index < array.length; index++){
- \n
+ 
     let temp = array[index];
     let j = index - 1;
- \n
+ 
     while (j >= 0 && array[j] > temp){
       array[j + 1] = array[j];
       j--;
     }
- \n
+ 
     array[j + 1] = temp;
   }
 }`);
 </script>
 
 <!-- ==== Komponens markup ==== -->
+<div class="custom-buttons button-group">
+	<button disabled={$algorithmStatus !== 'idle'} on:click={reshuffleData}>Keverés</button>
+</div>
+
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		{#each data as num, index}
 			<div
@@ -223,14 +219,6 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.array-visual {
 		display: flex;
 		gap: 4px;
@@ -257,5 +245,27 @@
 	.bar.swap {
 		background-color: limegreen;
 		color: black;
+	}
+	.button-group {
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem;
+		border-bottom: 3px solid #484848;
+	}
+	.custom-buttons button {
+		padding: 0.5rem 1rem;
+		background-color: #444;
+		color: aliceblue;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+	.custom-buttons button:hover {
+		background-color: #5cb85c;
+	}
+	.custom-buttons button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>

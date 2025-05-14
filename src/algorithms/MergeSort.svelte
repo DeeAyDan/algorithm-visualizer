@@ -15,6 +15,9 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Adattömb randomizálása ====
 	function shuffle(array) {
@@ -25,18 +28,16 @@
 
 			[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
 		}
+		return array;
 	}
 
 	// ==== Alapadatok ====
 	let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	shuffle(data);
+
 	let initArr = [...data];
 	let maxValue = Math.max(...data);
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	activeLine.set(-1);
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
+	let countArray = [...data];
 
 	// ==== Vizualizációs indexek ====
 	let activeIndices: number[] = [];
@@ -44,9 +45,29 @@
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		let countArray = [...data];
+		countArray = [...data];
 		totalSteps.set(countMergeSortSteps(countArray));
+		resetParameters();
 	});
+
+	function resetParameters() {
+		currentStep.set(0);
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		data = [...initArr];
+	}
+
+	// ==== Keverés funkció ====
+	function reshuffleData() {
+		data = shuffle([...data]);
+		initArr = [...data];
+		countArray = [...data];
+		totalSteps.set(countMergeSortSteps(countArray));
+		resetParameters();
+		consoleLog.update((logs) => [...logs, 'Adatok újrakeverve!']);
+	}
 
 	function countMergeSortSteps(array) {
 		let steps = 0;
@@ -114,45 +135,17 @@
 	}
 
 	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					data = [...initArr];
-
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -163,7 +156,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await mergeSort(data);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -179,9 +172,19 @@
 		const left = array.slice(0, middle);
 		const right = array.slice(middle);
 
+		activeLine.set({ start: 11, end: 11 });
+		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		await mergeSort(left, startIndex);
+
+		activeLine.set({ start: 12, end: 12 });
+		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		await mergeSort(right, startIndex + middle);
 
+		activeLine.set({ start: 14, end: 14 });
+		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		await merge(left, right, array, startIndex);
 	}
 
@@ -199,13 +202,13 @@
 
 			if (left[l] <= right[r]) {
 				merged[i] = left[l++];
-				activeLine.set(31)
+				activeLine.set({ start: 25, end: 26 });
 			} else {
 				merged[i] = right[r++];
-				activeLine.set(33)
+				activeLine.set({ start: 27, end: 29 });
 			}
-			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 
 			data[startIndex + i] = merged[i];
 			data = [...data];
@@ -217,9 +220,9 @@
 			log(`Másolás balról: ${left[l]}`);
 			swapIndices = [startIndex + i];
 
-			activeLine.set(42)
-			await pauseIfNeeded();
+			activeLine.set({ start: 36, end: 41 });
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 			merged[i] = left[l++];
 			data[startIndex + i] = merged[i];
 			data = [...data];
@@ -230,9 +233,9 @@
 			log(`Másolás jobbról: ${right[r]}`);
 			swapIndices = [startIndex + i];
 
-			activeLine.set(50)
-			await pauseIfNeeded();
+			activeLine.set({ start: 43, end: 48 });
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 			merged[i] = right[r++];
 			data[startIndex + i] = merged[i];
 			data = [...data];
@@ -244,59 +247,67 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-`function mergeSort(array, startIndex = 0) {
- \n
+		`function mergeSort(array, startIndex = 0) {
+ 
   if (array.length < 2){
     return;
   }
-	   \n
+	
   const middle = Math.floor(array.length / 2);
   const left = array.slice(0, middle);
   const right = array.slice(middle);
- \n
+ 
   mergeSort(left, startIndex);
   mergeSort(right, startIndex + middle);
- \n
+ 
   merge(left, right, array, startIndex);
 }
- \n
+ 
 function merge(left, right, merged, startIndex) {
- \n
+ 
   let i = 0,
   l = 0,
   r = 0;
- \n
+ 
   while (l < left.length && r < right.length) {
+
     if (left[l] <= right[r]) {
       merged[i] = left[l++];
     } else {
       merged[i] = right[r++];
     }
+
     data[startIndex + i] = merged[i];
     data = [...data];
     i++;
   }
- \n 
+ 
   while (l < left.length) {
     merged[i] = left[l++];
     data[startIndex + i] = merged[i];
     data = [...data];
     i++;
   }
- \n
+ 
   while (r < right.length) {
     merged[i] = right[r++];
     data[startIndex + i] = merged[i];
     data = [...data];
     i++;
   }
-}`);
+}`
+	);
 </script>
 
 <!-- ==== Komponens markup ==== -->
+<div class="custom-buttons button-group">
+	<button disabled={$algorithmStatus !== 'idle'} on:click={reshuffleData}>Keverés</button>
+</div>
+
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
+	
+
 	<div class="array-visual">
 		{#each data as num, index}
 			<div
@@ -314,14 +325,6 @@ function merge(left, right, merged, startIndex) {
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.array-visual {
 		display: flex;
 		gap: 4px;
@@ -345,5 +348,27 @@ function merge(left, right, merged, startIndex) {
 	.bar.swap {
 		background-color: limegreen;
 		color: black;
+	}
+	.button-group {
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem;
+		border-bottom: 3px solid #484848;
+	}
+	.custom-buttons button {
+		padding: 0.5rem 1rem;
+		background-color: #444;
+		color: aliceblue;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+	.custom-buttons button:hover {
+		background-color: #5cb85c;
+	}
+	.custom-buttons button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>

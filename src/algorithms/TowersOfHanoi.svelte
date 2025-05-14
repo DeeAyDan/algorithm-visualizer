@@ -15,12 +15,8 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
-	// ==== Basic Data ====
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	activeLine.set({start: -1, end: -1});
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Algorithm Parameters ====
@@ -31,13 +27,19 @@
 	let sourcePosition = null;
 	let targetPosition = null;
 	let animationInProgress = false;
-	
+
 	// Configuration
 	const TOWER_NAMES = ['A', 'B', 'C'];
 	const DISK_COLORS = [
-		'#FF5252', '#FF7F50', '#FFEB3B', 
-		'#66BB6A', '#29B6F6', '#5C6BC0',
-		'#AB47BC', '#EC407A', '#26A69A'
+		'#FF5252',
+		'#FF7F50',
+		'#FFEB3B',
+		'#66BB6A',
+		'#29B6F6',
+		'#5C6BC0',
+		'#AB47BC',
+		'#EC407A',
+		'#26A69A'
 	];
 
 	function initializeTowers() {
@@ -56,54 +58,32 @@
 
 	// ==== Initialize on mount ====
 	onMount(() => {
-		initializeTowers();
+		resetParameters();
 	});
 
-	// ==== Delay and Control Functions ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
+	function resetParameters() {
+		currentStep.set(0);
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		movingDisk = null;
+		sourcePosition = null;
+		targetPosition = null;
+		animationInProgress = false;
+		initializeTowers();
 	}
-	
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					activeLine.set(-1);
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
-	
+
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
-			towers = JSON.parse(JSON.stringify(initTowers));
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -112,10 +92,13 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		initializeTowers();
-		consoleLog.update((logs) => [...logs, `${displayName} algoritmus indítása ${numDisks} koronggal...`]);
+		consoleLog.update((logs) => [
+			...logs,
+			`${displayName} algoritmus indítása ${numDisks} koronggal...`
+		]);
 
 		await hanoi(numDisks, 0, 2, 1);
-		activeLine.set({start: -1, end: -1});
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás sikeresen befejeződött!']);
 		algorithmStatus.set('finished');
@@ -124,30 +107,30 @@
 
 	async function hanoi(n: number, from: number, to: number, aux: number) {
 		if (n === 0) return;
-		
-		activeLine.set({start: 1, end: 1});
-		await pauseIfNeeded();
-		await delay(300 - get(speed) * 3);
 
-		activeLine.set({start: 3, end: 3});
-		await pauseIfNeeded();
+		activeLine.set({ start: 1, end: 1 });
 		await delay(300 - get(speed) * 3);
+		await pauseIfNeeded();
+
+		activeLine.set({ start: 3, end: 3 });
+		await delay(300 - get(speed) * 3);
+		await pauseIfNeeded();
 		await hanoi(n - 1, from, aux, to);
 
-		activeLine.set({start: 4, end: 4});
-		await pauseIfNeeded();
+		activeLine.set({ start: 4, end: 4 });
 		await delay(300 - get(speed) * 3);
+		await pauseIfNeeded();
 		await moveDisk(from, to);
 
-		activeLine.set({start: 5, end: 5});
-		await pauseIfNeeded();
+		activeLine.set({ start: 5, end: 5 });
 		await delay(300 - get(speed) * 3);
+		await pauseIfNeeded();
 		await hanoi(n - 1, aux, to, from);
 	}
 
 	async function moveDisk(from: number, to: number) {
 		await pauseIfNeeded();
-		
+
 		let disk = towers[from].pop();
 		if (disk !== undefined) {
 			// Start animation
@@ -155,27 +138,29 @@
 			movingDisk = disk;
 			sourcePosition = from;
 			targetPosition = to;
-			
+
 			// Wait for animation
 			await delay(500 - get(speed) * 5);
-			
+			await pauseIfNeeded();
+
 			// End animation and update state
 			towers[to].push(disk);
 			log(`Lépés: ${disk} korong ${TOWER_NAMES[from]} → ${TOWER_NAMES[to]}`);
 			animationInProgress = false;
 			movingDisk = null;
-			
+
 			// Update the reactive towers array
-			towers = [...towers]; 
-			
-			activeLine.set({start: 9, end: 12});
+			towers = [...towers];
+
+			activeLine.set({ start: 9, end: 12 });
 			await delay(600 - get(speed) * 6);
+			await pauseIfNeeded();
 		}
 	}
 
 	// ==== Source Code Display ====
 	selectedAlgorithmSourceCode.set(
-`function hanoi(n, from, to, aux) {
+		`function hanoi(n, from, to, aux) {
   if (n === 0) return;
   hanoi(n - 1, from, aux, to);
   moveDisk(from, to);
@@ -187,17 +172,18 @@ function moveDisk(from, to) {
   if (disk !== undefined) {
     towers[to].push(disk);
   }
-}`);
+}`
+	);
 
 	// Helper function to get disk position for animation
 	function getDiskAnimationStyle(disk) {
 		if (!animationInProgress || movingDisk !== disk) return '';
-		
+
 		const fromTower = sourcePosition;
 		const toTower = targetPosition;
 		const direction = toTower - fromTower;
 		const moveDistance = direction * 33.3; // % of container width
-		
+
 		return `
 			position: absolute;
 			transform: translateY(-100px) translateX(${moveDistance}%);
@@ -205,7 +191,7 @@ function moveDisk(from, to) {
 			z-index: 20;
 		`;
 	}
-	
+
 	// Helper function to determine disk color
 	function getDiskColor(diskSize) {
 		return DISK_COLORS[diskSize - 1] || '#2f4f4f';
@@ -222,20 +208,20 @@ function moveDisk(from, to) {
 		min="1"
 		max="9"
 		on:change={() => initializeTowers()}
-		disabled={$algorithmStatus === 'running' || $algorithmStatus === 'paused'}
+		disabled={$algorithmStatus !== 'idle'}
 	/>
 </div>
 
 <!-- ==== Component Markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	
+
 	<div class="tower-visual">
 		{#each towers as tower, towerIndex}
 			<div class="tower">
 				<div class="base-plate"></div>
 				<div class="bar"></div>
-				
+
 				{#each tower as disk, diskIndex}
 					<div
 						class="disk"
@@ -248,7 +234,7 @@ function moveDisk(from, to) {
 						{disk}
 					</div>
 				{/each}
-				
+
 				{#if animationInProgress && sourcePosition === towerIndex && movingDisk !== null}
 					<div
 						class="disk moving-disk"
@@ -305,7 +291,7 @@ function moveDisk(from, to) {
 		z-index: 1;
 		border-radius: 4px;
 	}
-	
+
 	.base-plate {
 		width: 80%;
 		height: 10px;
@@ -330,7 +316,7 @@ function moveDisk(from, to) {
 		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 	}
-	
+
 	.moving-disk {
 		position: absolute;
 		bottom: 0;
@@ -344,7 +330,7 @@ function moveDisk(from, to) {
 		padding: 0.5rem;
 		border-bottom: 3px solid #505050;
 	}
-	
+
 	.custom-input input {
 		width: 70px;
 		padding: 0.5rem;
@@ -361,13 +347,13 @@ function moveDisk(from, to) {
 		cursor: not-allowed;
 		border-color: #3a3a3a;
 	}
-	
+
 	.tower-labels {
 		display: flex;
 		width: 100%;
 		justify-content: space-around;
 	}
-	
+
 	.tower-label {
 		font-weight: bold;
 		font-size: 1.2rem;

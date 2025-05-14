@@ -15,18 +15,32 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Alapadatok ====
-	const size = 4;
+	const size = 5;
 	let matrix = generateMatrix(size);
 	let solutionMatrix = [...matrix];
 	let activeCell: [number, number] | null = null;
 
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	activeLine.set(-1);
+	// ==== Lépésszám beállítás ====
+	onMount(() => {
+		totalSteps.set(size * size);
+		resetParameters();
+	});
+
+	function resetParameters() {
+		algorithmStatus.set('idle');
+		currentStep.set(0);
+		consoleLog.set([]);
+		matrix = generateMatrix(size);
+		path = [];
+		solutionMatrix = [...matrix];
+		activeCell = null;
+		activeLine.set({ start: -1, end: -1 });
+	}
 
 	// ==== Segédfüggvények ====
 	function generateMatrix(n) {
@@ -35,42 +49,12 @@
 		);
 	}
 
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
-
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			await new Promise((resolve) => {
 				const unsub = resumeSignal.subscribe(() => {
 					if (get(algorithmStatus) === 'idle') {
-						consoleLog.set([]);
-						currentStep.set(0);
-						matrix = generateMatrix(size);
-						path = [];
-						solutionMatrix = [...matrix];
+						resetParameters();
 						unsub();
 						resolve();
 					}
@@ -90,34 +74,34 @@
 
 				let chosenFrom = '';
 
-				activeLine.set(6);
+				activeLine.set({ start: 3, end: 4 });
+				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
-				await delay(300 - get(speed) * 8);
+
 				if (fromTop > fromLeft) {
 					chosenFrom = 'fentről';
-					activeLine.set(7);
+					activeLine.set({ start: 10, end: 11 });
+					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
-					await delay(300 - get(speed) * 8);
 				} else if (fromLeft > fromTop) {
 					chosenFrom = 'balról';
-
-					activeLine.set(9);
+					activeLine.set({ start: 12, end: 13 });
+					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
-					await delay(300 - get(speed) * 8);
 				} else {
 					chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
 
-					activeLine.set(12);
+					activeLine.set({ start: 14, end: 16 });
+					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
-					await delay(300 - get(speed) * 8);
 				}
 
 				solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
 
-				log(`Megoldás [${i},${j}] = ${solutionMatrix[i][j]}`);
-				activeLine.set(13);
+				log(`Megoldás [${i},${j}] = ${solutionMatrix[i][j]} (${chosenFrom})`);
+				activeLine.set({ start: 18, end: 18 });
+				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
-				await delay(300 - get(speed) * 8);
 			}
 		}
 		activeCell = null;
@@ -152,7 +136,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await maxSumPath();
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -160,19 +144,17 @@
 		await restartAlgorithm();
 	}
 
-	// ==== Lépésszám beállítás (opcionális, ha számolni akarod később) ====
-	onMount(() => {
-		totalSteps.set(size * size); // jelenlegi logika szerint
-	});
-
 	// ==== Forráskód beállítás ====
 	selectedAlgorithmSourceCode.set(
 		`function maxSumPath() {
+
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
+
       let fromTop = i > 0 ? solutionMatrix[i - 1][j] : 0;
       let fromLeft = j > 0 ? solutionMatrix[i][j - 1] : 0;
       let chosenFrom = '';
+
       if (fromTop > fromLeft) {
         chosenFrom = 'fentről';
       } else if (fromLeft > fromTop) {
@@ -180,6 +162,7 @@
       } else {
         chosenFrom = i === 0 && j === 0 ? 'kezdőérték' : 'egyforma érték (fentről/balról)';
  	 }
+
       solutionMatrix[i][j] = matrix[i][j] + Math.max(fromTop, fromLeft);
     }
   }
@@ -190,7 +173,6 @@
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<div class="matrix-container">
 		<!-- Bemeneti mátrix -->
 		<div class="matrix">
@@ -232,14 +214,7 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
+
 	.matrix-container {
 		display: flex;
 		justify-content: center;

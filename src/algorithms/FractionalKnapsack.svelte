@@ -15,21 +15,51 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Alapadatok ====
-
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	activeLine.set(-1);
 	let selectedItem = null;
 	let removedAmountFromSelectedItem = 0;
+
+	let sackSize = 50;
+	let sackFilled = 30;
+	let sackValue = 0;
 
 	let items = [
 		{ name: 'Tárgy 1', value: 10, weight: 5, color: getRandomColor(), ratio: 2 },
 		{ name: 'Tárgy 2', value: 20, weight: 20, color: getRandomColor(), ratio: 1 }
 	];
+
+	// Create reactive sack array
+	$: sack = Array(sackSize).fill(null);
+	$: totalSteps.set(
+		Math.min(
+			sackSize,
+			items.reduce((acc, item) => acc + item.weight, 0)
+		)
+	);
+
+	// ==== Előkalkulált lépésszám ====
+	onMount(() => {
+		resetParameters();
+	});
+
+	function resetParameters() {
+		algorithmStatus.set('idle');
+		currentStep.set(0);
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		sackFilled = 0;
+		sackValue = 0;
+		sack = Array(sackSize).fill(null);
+		items.forEach((item) => {
+			item.color = getRandomColor();
+		});
+		items = [...items];
+	}
 
 	function getRandomColor() {
 		const r = Math.floor(Math.random() * 256);
@@ -37,12 +67,6 @@
 		const b = Math.floor(Math.random() * 256);
 		return `rgb(${r}, ${g}, ${b})`;
 	}
-
-	let sackSize = 50;
-	let sackFilled = 30;
-	let sackValue = 0;
-
-	let sack = Array(sackSize).fill(null);
 
 	function addItem(name, value, weight) {
 		items = [
@@ -108,12 +132,6 @@
 			newItemValue = 0;
 			newItemWeight = 0;
 			showInsertForm = false;
-			totalSteps.set(
-			Math.min(
-				sackSize,
-				items.reduce((acc, item) => acc + item.weight, 0)
-			)
-		);
 		}
 	}
 
@@ -122,61 +140,18 @@
 		showDeleteList = false;
 	}
 
-	// ==== Előkalkulált lépésszám ====
-	onMount(() => {
-		totalSteps.set(
-			Math.min(
-				sackSize,
-				items.reduce((acc, item) => acc + item.weight, 0)
-			)
-		);	});
-
 	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					sack = Array(sackSize).fill(null);
-					sackValue = 0;
-
-					items.forEach((item) => {
-						item.color = getRandomColor();
-					});
-					items = [...items];
-
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -187,7 +162,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await knapSack();
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -195,16 +170,10 @@
 	}
 
 	async function knapSack() {
-		sack = Array(sackSize).fill(null);
-		sackFilled = 0;
-		sackValue = 0;
-
 		items = items.map((item) => ({
 			...item,
 			ratio: item.value / item.weight
 		}));
-
-
 
 		let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
 
@@ -214,9 +183,9 @@
 			selectedItem = item;
 			removedAmountFromSelectedItem = 0;
 
-			activeLine.set(12);
-			await pauseIfNeeded();
+			activeLine.set({ start: 5, end: 8 });
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 			for (let i = 0; i < sack.length && canTake > 0; i++) {
 				if (sack[i] === null) {
 					sack[i] = { ...item };
@@ -227,9 +196,9 @@
 					let percentFilled = (filledWeight / item.weight) * 100;
 					sackValue += item.value / item.weight;
 
-					activeLine.set(19);
-					await pauseIfNeeded();
+					activeLine.set({ start: 12, end: 19 });
 					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
 					log(`Hozzáadva: ${item.name} (${percentFilled.toFixed(1)}%)`);
 				}
 			}
@@ -250,17 +219,16 @@
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
 		`function knapSack() {
-  sack = Array(sackSize).fill(null);
-  sackFilled = 0;
-  sackValue = 0;
   items = items.map((item) => ({...item, ratio: item.value / item.weight}));
   let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
- \n   
+ 
   for (let item of sortedItems) {
     let canTake = Math.min(item.weight,
                   sackSize - sackFilled);
     let filledWeight = 0;
+
     for (let i = 0; i < sack.length && canTake > 0; i++) {
+
       if (sack[i] === null) {
         sack[i] = item;
         canTake--;
@@ -269,7 +237,9 @@
                     / item.weight) * 100;
         sackValue += item.value * (percentFilled / 100);
       }
+
     }
+
     let fraction = filledWeight / item.weight;
     sackValue += item.value * fraction;
 
@@ -283,11 +253,11 @@
 <div class="custom-input">
 	<div>
 		<label for="order">Méret:</label>
-		<input id="order" type="number" bind:value={sackSize} />
+		<input id="order" type="number" disabled={$algorithmStatus !== 'idle'} bind:value={sackSize} />
 	</div>
 	<div class="custom-buttons">
 		<div class="button-group">
-			<button on:click={openInsertForm}>Beszúrás</button>
+			<button disabled={$algorithmStatus !== 'idle'} on:click={openInsertForm}>Beszúrás</button>
 			{#if showInsertForm}
 				<div class="dropdown insert-dropdown">
 					<input placeholder="Tárgy neve" maxlength="12" bind:value={newItemName} />
@@ -300,7 +270,7 @@
 			{/if}
 		</div>
 		<div class="button-group">
-			<button on:click={openDeleteList}>Törlés</button>
+			<button disabled={$algorithmStatus !== 'idle'} on:click={openDeleteList}>Törlés</button>
 			{#if showDeleteList}
 				<div class="dropdown">
 					{#each items as item, index}
@@ -318,7 +288,6 @@
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<div class="sack-visual">
 		<div class="sack-container">
 			<div class="sack-text">Táska mérete</div>
@@ -370,14 +339,6 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.sack-visual {
 		display: flex;
 		gap: 40px;
@@ -486,6 +447,11 @@
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
 	}
+	.custom-input input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
+	}
 	.custom-input button {
 		padding: 0.5rem 1rem;
 		background-color: #444;
@@ -493,6 +459,11 @@
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;
+	}
+	.custom-input button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 	.custom-input button:hover {
 		background-color: #5cb85c;

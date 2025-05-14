@@ -15,21 +15,42 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Alapadatok ====
 
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	activeLine.set(-1);
 	let selectedItem = null;
 	let removedAmountFromSelectedItem = 0;
-
 	let items = [
 		{ name: 'Tárgy 1', value: 10, weight: 5, color: getRandomColor(), ratio: 2 },
 		{ name: 'Tárgy 2', value: 20, weight: 20, color: getRandomColor(), ratio: 1 }
 	];
+
+	// Create reactive sack array
+	$: sack = Array(sackSize).fill(null);
+	$: totalSteps.set(sackSize);
+
+	// ==== Előkalkulált lépésszám ====
+	onMount(() => {
+		resetParameters();
+	});
+
+	function resetParameters() {
+		algorithmStatus.set('idle');
+		currentStep.set(0);
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		sackFilled = 0;
+		sackValue = 0;
+		sack = Array(sackSize).fill(null);
+		items.forEach((item) => {
+			item.color = getRandomColor();
+		});
+		items = [...items];
+	}
 
 	function getRandomColor() {
 		const r = Math.floor(Math.random() * 256);
@@ -108,7 +129,6 @@
 			newItemValue = 0;
 			newItemWeight = 0;
 			showInsertForm = false;
-			totalSteps.set(sackSize);
 		}
 	}
 
@@ -117,57 +137,18 @@
 		showDeleteList = false;
 	}
 
-	// ==== Előkalkulált lépésszám ====
-	onMount(() => {
-		totalSteps.set(sackSize);
-	});
-
 	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					sack = Array(sackSize).fill(null);
-					sackValue = 0;
-
-					items.forEach((item) => {
-						item.color = getRandomColor();
-					});
-					items = [...items];
-
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -178,7 +159,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await knapSackRep();
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -186,15 +167,10 @@
 	}
 
 	async function knapSackRep() {
-		sack = Array(sackSize).fill(null);
-		sackFilled = 0;
-		sackValue = 0;
-
 		items = items.map((item) => ({
 			...item,
 			ratio: item.value / item.weight
 		}));
-
 
 		let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
 
@@ -210,20 +186,20 @@
 				let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
 				let fraction = canTake / bestItem.weight;
 
-				activeLine.set(12);
-				await pauseIfNeeded();
+				activeLine.set({ start: 6, end: 8 });
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
+
 				for (let i = 0; i < sack.length && canTake > 0; i++) {
 					if (sack[i] === null) {
-						sack[i] = {...bestItem};
+						sack[i] = { ...bestItem };
 						canTake--;
 						removedAmountFromSelectedItem++;
 						sackValue += bestItem.value / bestItem.weight;
 
-
-						activeLine.set(14);
-						await pauseIfNeeded();
+						activeLine.set({ start: 11, end: 14 });
 						await delay(900 - get(speed) * 8);
+						await pauseIfNeeded();
 						currentStep.update((n) => n + 1);
 					}
 				}
@@ -234,9 +210,9 @@
 					...logs,
 					`${bestItem.name} hozzáadva (${(fraction * 100).toFixed(1)}%)`
 				]);
-				activeLine.set(18);
-				await pauseIfNeeded();
+				activeLine.set({ start: 17, end: 18 });
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 			}
 
 			let fraction = filledWeight / item.weight;
@@ -250,28 +226,26 @@
 			sackFilled = sack.filter((x) => x !== null).length;
 		}
 		selectedItem = null;
-
 	}
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
 		`function knapSack() {
-  sack = Array(sackSize).fill(null);
-  sackFilled = 0;
-  sackValue = 0;
   items = items.map((item) => ({...item, ratio: item.value / item.weight}));
   let sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
+
   while (sackFilled < sackSize) {
     const bestItem = sortedItems[0];
     let canTake = Math.min(bestItem.weight, sackSize - sackFilled);
     let fraction = canTake / bestItem.weight;
-      \n
+    
     for (let i = 0; i < sack.length && canTake > 0; i++) {
       if (sack[i] === null) {
         sack[i] = bestItem;
         canTake--;
       }
     }
+
     sackValue += bestItem.value * fraction;
     sackFilled = sack.filter((x) => x !== null).length;
   }
@@ -282,11 +256,11 @@
 <div class="custom-input">
 	<div>
 		<label for="order">Méret:</label>
-		<input id="order" type="number" bind:value={sackSize} />
+		<input id="order" type="number" disabled={$algorithmStatus !== 'idle'} bind:value={sackSize} />
 	</div>
 	<div class="custom-buttons">
 		<div class="button-group">
-			<button on:click={openInsertForm}>Beszúrás</button>
+			<button disabled={$algorithmStatus !== 'idle'} on:click={openInsertForm}>Beszúrás</button>
 			{#if showInsertForm}
 				<div class="dropdown insert-dropdown">
 					<input placeholder="Tárgy neve" maxlength="12" bind:value={newItemName} />
@@ -299,7 +273,7 @@
 			{/if}
 		</div>
 		<div class="button-group">
-			<button on:click={openDeleteList}>Törlés</button>
+			<button disabled={$algorithmStatus !== 'idle'} on:click={openDeleteList}>Törlés</button>
 			{#if showDeleteList}
 				<div class="dropdown">
 					{#each items as item, index}
@@ -317,7 +291,6 @@
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<div class="sack-visual">
 		<div class="sack-container">
 			<div class="sack-text">Táska mérete</div>
@@ -350,10 +323,7 @@
 						<div class="item-weight-text">Súly: {item.weight}</div>
 						<div class="item-weight">
 							{#each Array(item.weight) as _, j}
-								<div
-									class="item-space"
-									style="background-color: {item.color};"
-								></div>
+								<div class="item-space" style="background-color: {item.color};"></div>
 							{/each}
 						</div>
 						<div class="item-ratio">Arány: {item.ratio.toFixed(2)}</div>
@@ -366,14 +336,6 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.sack-visual {
 		display: flex;
 		gap: 40px;
@@ -482,6 +444,11 @@
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
 	}
+	.custom-input input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
+	}
 	.custom-input button {
 		padding: 0.5rem 1rem;
 		background-color: #444;
@@ -489,6 +456,11 @@
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;
+	}
+	.custom-input button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 	.custom-input button:hover {
 		background-color: #5cb85c;
@@ -547,4 +519,3 @@
 		border-radius: 4px;
 	}
 </style>
-

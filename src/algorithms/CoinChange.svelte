@@ -15,23 +15,37 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Alapadatok ====
 
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	activeLine.set(-1);
 	let exchangeCoins = [1, 4, 6, 10];
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 	let dpTable: { index: number; value: number; coin: number }[] = [];
 	let lastCoinTable = [];
-
 	let moneyToExchange = 29;
 
 	let newCoin = 0;
 	let showInsertForm = false;
 	let showDeleteList = false;
+
+	// ==== Előkalkulált lépésszám ====
+	onMount(() => {
+		totalSteps.set(Math.floor(moneyToExchange));
+		resetParameters();
+	});
+
+	function resetParameters() {
+		algorithmStatus.set('idle');
+		currentStep.set(0);
+		consoleLog.set([]);
+
+		usedCoins = [];
+		dpTable = [];
+
+		activeLine.set({ start: -1, end: -1 });
+	}
 
 	function openInsertForm() {
 		showInsertForm = !showInsertForm;
@@ -63,53 +77,18 @@
 		showDeleteList = false;
 	}
 
-	// ==== Előkalkulált lépésszám ====
-	onMount(() => {
-		totalSteps.set(0);
-	});
-
 	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-
-					usedCoins = [];
-					dpTable = [];
-
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -125,10 +104,12 @@
 		showDeleteList = false;
 
 		let amount = Math.floor(moneyToExchange);
+		totalSteps.set(amount);
 		let coins = exchangeCoins.map((c) => Math.floor(c));
-		dpTable = [];
 
 		await coinExchange(amount, coins);
+
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -144,30 +125,31 @@
 
 		dp[0] = 0;
 
-		totalSteps.set(amount);
-
 		for (let i = 1; i <= amount; i++) {
-			activeLine.set(6);
-			await pauseIfNeeded();
+			activeLine.set({ start: 7, end: 7 });
 			await delay(700 - get(speed) * 8);
+			await pauseIfNeeded();
+
 			for (let coin of coins) {
-				activeLine.set(7);
-				await pauseIfNeeded();
+				activeLine.set({ start: 8, end: 8 });
 				await delay(700 - get(speed) * 8);
+				await pauseIfNeeded();
+
 				if (i - coin >= 0 && dp[i - coin] + 1 < dp[i]) {
 					dp[i] = dp[i - coin] + 1;
 					lastCoin[i] = coin;
-					activeLine.set(9);
-					await pauseIfNeeded();
+					activeLine.set({ start: 10, end: 13 });
 					await delay(700 - get(speed) * 8);
+					await pauseIfNeeded();
 				}
 			}
 
 			dpTable = [...dpTable, { index: i, value: dp[i], coin: lastCoin[i] }];
 
-			activeLine.set(12);
-			await pauseIfNeeded();
+			activeLine.set({ start: 16, end: 16 });
 			await delay(700 - get(speed) * 8);
+			await pauseIfNeeded();
+
 			log(`Összeg: ${i}, Minimum érme: ${dp[i]}, Utolsó érme: ${lastCoin[i]}`);
 		}
 
@@ -176,17 +158,16 @@
 		while (current > 0) {
 			let coin = lastCoin[current];
 			if (coin === -1) {
-				activeLine.set(20);
-				await pauseIfNeeded();
+				activeLine.set({ start: 24, end: 26 });
 				await delay(700 - get(speed) * 8);
+				await pauseIfNeeded();
+
 				consoleLog.update((logs) => [...logs, 'Nem lehet pontosan felváltani!']);
 				break;
 			}
 			usedCoins.push(coin);
 			current -= coin;
 		}
-
-		activeLine.set(-1);
 
 		consoleLog.update((logs) => [...logs, `Minimum érme szám: ${usedCoins.length}`]);
 		consoleLog.update((logs) => [...logs, `Felhasznált érmék: ${usedCoins}`]);
@@ -199,18 +180,22 @@
   let dp = Array(amount + 1).fill(Infinity);
   let lastCoin = Array(amount + 1).fill(-1);
   dp[0] = 0;
+
     for (let i = 1; i <= amount; i++) {
       for (let coin of coins) {
+
         if (i - coin >= 0 && dp[i - coin] + 1 < dp[i]) {
           dp[i] = dp[i - coin] + 1;
           lastCoin[i] = coin;
         }
+
       }
       dpTable = [...dpTable, { index: i, value: dp[i], coin: lastCoin[i] }];
     }
 
   usedCoins = [];
   let current = amount;
+
   while (current > 0) {
     let coin = lastCoin[current];
     if (coin === -1) {
@@ -219,6 +204,7 @@
     usedCoins.push(coin);
     current -= coin;
   }
+
 }`
 	);
 </script>
@@ -227,14 +213,19 @@
 <div class="custom-input">
 	<div>
 		<label for="order">Felváltandó:</label>
-		<input id="order" bind:value={moneyToExchange} />
+		<input
+			id="order"
+			type="number"
+			disabled={$algorithmStatus !== 'idle'}
+			bind:value={moneyToExchange}
+		/>
 	</div>
 
 	<div class="custom-buttons">
 		<div class="button-group">
-			<button on:click={openInsertForm}>Beszúrás</button>
+			<button disabled={$algorithmStatus !== 'idle'} on:click={openInsertForm}>Beszúrás</button>
 			{#if showInsertForm}
-				<div class="dropdown">
+				<div class="dropdown insert-dropdown">
 					<input type="number" placeholder="Érme értéke" bind:value={newCoin} />
 					<button on:click={insertNewCoin}>Hozzáadás</button>
 				</div>
@@ -242,7 +233,7 @@
 		</div>
 
 		<div class="button-group">
-			<button on:click={openDeleteList}>Kivétel</button>
+			<button disabled={$algorithmStatus !== 'idle'} on:click={openDeleteList}>Kivétel</button>
 			{#if showDeleteList}
 				<div class="dropdown">
 					{#each exchangeCoins as coin, index}
@@ -260,7 +251,6 @@
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<div class="coin-visual">
 		<div class="left-container">
 			<div>Felhasználható</div>
@@ -309,14 +299,6 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.coin-visual {
 		display: flex;
 		gap: 40px;
@@ -353,12 +335,18 @@
 		border-bottom: 3px solid #505050;
 	}
 	.custom-input input {
+		text-align: center;
+		font-size: 1rem;
 		width: 55px;
 		padding: 0.5rem;
-		margin-right: 10px;
 		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
+	}
+	.custom-input input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 	.custom-input button {
 		padding: 0.5rem 1rem;
@@ -370,6 +358,11 @@
 	}
 	.custom-input button:hover {
 		background-color: #5cb85c;
+	}
+	.custom-input button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 	.custom-input label {
 		width: 150px;
@@ -414,6 +407,9 @@
 		background-color: #3a3a3a;
 		color: white;
 		border: 1px solid #666;
+	}
+	.insert-dropdown {
+		align-items: center;
 	}
 	.delete-item {
 		display: flex;

@@ -15,17 +15,13 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Alapadatok ====
-
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
 	let tspEdges: { from: number; to: number }[] = [];
 	let checkingEdge: { from: number; to: number } | null = null;
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	let elementValue = 8;
-	activeLine.set(-1);
 
 	// === Városok ===
 	type City = { x: number; y: number };
@@ -34,6 +30,10 @@
 	let weight = [];
 	let currentCityIndex: number | null = null;
 	let nextCityIndex: number | null = null;
+
+	$: elementValue = 8;
+	$: generateCities(elementValue);
+	$: totalSteps.set(tspGreedyCounter(cities));
 
 	// === Vizualizáció és adatok ===
 	function generateCities(count) {
@@ -57,9 +57,23 @@
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		generateCities(elementValue);
-		totalSteps.set(tspGreedyCounter(cities));
+		resetParameters();
 	});
+
+	function resetParameters() {
+		currentStep.set(0);
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+
+		tspPath = [];
+		tspEdges = [];
+		tspEdges = [...tspEdges];
+		weight = [];
+		weight = [...weight];
+		currentCityIndex = null;
+		nextCityIndex = null;
+		activeLine.set({ start: -1, end: -1 });
+	}
 
 	function tspGreedyCounter(cities: City[]): number {
 		let steps = 0;
@@ -95,52 +109,17 @@
 	}
 
 	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					tspPath = [];
-					tspEdges = [];
-					tspEdges = [...tspEdges];
-					weight = [];
-					weight = [...weight];
-					cities = [];
-					totalSteps.set(0);
-					currentCityIndex = null;
-					nextCityIndex = null;
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -157,10 +136,8 @@
 			elementValue = 20;
 		}
 
-		generateCities(elementValue);
-		totalSteps.set(tspGreedyCounter(cities));
 		await tspGreedy(cities);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -180,20 +157,25 @@
 			let minDist = Infinity;
 
 			for (let i = 0; i < n; i++) {
-				activeLine.set(17);
+				activeLine.set({ start: 13, end: 23 });
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
+
 				if (!visited.has(i)) {
 					checkingEdge = { from: current, to: i };
 					currentCityIndex = current;
 					nextCityIndex = i;
 					log(`Távolság ellenőrzés: ${current} → ${i}`);
-					await pauseIfNeeded();
+					activeLine.set({ start: 15, end: 21 });
 					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
+
 
 					let dist = euclideanDistance(cities[current], cities[i]);
 					if (dist < minDist) {
-						activeLine.set(18);
-				await delay(900 - get(speed) * 8);
+						activeLine.set({ start: 17, end: 20 });
+						await delay(900 - get(speed) * 8);
+						await pauseIfNeeded();
 						minDist = dist;
 						nearest = i;
 					}
@@ -201,11 +183,10 @@
 			}
 
 			if (nearest !== null) {
-
-				activeLine.set(26);
+				activeLine.set({ start: 25, end: 31 });
 				log(`Lépés: ${current} → ${nearest}, távolság: ${minDist.toFixed(2)}`);
-				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 				checkingEdge = null;
 
 				tspEdges.push({ from: current, to: nearest });
@@ -224,7 +205,7 @@
 		log(
 			`Visszatérés: ${current} → ${tspPath[0]}, távolság: ${euclideanDistance(cities[current], cities[0]).toFixed(2)}`
 		);
-		activeLine.set(35);
+		activeLine.set({ start: -1, end: -1 });
 		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
 
@@ -246,19 +227,20 @@
 
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
-`function tspGreedy(cities) {
+		`function tspGreedy(cities) {
   const n = cities.length;
   const visited = new Set<number>();
   let current = 0;
   tspPath = [current];
   tspEdges = [];
   visited.add(current);
- \n
+ 
   while (visited.size < n) {
     let nearest = null;
     let minDist = Infinity;
- \n
+ 
     for (let i = 0; i < n; i++) {
+
       if (!visited.has(i)) {
         let dist = euclideanDistance(cities[current], cities[i]);
         if (dist < minDist) {
@@ -266,8 +248,9 @@
           nearest = i;
         }
       }
+
     }
- \n
+ 
     if (nearest !== null) {
       tspEdges.push({ from: current, to: nearest });
 
@@ -275,22 +258,31 @@
       tspPath.push(current);
       visited.add(current);
     }
+
   }
- \n
+ 
   tspEdges.push({ from: current, to: tspPath[0] });
   tspPath.push(tspPath[0]);
-}`);
+}`
+	);
 </script>
 
 <div class="control-buttons">
 	<div>Városok száma:</div>
-	<input class="custom-input" type="number" min="3" max="20" bind:value={elementValue} placeholder="Pontok száma" />
+	<input
+		class="custom-input"
+		type="number"
+		disabled={$algorithmStatus !== 'idle'}
+		min="3"
+		max="20"
+		bind:value={elementValue}
+		placeholder="Pontok száma"
+	/>
 </div>
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<svg class="svg" width="500" height="300">
 		{#each tspEdges as edge, i}
 			<line
@@ -329,15 +321,6 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: block;
-		width: fit-content;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.svg {
 		margin: 1rem auto;
 		border: 1px solid #ccc;
@@ -360,5 +343,10 @@
 		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
+	}
+	.control-buttons input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>
