@@ -15,10 +15,8 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	let nodes = [10, 8, 6, 7, 9, 3, 2, 4, 1, 5];
@@ -26,6 +24,27 @@
 	activeLine.set(-1);
 
 	let nodePositions = [];
+
+	$: totalSteps.set(heapSortCounter());
+
+	onMount(() => {
+		calculateNodePositions();
+		resetParameters();
+	});
+
+	function resetParameters() {
+		currentStep.set(0);
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		nodes = [10, 8, 6, 7, 9, 3, 2, 4, 1, 5];
+		arr = [...nodes];
+		activeNodes = [];
+		swapNodes = [];
+		shuffle(nodes);
+		calculateNodePositions();
+	}
 
 	// ==== Vizualizációs indexek ====
 
@@ -58,10 +77,21 @@
 		}
 	}
 
-	onMount(() => {
+	// ==== Keverés gomb funkció ====
+	function reshuffleData() {
+		if (get(algorithmStatus) !== 'idle') return;
+
+		shuffle(nodes);
+		arr = [...nodes];
 		calculateNodePositions();
 		totalSteps.set(heapSortCounter());
-	});
+
+		consoleLog.set([]);
+		currentStep.set(0);
+		activeNodes = [];
+		swapNodes = [];
+		activeLine.set({ start: -1, end: -1 });
+	}
 
 	function heapSortCounter() {
 		let steps = 0;
@@ -113,42 +143,12 @@
 	}
 
 	// ==== Vezérlés ====
-
-	function log(msg: string) {
-		consoleLog.update((logs) => [...logs, msg]);
-		currentStep.update((n) => n + 1);
-	}
-
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume() {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') await waitUntilResume();
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			return new Promise((resolve) => {
 				const unsub = resumeSignal.subscribe(() => {
 					if (get(algorithmStatus) === 'idle') {
-						consoleLog.set([]);
-						currentStep.set(0);
-						nodes = [10, 8, 6, 7, 9, 3, 2, 4, 1, 5];
-						activeNodes = [];
-						swapNodes = [];
-						shuffle(nodes);
-						calculateNodePositions();
-						arr = [...nodes];
-						totalSteps.set(heapSortCounter());
+						resetParameters();
 						unsub();
 						resolve();
 					}
@@ -166,7 +166,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await heapSort();
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -184,6 +184,9 @@
 
 		for (let i = n - 1; i > 0; i--) {
 			log(`Gyökér és utolsó csere: ${nodes[0]} ⇄ ${nodes[i]}`);
+			activeLine.set({ start: 8, end: 11 });
+			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 			await swap(0, i);
 			await heapify(i, 0);
 		}
@@ -194,10 +197,9 @@
 		activeNodes = [i, j];
 		swapNodes = [];
 
-		activeLine.set(18)
+		activeLine.set({ start: 15, end: 17 });
 		await delay(900 - get(speed) * 8);
 		await pauseIfNeeded();
-
 
 		activeNodes = [];
 		swapNodes = [i, j];
@@ -209,6 +211,8 @@
 		calculateNodePositions();
 
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
+
 		swapNodes = [];
 	}
 
@@ -221,13 +225,13 @@
 			log(`Összehasonlítás: ${nodes[l]} (bal) és ${nodes[largest]} (jelenlegi legnagyobb)`);
 			activeNodes = [l, largest];
 			swapNodes = [];
-			
-		activeLine.set(28);
-			await delay(900 - get(speed) * 8);
-			await pauseIfNeeded();
+
 			if (nodes[l] > nodes[largest]) {
 				largest = l;
+				activeLine.set({ start: 24, end: 26 });
 			}
+			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 		}
 
 		if (r < n) {
@@ -235,12 +239,12 @@
 			activeNodes = [r, largest];
 			swapNodes = [];
 
-			activeLine.set(33);
-			await delay(900 - get(speed) * 8);
-			await pauseIfNeeded();
 			if (nodes[r] > nodes[largest]) {
 				largest = r;
+				activeLine.set({ start: 28, end: 30 });
 			}
+			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 		}
 
 		activeNodes = [];
@@ -254,34 +258,34 @@
 	selectedAlgorithmSourceCode.set(`
 function heapSort() {
   const n = nodes.length;
- \n
+ 
   for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
     heapify(n, i);
   }
- \n
+ 
   for (let i = n - 1; i > 0; i--) {
     swap(0, i);
     heapify(i, 0);
   }
 }
- \n
+ 
 function swap(i, j) {
   [nodes[i], nodes[j]] = [nodes[j], nodes[i]];
 }
- \n
+ 
 function heapify(n, i) {
   let largest = i;
   const l = 2 * i + 1;
   const r = 2 * i + 2;
- \n
+ 
   if (l < n && nodes[l] > nodes[largest]) {
     largest = l;
   }
- \n 
+ 
   if (r < n && nodes[r] > nodes[largest]) {
     largest = r;
   }
- \n
+ 
   if (largest !== i) {
     swap(i, largest);
     heapify(n, largest);
@@ -290,9 +294,12 @@ function heapify(n, i) {
 `);
 </script>
 
+<div class="custom-buttons button-group">
+	<button disabled={$algorithmStatus !== 'idle'} on:click={reshuffleData}>Keverés</button>
+</div>
+
 <!-- ==== Vizualizáció ==== -->
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-<div class="tag">Vászon</div>
 <div class="graph-container">
 	<svg class="svg" width="500" height="300" style="border: 1px solid #ccc">
 		{#each nodePositions as node, i}
@@ -351,17 +358,30 @@ function heapify(n, i) {
 		justify-content: center;
 		align-items: center;
 	}
-	.tag {
-		display: block;
-		width: fit-content;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.svg {
 		border: 1px solid #ccc;
 		border-radius: 4px;
+	}
+	.button-group {
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem;
+		border-bottom: 3px solid #484848;
+	}
+	.custom-buttons button {
+		padding: 0.5rem 1rem;
+		background-color: #444;
+		color: aliceblue;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+	.custom-buttons button:hover {
+		background-color: #5cb85c;
+	}
+	.custom-buttons button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>

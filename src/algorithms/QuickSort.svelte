@@ -15,7 +15,9 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
+	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	// ==== Adattömb randomizálása ====
 	function shuffle(array) {
@@ -33,12 +35,8 @@
 	shuffle(data);
 	let initArr = [...data];
 	let maxValue = Math.max(...data);
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	activeLine.set(-1);
-	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
+	$: totalSteps.set(countQuickSortSteps());
 
 	// ==== Vizualizációs indexek ====
 	let pivotIndex: number | null = null;
@@ -47,8 +45,21 @@
 
 	// ==== Előkalkulált lépésszám ====
 	onMount(() => {
-		totalSteps.set(countQuickSortSteps());
+		resetParameters();
 	});
+
+	function resetParameters() {
+		currentStep.set(0);
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+		activeLine.set({start: -1, end: -1});
+
+		data = [...initArr];
+		maxValue = Math.max(...data);
+		pivotIndex = null;
+		activeIndex = null;
+		swapIndices = null;
+	}
 
 	function countQuickSortSteps() {
 		let steps = 0;
@@ -82,45 +93,17 @@
 	}
 
 	// ==== Késleltetés és vezérlés ====
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					data = [...initArr];
-
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -131,7 +114,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await quickSort(data, 0, data.length - 1);
-		activeLine.set(-1);
+		activeLine.set({start: -1, end: -1});
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -149,33 +132,33 @@
 		let pivot = arr[right];
 		pivotIndex = right;
 		log(`Pivot kiválasztva: ${pivot}`);
-		activeLine.set(14)
-		await pauseIfNeeded();
+		activeLine.set({start: 2, end: 2});
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		let i = left - 1;
 		for (let j = left; j < right; j++) {
 			activeIndex = j;
 			log(`Összehasonlítás: ${arr[j]} <= ${pivot}`);
-			activeLine.set(20)
-			await pauseIfNeeded();
+			activeLine.set({start: 15, end: 16});
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 			if (arr[j] <= pivot) {
 				i++;
 				[arr[i], arr[j]] = [arr[j], arr[i]];
 				log(`Csere: ${arr[i]} <-> ${arr[j]}`);
-				activeLine.set(22)
+				activeLine.set({start: 17, end: 20});
 				data = [...arr];
-				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 			}
 		}
 		[arr[i + 1], arr[right]] = [arr[right], arr[i + 1]];
 		swapIndices = [i + 1, right];
 		log(`Pivot helyre rakása: ${arr[i + 1]} <-> ${arr[right]}`);
-		activeLine.set(27)
+		activeLine.set({start: 23, end: 25});
 		data = [...arr];
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		swapIndices = null;
 		pivotIndex = null;
 		activeIndex = null;
@@ -183,21 +166,20 @@
 	}
 
 	// ==== Forráskód megjelenítés ====
-	selectedAlgorithmSourceCode.set(
-`function quickSort(arr, left, right){
- \n
+	selectedAlgorithmSourceCode.set(`function quickSort(arr, left, right){
+  let pivot = arr[right];
+
   if (left < right){
     let pivotIndex = partition(arr, left, right);
     quickSort(arr, left, pivotIndex - 1);
     quickSort(arr, pivotIndex + 1, right);
   }
 }
- \n
+ 
 function partition(arr, left, right){
- \n
   let pivot = arr[right];
   let i = left - 1;
- \n
+ 
   for (let j = left; j < right; j++){
     activeIndex = j;
     if (arr[j] <= pivot){
@@ -205,17 +187,20 @@ function partition(arr, left, right){
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
   }
- \n
+ 
   [arr[i + 1], arr[right]] = [arr[right], arr[i + 1]];
   pivotIndex = null;
   return i + 1;
 }`);
 </script>
 
+<div class="custom-buttons button-group">
+	<button disabled={$algorithmStatus !== 'idle'} on:click={reshuffleData}>Keverés</button>
+</div>
+
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		{#each data as num, index}
 			<div
@@ -234,14 +219,6 @@ function partition(arr, left, right){
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.array-visual {
 		display: flex;
 		gap: 4px;
@@ -268,5 +245,27 @@ function partition(arr, left, right){
 	.bar.swap {
 		background-color: limegreen;
 		color: black;
+	}
+	.button-group {
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem;
+		border-bottom: 3px solid #484848;
+	}
+	.custom-buttons button {
+		padding: 0.5rem 1rem;
+		background-color: #444;
+		color: aliceblue;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+	.custom-buttons button:hover {
+		background-color: #5cb85c;
+	}
+	.custom-buttons button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>
