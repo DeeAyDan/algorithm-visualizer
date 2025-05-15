@@ -17,15 +17,9 @@
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
-
-	// ==== Alapadatok ====
-
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	activeLine.set(-1);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
+	// ==== Alapadatok ====
 	let edges = [
 		{ from: 0, to: 1, weight: 2 },
 		{ from: 1, to: 2, weight: 2 },
@@ -62,16 +56,24 @@
 		totalSteps.set(edges.length * 2);
 	});
 
+	function resetParameters() {
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+		currentStep.set(0);
+
+		activeLine.set({start: -1, end: -1});
+
+		mstEdges = [];
+		randomizeEdgeWeights();
+	}
+
 	// ==== Késleltetés és vezérlés ====
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			await new Promise((resolve) => {
 				const unsub = resumeSignal.subscribe(() => {
 					if (get(algorithmStatus) === 'idle') {
-						consoleLog.set([]);
-						currentStep.set(0);
-						mstEdges = [];
-						randomizeEdgeWeights();
+						resetParameters();
 						unsub();
 						resolve();
 					}
@@ -81,14 +83,10 @@
 	}
 
 	async function startAlgorithm() {
-		consoleLog.set([]);
-		currentStep.set(0);
-		mstEdges = [];
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await kruskal();
-		activeLine.set(-1);
-
+		activeLine.set({start: -1, end: -1});
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -109,20 +107,19 @@
 			let y = find(parent, to);
 
 			log(`Él vizsgálata: (${from}, ${to}) súly: ${weight}`);
-			activeLine.set(9);
+			activeLine.set({start: 10, end: 11});
 			highlightedEdge = { from, to };
 			await delay(900 - get(speed) * 8);
 			await pauseIfNeeded();
 
 			if (x !== y) {
 				log(`Hozzáadás az feszítőfához: (${from}, ${to})`);
-				activeLine.set(15);
+				activeLine.set({start:13, end: 16});
 				result.push(edges[i]);
 				mstEdges = [...result];
 				union(parent, rank, x, y);
 			} else {
 				log(`Ciklust alkotna, kihagyva: (${from}, ${to})`);
-				activeLine.set(-1);
 			}
 
 			highlightedEdge = null;
@@ -152,18 +149,18 @@
 	}
 
 	selectedAlgorithmSourceCode.set(
-`function kruskal() {
+		`function kruskal() {
   edges.sort((a, b) => a.weight - b.weight);
   let parent = Array(numVertices)
                .fill(0).map((_, i) => i);
   let rank = Array(numVertices).fill(0);
   let result = [];
- \n
+ 
   for (let i = 0; i < edges.length; i++) {
     let { from, to, weight } = edges[i];
     let x = find(parent, from);
     let y = find(parent, to);
- \n
+ 
     if (x !== y) {
       result.push(edges[i]);
       union(parent, rank, x, y);
@@ -171,15 +168,16 @@
   }
   mstEdges = result;
 }
- \n
+ 
 function find(parent, i) {
   if (parent[i] === i) return i;
   return find(parent, parent[i]);
 }
- \n
+ 
 function union(parent, rank, x, y) {
   let xroot = find(parent, x);
   let yroot = find(parent, y);
+
   if (rank[xroot] < rank[yroot]) {
     parent[xroot] = yroot;
   } else if (rank[xroot] > rank[yroot]) {
@@ -188,7 +186,9 @@ function union(parent, rank, x, y) {
     parent[yroot] = xroot;
     rank[xroot]++;
   }
-}`);
+
+}`
+	);
 </script>
 
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
@@ -214,8 +214,8 @@ function union(parent, rank, x, y) {
 				stroke-width="2"
 			/>
 			<text
-			x={(nodes[from].x + nodes[to].x) / 2}
-			y={(nodes[from].y + nodes[to].y) / 2 - 5}
+				x={(nodes[from].x + nodes[to].x) / 2}
+				y={(nodes[from].y + nodes[to].y) / 2 - 5}
 				text-anchor="middle"
 				font-size="12"
 				fill="aliceblue">{weight}</text
@@ -223,10 +223,8 @@ function union(parent, rank, x, y) {
 		{/each}
 		<!-- Csúcsok -->
 		{#each nodes as { id, x, y }}
-			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="aliceblue" stroke-width="2"/>
-			<text x={x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12"
-				>{id}</text
-			>
+			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="aliceblue" stroke-width="2" />
+			<text {x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12">{id}</text>
 		{/each}
 	</svg>
 </div>

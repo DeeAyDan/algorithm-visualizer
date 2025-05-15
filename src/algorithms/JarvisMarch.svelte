@@ -17,14 +17,10 @@
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	let elementValue = 6;
-	activeLine.set(-1);
-	let selectedEdges = [];
 
+	let elementValue = 6;
+	let selectedEdges = [];
 	let points = [];
 
 	function generatePoints(count) {
@@ -46,20 +42,38 @@
 		return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
 	}
 
-	let highlightedEdge: [Point, Point] | null = null;
-	let hullEdges: [Point, Point][] = [];
+	let highlightedEdge = null;
+	let hullEdges = [];
+
+	// Make points reactive to elementValue changes
+	$: {
+		if (get(algorithmStatus) === 'idle') {
+			generatePoints(elementValue);
+			totalSteps.set(jarvisMarchCounter([...points]));
+		}
+	}
 
 	onMount(() => {
+		resetParameters();
 		generatePoints(elementValue);
-		arr = [...points];
-		totalSteps.set(jarvisMarchCounter(arr));
+		totalSteps.set(jarvisMarchCounter([...points]));
 	});
 
-	function jarvisMarchCounter(points: Point[]) {
-		let steps = 0;
-		if (points.length < 3) return;
+	function resetParameters() {
+		currentStep.set(0);
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
 
-		let hull: Point[] = [];
+		hullEdges = [];
+		selectedEdges = [];
+	}
+
+	function jarvisMarchCounter(points) {
+		let steps = 0;
+		if (points.length < 3) return steps;
+
+		let hull = [];
 
 		let leftmost = points.reduce((min, p) => (p.x < min.x ? p : min), points[0]);
 		let p = leftmost;
@@ -69,57 +83,53 @@
 			let q = points[0] === p ? points[1] : points[0];
 
 			for (let r of points) {
-				highlightedEdge = [p, r];
 				steps++;
 				if (crossProduct(p, q, r) < 0) {
 					q = r;
 				}
 			}
 			steps++;
-			hullEdges.push([p, q]);
 			p = q;
 		} while (p !== leftmost);
 
-		if (hull.length > 1) {
-			hullEdges.push([hull[hull.length - 1], hull[0]]);
-		}
 		return steps;
 	}
+
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					hullEdges = [];
-					selectedEdges = [];
-					selectedEdges = [...selectedEdges];
-					unsub();
-					resolve();
-				}
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						generatePoints(elementValue);
+						totalSteps.set(jarvisMarchCounter([...points]));
+						unsub();
+						resolve();
+					}
+				});
 			});
-		});		}
+		}
 	}
 
 	async function startAlgorithm() {
 		consoleLog.set([]);
 		currentStep.set(0);
 		hullEdges = [];
+		selectedEdges = [];
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await jarvisMarch(points);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
-	async function jarvisMarch(points: Point[]) {
+	async function jarvisMarch(points) {
 		if (points.length < 3) return;
 
-		let hull: Point[] = [];
+		let hull = [];
 
 		let leftmost = points.reduce((min, p) => (p.x < min.x ? p : min), points[0]);
 		let p = leftmost;
@@ -133,26 +143,31 @@
 				log(
 					`Vizsgálat: (${p.x.toFixed(2)}, ${p.y.toFixed(2)}) → (${r.x.toFixed(2)}, ${r.y.toFixed(2)})`
 				);
-				activeLine.set(13);
-				await pauseIfNeeded();
+				activeLine.set({ start: 13, end: 13 });
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 
 				if (crossProduct(p, q, r) < 0) {
 					q = r;
-					activeLine.set(14);
-				await delay(900 - get(speed) * 8);
+					activeLine.set({ start: 28, end: 30 });
+					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
+					activeLine.set({ start: 14, end: 16 });
+					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
 				}
 			}
 
 			selectedEdges.push([p, q]);
 			selectedEdges = [...selectedEdges];
 			highlightedEdge = null;
-			activeLine.set(25);
+			activeLine.set({ start: 19, end: 21 });
 
 			log(
 				`Kiválasztott él: (${p.x.toFixed(2)}, ${p.y.toFixed(2)}) → (${q.x.toFixed(2)}, ${q.y.toFixed(2)})`
 			);
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 			hullEdges.push([p, q]);
 			p = q;
 		} while (p !== leftmost);
@@ -163,45 +178,53 @@
 		highlightedEdge = null;
 	}
 
-	function crossProduct(a: Point, b: Point, c: Point): number {
+	function crossProduct(a, b, c) {
 		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	}
 
-	selectedAlgorithmSourceCode.set(
-		`function jarvisMarch(points) {
+	selectedAlgorithmSourceCode.set(`function jarvisMarch(points) {
+
   if (points.length < 3) return;
+
   let hull = [];
   let leftmost = points.reduce((min, p) => (p.x < min.x ? p : min), points[0]);
   let p = leftmost;
- \n
+ 
   do {
     hull.push(p);
     let q = points[0] === p ? points[1] : points[0];
- \n
+ 
     for (let r of points) {
       if (crossProduct(p, q, r) < 0) {
         q = r;
       }
     }
- \n
+ 
     hullEdges.push([p, q]);
     p = q;
   } while (p !== leftmost);
- \n
+ 
   if (hull.length > 1) {
   hullEdges.push([hull[hull.length - 1], hull[0]]);
   }
 }
-\n
+ 
 function crossProduct(a, b, c){
     return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-}`
-	);
+}`);
 </script>
 
-<div class="control-buttons">
+<div class="custom-input">
 	<div>Pontok száma:</div>
-	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Pontok száma" />
+	<input
+		class="custom-input"
+		type="number"
+		disabled={$algorithmStatus !== 'idle'}
+		bind:value={elementValue}
+		placeholder="Pontok száma"
+		min="3"
+		max="20"
+	/>
 </div>
 
 <div class="algorithm-container">
@@ -218,12 +241,13 @@ function crossProduct(a, b, c){
 				x2={highlightedEdge[1].x}
 				y2={highlightedEdge[1].y}
 				stroke="#dc143c"
+				stroke-dasharray="4"
 				stroke-width="2"
 			/>
 		{/if}
 
 		{#each hullEdges as [a, b]}
-			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="green" stroke-width="2" />
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#45a049" stroke-width="2" />
 			<circle cx={a.x} cy={a.y} r="6" fill="limegreen" />
 		{/each}
 
@@ -242,20 +266,26 @@ function crossProduct(a, b, c){
 		display: block;
 		background-color: #2f2f2f;
 	}
-	.control-buttons {
+	.custom-input {
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		gap: 10px;
 		padding: 0.5rem;
-		border-bottom: 3px solid #484848;
+		border-bottom: #484848 3px solid;
 	}
-	.control-buttons input {
+
+	.custom-input input {
 		width: 55px;
 		padding: 0.5rem;
 		margin-right: 10px;
 		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
+	}
+	.custom-input input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>

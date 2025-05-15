@@ -17,24 +17,13 @@
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
-
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	activeLine.set(-1);
 
 	let elementValue = 6;
 
-	let points = [
-		{ x: 50, y: 50 },
-		{ x: 450, y: 50 },
-		{ x: 250, y: 100 },
-		{ x: 400, y: 250 },
-		{ x: 100, y: 200 },
-		{ x: 250, y: 280 }
-	];
-
+	// Reactive declaration - when elementValue changes, points will update automatically
+	$: points = generateRandomPoints(elementValue);
+	
 	let highlightedEdge: [Point, Point] | null = null;
 	let hullEdges: [Point, Point][] = [];
 
@@ -44,6 +33,9 @@
 	};
 
 	function generateRandomPoints(n): Point[] {
+		// Ensure input is within bounds
+		n = Math.max(3, Math.min(20, n));
+		
 		const width = 500;
 		const height = 300;
 		const margin = 20;
@@ -57,9 +49,22 @@
 		return points;
 	}
 
+	// Update totalSteps when points change
+	$: totalSteps.set(convexHullCounter(points));
+
 	onMount(() => {
-		totalSteps.set(convexHullCounter(points));
+		resetParameters();
 	});
+
+	function resetParameters() {
+		currentStep.set(0);
+		algorithmStatus.set('idle');
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		hullEdges = [];
+		hullEdges = [...hullEdges];
+	}
 
 	function convexHullCounter(points: Point[]): number {
 		let steps = 0;
@@ -95,44 +100,41 @@
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					hullEdges = [];
-					hullEdges = [...hullEdges];
-
-					unsub();
-					resolve();
-				}
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						resetParameters();
+						unsub();
+						resolve();
+					}
+				});
 			});
-		});		}
+		}
 	}
 
 	async function startAlgorithm() {
-		consoleLog.set([]);
-		currentStep.set(0);
-		hullEdges = [];
-
-		if (elementValue < 3) {
-			elementValue = 3;
-		} else if (elementValue > 20) {
-			elementValue = 20;
-		}
-
+		// No need to regenerate points here, as they're already reactive
+		// No need to clamp elementValue here as it's done in generateRandomPoints
+		
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		points = generateRandomPoints(elementValue);
 		totalSteps.set(convexHullCounter(points));
 		await convexHull(points);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
 		await restartAlgorithm();
 	}
 
+	// Handle manual input validation
+	function handleInputChange() {
+		if (elementValue < 3) elementValue = 3;
+		if (elementValue > 20) elementValue = 20;
+	}
+
 	async function convexHull(points: Point[]) {
+		hullEdges = []; // Clear previous hull edges
+		
 		for (let i = 0; i < points.length; i++) {
 			for (let j = i + 1; j < points.length; j++) {
 				let a = points[i];
@@ -140,30 +142,36 @@
 
 				highlightedEdge = [a, b];
 				log(`Vizsgálat: él (${a.x}, ${a.y}) → (${b.x}, ${b.y})`);
+				activeLine.set({ start: 7, end: 8 });
+
+				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
-				await delay(Math.max(100, 900 - get(speed) * 8));
 
 				let allOnOneSide = true;
 				let side = null;
 
 				for (let k = 0; k < points.length; k++) {
-					activeLine.set(17);
-					await delay(Math.max(100, 900 - get(speed) * 8));
+					activeLine.set({ start: 13, end: 13 });
+					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
 					if (k === i || k === j) {
-						activeLine.set(18);
-						await delay(Math.max(100, 900 - get(speed) * 8));
+						activeLine.set({ start: 15, end: 15 });
+						await delay(900 - get(speed) * 8);
+						await pauseIfNeeded();
 						continue;
 					}
 					let p = points[k];
 					let val = crossProduct(a, b, p);
 					if (val !== 0) {
 						if (side === null) {
-							activeLine.set(22);
-							await delay(Math.max(100, 900 - get(speed) * 8));
+							activeLine.set({ start: 21, end: 21 });
+							await delay(900 - get(speed) * 8);
+							await pauseIfNeeded();
 							side = val > 0;
 						} else if (val > 0 !== side) {
-							activeLine.set(23);
-							await delay(Math.max(100, 900 - get(speed) * 8));
+							activeLine.set({ start: 22, end: 25 });
+							await delay(900 - get(speed) * 8);
+							await pauseIfNeeded();
 							allOnOneSide = false;
 							break;
 						}
@@ -171,8 +179,9 @@
 				}
 
 				if (allOnOneSide) {
-					activeLine.set(32);
-					await delay(Math.max(200, 900 - get(speed) * 8));
+					activeLine.set({ start: 29, end: 31 });
+					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
 					log(`Él hozzáadva a konvex burokhoz`);
 					hullEdges.push([a, b]);
 					hullEdges = [...hullEdges];
@@ -186,23 +195,25 @@
 		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	}
 
-	selectedAlgorithmSourceCode.set(`
-function convexHull(points) {
+	selectedAlgorithmSourceCode.set(`function convexHull(points) {
   let hullEdges = [];
- \n
+ 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++){
-	\n
+	
       let a = points[i];
       let b = points[j];
- \n
+ 
       let allOnOneSide = true;
       let side = null;
- \n
+ 
       for (let k = 0; k < points.length; k++){
+
         if (k === i || k === j) continue;
+
         let p = points[k];
         let val = crossProduct(a, b, p);
+
         if (val !== 0) {
           if (side === null) side = val > 0;
           else if (val > 0 !== side) {
@@ -211,7 +222,7 @@ function convexHull(points) {
           }
         }
      }
- \n
+ 
       if (allOnOneSide) {
         hullEdges.push([a, b]);
       }
@@ -220,17 +231,23 @@ function convexHull(points) {
 }`);
 </script>
 
-<div class="control-buttons">
+<div class="custom-input">
 	<div>Pontok száma:</div>
-	<input class="custom-input" type="number" bind:value={elementValue} max="20" min="3" />
+	<input
+		class="custom-input"
+		type="number"
+		disabled={$algorithmStatus !== 'idle'}
+		bind:value={elementValue}
+		on:change={handleInputChange}
+		max="20"
+		min="3"
+	/>
 </div>
 
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 
 <div class="graph-container">
 	<svg class="svg" width="500" height="300">
-		
-
 		<!-- Aktuálisan vizsgált él -->
 		{#if highlightedEdge}
 			<line
@@ -267,7 +284,7 @@ function convexHull(points) {
 		border: 1px solid #ccc;
 		border-radius: 4px;
 	}
-	.control-buttons {
+	.custom-input {
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -276,12 +293,17 @@ function convexHull(points) {
 		border-bottom: #484848 3px solid;
 	}
 
-	.control-buttons input {
+	.custom-input input {
 		width: 55px;
 		padding: 0.5rem;
 		margin-right: 10px;
 		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
+	}
+	.custom-input input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>
