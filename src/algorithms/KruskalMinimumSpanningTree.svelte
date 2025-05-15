@@ -15,6 +15,8 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
 
 	// ==== Alapadatok ====
 
@@ -61,26 +63,6 @@
 	});
 
 	// ==== Késleltetés és vezérlés ====
-
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await new Promise((resolve) => {
-				const unsub = resumeSignal.subscribe(() => {
-					if (get(algorithmStatus) === 'running') {
-						unsub();
-						resolve();
-					}
-				});
-			});
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			await new Promise((resolve) => {

@@ -13,6 +13,8 @@
 		activeLine
 	} from '../stores/store.svelte.js';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+
 
 	// Tree node interface
 	interface TreeNode {
@@ -57,29 +59,6 @@
 	}
 
 	onMount(initStores);
-
-	// Utility functions
-	function log(message: string): void {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-
-	function delay(ms: number): Promise<void> {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-
-	async function pauseIfNeeded(): Promise<void> {
-		if (get(algorithmStatus) === 'paused') {
-			await new Promise<void>((resolve) => {
-				const unsub = resumeSignal.subscribe(() => {
-					if (get(algorithmStatus) === 'running') {
-						unsub();
-						resolve();
-					}
-				});
-			});
-		}
-	}
 
 	function validateInput(): boolean {
 		if (elementValue === null || elementValue === undefined) {

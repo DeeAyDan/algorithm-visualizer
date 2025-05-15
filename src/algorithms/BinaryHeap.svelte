@@ -14,6 +14,7 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
@@ -46,22 +47,21 @@
 	}
 
 	function insertElement() {
-	if (!validateInput()) return;
-	heap.push(elementValue);
-	heap = [...heap]; // Új referencia létrehozása
-	log(`Elem beszúrása: ${elementValue}`);
-	heapifyUp(heap.length - 1);
-}
+		if (!validateInput()) return;
+		heap.push(elementValue);
+		heap = [...heap]; // Új referencia létrehozása
+		log(`Elem beszúrása: ${elementValue}`);
+		heapifyUp(heap.length - 1);
+	}
 
-function deleteElement() {
-	if (heap.length <= 1) return log('A kupac üres.');
-	log(`Gyökér törlése: ${heap[1]}`);
-	heap[1] = heap[heap.length - 1];
-	heap.pop();
-	heap = [...heap]; // Új referencia létrehozása
-	heapifyDown(1);
-}
-
+	function deleteElement() {
+		if (heap.length <= 1) return log('A kupac üres.');
+		log(`Gyökér törlése: ${heap[1]}`);
+		heap[1] = heap[heap.length - 1];
+		heap.pop();
+		heap = [...heap]; // Új referencia létrehozása
+		heapifyDown(1);
+	}
 
 	function heapifyDown(index: number) {
 		while (2 * index < heap.length) {
@@ -89,49 +89,19 @@ function deleteElement() {
 		totalSteps.set(0);
 	});
 
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					heap = [Infinity];
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
-
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						consoleLog.set([]);
+						currentStep.set(0);
+						heap = [Infinity];
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -165,18 +135,32 @@ function deleteElement() {
 		</div>
 		<svg viewBox="0 0 800 400" class="svg-tree">
 			{#each heap.slice(1) as value, i (i)}
-					{#if 2 * (i + 1) < heap.length}
-						<line x1={(i + 1) * 50} y1={50 + Math.floor(Math.log2(i + 1)) * 70}
-							x2={(2 * (i + 1)) * 50} y2={50 + Math.floor(Math.log2(2 * (i + 1))) * 70}
-							stroke="black" />
-					{/if}
-					{#if 2 * (i + 1) + 1 < heap.length}
-						<line x1={(i + 1) * 50} y1={50 + Math.floor(Math.log2(i + 1)) * 70}
-							x2={(2 * (i + 1) + 1) * 50} y2={50 + Math.floor(Math.log2(2 * (i + 1) + 1)) * 70}
-							stroke="black" />
-					{/if}
-					<circle cx={(i + 1) * 50} cy={50 + Math.floor(Math.log2(i + 1)) * 70} r="15" fill="#ccc" />
-					<text x={(i + 1) * 50} y={55 + Math.floor(Math.log2(i + 1)) * 70} text-anchor="middle" fill="black" font-size="14">{value}</text>
+				{#if 2 * (i + 1) < heap.length}
+					<line
+						x1={(i + 1) * 50}
+						y1={50 + Math.floor(Math.log2(i + 1)) * 70}
+						x2={2 * (i + 1) * 50}
+						y2={50 + Math.floor(Math.log2(2 * (i + 1))) * 70}
+						stroke="black"
+					/>
+				{/if}
+				{#if 2 * (i + 1) + 1 < heap.length}
+					<line
+						x1={(i + 1) * 50}
+						y1={50 + Math.floor(Math.log2(i + 1)) * 70}
+						x2={(2 * (i + 1) + 1) * 50}
+						y2={50 + Math.floor(Math.log2(2 * (i + 1) + 1)) * 70}
+						stroke="black"
+					/>
+				{/if}
+				<circle cx={(i + 1) * 50} cy={50 + Math.floor(Math.log2(i + 1)) * 70} r="15" fill="#ccc" />
+				<text
+					x={(i + 1) * 50}
+					y={55 + Math.floor(Math.log2(i + 1)) * 70}
+					text-anchor="middle"
+					fill="black"
+					font-size="14">{value}</text
+				>
 			{/each}
 		</svg>
 	</div>

@@ -16,6 +16,7 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { flip } from 'svelte/animate';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
 	interface Node {
 		value: number;
@@ -62,28 +63,6 @@
 			return false;
 		}
 		return true;
-	}
-
-	function log(msg: string) {
-		consoleLog.update((logs) => [...logs, msg]);
-		currentStep.update((n) => n + 1);
-	}
-
-	function delay(ms: number) {
-		return new Promise((res) => setTimeout(res, ms));
-	}
-
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await new Promise((resolve) => {
-				const unsub = resumeSignal.subscribe(() => {
-					if (get(algorithmStatus) === 'running') {
-						unsub();
-						resolve();
-					}
-				});
-			});
-		}
 	}
 
 	function height(n: Node | undefined): number {

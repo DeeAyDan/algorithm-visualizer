@@ -11,9 +11,9 @@
 		algorithmStatus,
 		resumeSignal
 	} from '../stores/store.svelte.js';
-
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
 	let maxDegree = 3;
 	let elementValue: number;
@@ -74,11 +74,6 @@
 			}
 		};
 	});
-
-	function log(msg: string) {
-		consoleLog.update((logs) => [...logs, msg]);
-		currentStep.update((n) => n + 1);
-	}
 
 	function validateInput(): boolean {
 		if (elementValue === undefined || elementValue === null) {
@@ -250,23 +245,6 @@
 		await tick();
 		await pauseIfNeeded();
 		await delay(700 - get(speed) * 6);
-	}
-
-	async function delay(ms) {
-		return new Promise(resolve => setTimeout(resolve, ms));
-	}
-
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			return new Promise(resolve => {
-				const unsubscribe = resumeSignal.subscribe(signal => {
-					if (signal) {
-						unsubscribe();
-						resolve();
-					}
-				});
-			});
-		}
 	}
 
 	async function updateTreeLayout() {

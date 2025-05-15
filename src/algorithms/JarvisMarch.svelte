@@ -15,6 +15,7 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
@@ -84,26 +85,9 @@
 		}
 		return steps;
 	}
-
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
+	async function restartAlgorithm() {
+		if (get(algorithmStatus) === 'finished') {
+			return new Promise((resolve) => {
 			const unsub = resumeSignal.subscribe(() => {
 				if (get(algorithmStatus) === 'idle') {
 					consoleLog.set([]);
@@ -115,17 +99,7 @@
 					resolve();
 				}
 			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
-	async function restartAlgorithm() {
-		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
-		}
+		});		}
 	}
 
 	async function startAlgorithm() {

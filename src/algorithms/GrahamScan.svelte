@@ -15,6 +15,7 @@
 	import Controls from '../routes/Controls.svelte';
 	import { get } from 'svelte/store';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
+	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
 	currentStep.set(0);
 	algorithmStatus.set('idle');
@@ -109,51 +110,25 @@
 		}
 		return steps;
 	}
-
-	function log(message: string) {
-		consoleLog.update((logs) => [...logs, message]);
-		currentStep.update((n) => n + 1);
-	}
-	function delay(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-	function waitUntilResume(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'running') {
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	function waitUntilRestart(): Promise<void> {
-		return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					hullEdges = [];
-					finalHullEdges = [];
-					selectedEdges = [];
-					selectedEdges = [...selectedEdges];
-					generatePoints(elementValue);
-					arr = [...points];
-					totalSteps.set(grahamScanCounter(arr));
-					unsub();
-					resolve();
-				}
-			});
-		});
-	}
-	async function pauseIfNeeded() {
-		if (get(algorithmStatus) === 'paused') {
-			await waitUntilResume();
-		}
-	}
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
-			await waitUntilRestart();
+			return new Promise((resolve) => {
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						consoleLog.set([]);
+						currentStep.set(0);
+						hullEdges = [];
+						finalHullEdges = [];
+						selectedEdges = [];
+						selectedEdges = [...selectedEdges];
+						generatePoints(elementValue);
+						arr = [...points];
+						totalSteps.set(grahamScanCounter(arr));
+						unsub();
+						resolve();
+					}
+				});
+			});
 		}
 	}
 
@@ -393,7 +368,7 @@ function crossProduct(a: Point, b: Point, c: Point): number {
 		align-items: center;
 		gap: 10px;
 		padding: 0.5rem;
-		border-bottom:#484848 3px solid;
+		border-bottom: #484848 3px solid;
 	}
 	.control-buttons input {
 		width: 55px;
