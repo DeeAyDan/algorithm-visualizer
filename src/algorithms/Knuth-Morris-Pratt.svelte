@@ -311,7 +311,6 @@ function computeLPS(pattern, lps) {
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		<div class="row">
 			{#each Array.from({ length: text.length }) as _, i}
@@ -338,14 +337,6 @@ function computeLPS(pattern, lps) {
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.array-visual {
 		display: flex;
 		flex-direction: column;

@@ -409,7 +409,6 @@
 	</div>
 
 	<div class="canvas-container">
-		<div class="tag">B-fa vizualizáció</div>
 		<svg class="svg" width={svgWidth} height={svgHeight}>
 			<!-- Definiáljuk a gradienteket a csomópontokhoz -->
 			<defs>
@@ -530,18 +529,6 @@
 	.canvas-container {
 		position: relative;
 		margin-top: 20px;
-	}
-	
-	.tag {
-		display: inline-block;
-		background-color: #484848;
-		color: white;
-		padding: 5px 10px;
-		border-radius: 4px 4px 0 0;
-		font-weight: bold;
-		position: relative;
-		top: 1px;
-		z-index: 2;
 	}
 	
 	.control-buttons {

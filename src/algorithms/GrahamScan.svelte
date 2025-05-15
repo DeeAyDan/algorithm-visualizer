@@ -344,7 +344,6 @@ function crossProduct(a: Point, b: Point, c: Point): number {
 
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Vászon</div>
 	<svg class="svg" width="500" height="300">
 		<!-- Zöld: végleges burok -->
 		{#each finalHullEdges as [a, b]}
@@ -381,15 +380,6 @@ function crossProduct(a: Point, b: Point, c: Point): number {
 </div>
 
 <style>
-	.tag {
-		display: block;
-		width: fit-content;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.svg {
 		margin: 1rem auto;
 		border: 1px solid #ccc;

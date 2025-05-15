@@ -446,7 +446,6 @@
 
 <!-- ==== Komponens markup ==== -->
 <div class="algorithm-container">
-	<div class="tag">Vászon</div>
 	<div class="array-visual">
 		<svg class="svg" width="500" height="300" bind:this={svg}></svg>
 	</div>
@@ -454,12 +453,7 @@
 
 <!-- ==== Stílus ==== -->
 <style>
-	.tag {
-		display: inline-block;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
+
 	.control-buttons {
 		display: flex;
 		justify-content: space-around;

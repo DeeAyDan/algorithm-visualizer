@@ -157,7 +157,6 @@ function deleteElement() {
 
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-	<div class="tag">Kupac (tömb és fa)</div>
 	<div class="array-visual">
 		<div class="row">
 			{#each heap.slice(1) as value, i}
@@ -184,12 +183,6 @@ function deleteElement() {
 </div>
 
 <style>
-	.tag {
-		display: inline-block;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.array-visual {
 		display: flex;
 		flex-direction: column;

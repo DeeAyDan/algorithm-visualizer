@@ -416,7 +416,6 @@ function deleteElement(tree, value) {
 </div>
 
 <div class="algorithm-container">
-	<div class="tag">Vászon</div>
 	<svg class="svg" width="500" height="300">
 		<!-- Edge connections (drawn first) -->
 		{#each nodes as node (node.id || node.value)}
@@ -477,12 +476,6 @@ function deleteElement(tree, value) {
 </div>
 
 <style>
-	.tag {
-		display: inline-block;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
 	.control-buttons {
 		display: flex;
 		justify-content: space-around;

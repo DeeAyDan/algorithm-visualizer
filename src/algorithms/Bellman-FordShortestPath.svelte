@@ -229,7 +229,6 @@ async function bellmanFord(start) {
 
 <!-- ==== UI ==== -->
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
-<div class="tag">Vászon</div>
 
 <div class="graph-container">
 	<svg class="svg" width="500" height="300">
@@ -313,15 +312,6 @@ async function bellmanFord(start) {
 		display: flex;
 		justify-content: center;
 		align-items: center;
-	}
-	.tag {
-		display: block;
-		width: fit-content;
-		top: 0;
-		left: 0;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
 	}
 	.svg {
 		border: 1px solid #ccc;

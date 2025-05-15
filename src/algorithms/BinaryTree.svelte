@@ -589,7 +589,6 @@
 </div>
 
 <div class="algorithm-container">
-	<div class="tag">Vászon</div>
 	<svg class="svg" width="500" height="300">
 		{#if tree}
 			<!-- Draw edges first so they appear behind nodes -->
@@ -664,13 +663,6 @@
 </div>
 
 <style>
-	.tag {
-		display: inline-block;
-		background-color: #484848;
-		color: white;
-		padding: 3px;
-	}
-
 	.control-buttons {
 		display: flex;
 		justify-content: space-around;
