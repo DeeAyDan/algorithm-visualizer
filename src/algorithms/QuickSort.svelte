@@ -30,6 +30,16 @@
 		}
 	}
 
+	function reshuffleData() {
+  shuffle(data);
+  initArr = [...data];
+  maxValue = Math.max(...data);
+  resetParameters();
+  totalSteps.set(countQuickSortSteps());
+  consoleLog.set([]);
+  consoleLog.update((logs) => [...logs, 'Adatok újrakeverve, algoritmus visszaállítva.']);
+}
+
 	// ==== Alapadatok ====
 	let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	shuffle(data);

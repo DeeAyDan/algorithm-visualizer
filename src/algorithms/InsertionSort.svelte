@@ -59,7 +59,7 @@
 		countArray = [...data];
 		totalSteps.set(countInsersionSortSteps(countArray));
 		resetParameters();
-		consoleLog.update((logs) => [...logs, 'Adatok újrakeverve!']);
+		consoleLog.update((logs) => [...logs, 'Adatok újrakeverve, algoritmus visszaállítva.']);
 	}
 
 	function resetParameters() {

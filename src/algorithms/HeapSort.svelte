@@ -90,6 +90,7 @@
 		currentStep.set(0);
 		activeNodes = [];
 		swapNodes = [];
+		consoleLog.update((logs) => [...logs, 'Adatok újrakeverve, algoritmus visszaállítva.']);
 		activeLine.set({ start: -1, end: -1 });
 	}
 
