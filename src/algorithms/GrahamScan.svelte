@@ -168,7 +168,8 @@
 		const lowest = points.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x < b.x) ? a : b));
 		activeLine.set(2);
 		log(`Legalsó pont: index: ${points.indexOf(lowest)}`);
-		await delay(1000 - get(speed) * 8);
+		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		// 2. Polárszög szerint rendezés
 		const sorted = points
@@ -184,7 +185,8 @@
 		log(
 			`Rendezett pontok indexei: ${[lowest, ...sorted].map((p) => points.indexOf(p)).join(', ')}`
 		);
-		await delay(1000 - get(speed) * 8);
+		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		// 3. Stack inicializálása
 		const stack: Point[] = [lowest, sorted[0]];
@@ -195,7 +197,8 @@
 		log(
 			`Kezdő él: (${lowest.x.toFixed(2)}, ${lowest.y.toFixed(2)}) → (${sorted[0].x.toFixed(2)}, ${sorted[0].y.toFixed(2)})`
 		);
-		await delay(1000 - get(speed) * 8);
+		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		for (let i = 1; i < sorted.length; i++) {
 			const current = sorted[i];
@@ -205,8 +208,8 @@
 			activeLine.set(17);
 			log(`Vizsgált pont indexe: ${points.indexOf(current)}`);
 			highlightedEdge = [top, current];
+			await delay(900 - get(speed) * 8);
 			await pauseIfNeeded();
-			await delay(1000 - get(speed) * 8);
 
 			while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
 				activeLine.set(22);
@@ -218,8 +221,8 @@
 				stackEdges = [...stackEdges];
 				top = stack[stack.length - 1];
 				nextToTop = stack[stack.length - 2];
+				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
-				await delay(1000 - get(speed) * 8);
 			}
 
 			stack.push(current);
@@ -231,8 +234,8 @@
 				`Hozzáadva a burokhoz: (${top.x.toFixed(2)}, ${top.y.toFixed(2)}) → (${current.x.toFixed(2)}, ${current.y.toFixed(2)})`
 			);
 
+			await delay(900 - get(speed) * 8);
 			await pauseIfNeeded();
-			await delay(1000 - get(speed) * 8);
 		}
 
 		highlightedEdge = null;
@@ -246,8 +249,8 @@
 			`Záró él: (${last.x.toFixed(2)}, ${last.y.toFixed(2)}) → (${first.x.toFixed(2)}, ${first.y.toFixed(2)})`
 		);
 
+		await delay(900 - get(speed) * 8);
 		await pauseIfNeeded();
-		await delay(1000 - get(speed) * 6);
 
 		// 4. Végső burok összeállítása
 		for (let i = 0; i < stack.length; i++) {
