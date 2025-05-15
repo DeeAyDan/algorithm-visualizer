@@ -97,19 +97,19 @@
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					matchPositions = new Set<number>([]);
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						consoleLog.set([]);
+						currentStep.set(0);
+						matchPositions = new Set<number>([]);
 
-					patternPosition = 0;
+						patternPosition = 0;
 
-					unsub();
-					resolve();
-				}
+						unsub();
+						resolve();
+					}
+				});
 			});
-		});
 		}
 	}
 
@@ -169,20 +169,21 @@
 
 		activeLine.set(23);
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		for (let i = 0; i <= N - M; i++) {
 			patternPosition = i;
 			textIndex = null;
 			log(`Hash összehasonlítás: minta=${p}, szöveg=${t}`);
 			activeLine.set(25);
-			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 
 			if (p === t) {
 				log(`Hash egyezik, karakter-összehasonlítás...`);
 				activeLine.set(26);
-				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 
 				let match = true;
 				for (let j = 0; j < M; j++) {
@@ -195,8 +196,8 @@
 					log(`Egyezés '${text[i + j]}' = '${pattern[j]}'`);
 					activeLine.set(29);
 					textIndex = i + j;
-					await pauseIfNeeded();
 					await delay(900 - get(speed) * 8);
+					await pauseIfNeeded();
 				}
 				if (match) {
 					log(`Minta találat a(z) ${i}. pozíción!`);
@@ -282,10 +283,7 @@
 		</div>
 		<div class="row pattern-row" style="left: {patternPosition * 45}px">
 			{#each Array.from({ length: pattern.length }) as _, i}
-				<div
-					class="bar pattern"
-					style="background-color: #ffd700;"
-				>
+				<div class="bar pattern" style="background-color: #ffd700;">
 					{pattern[i]}
 				</div>
 			{/each}

@@ -15,7 +15,6 @@
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
-
 	// Tree node interface
 	interface TreeNode {
 		value: number;
@@ -23,8 +22,8 @@
 		right?: TreeNode | null;
 		x: number;
 		y: number;
-		prevX?: number;  // For animation tracking
-		prevY?: number;  // For animation tracking
+		prevX?: number; // For animation tracking
+		prevY?: number; // For animation tracking
 		isNew?: boolean; // Flag for newly inserted nodes
 	}
 
@@ -39,7 +38,7 @@
 
 	// Animation constants
 	const ANIMATION = {
-		delay: 800,
+		delay: 900,
 		duration: 600,
 		easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)'
 	};
@@ -304,13 +303,13 @@
 			if (depth > LAYOUT.maxDepth - 1) {
 				activeLine.set(5);
 				log(`A fa mélysége nem lehet nagyobb, mint ${LAYOUT.maxDepth}.`);
-				await pauseIfNeeded();
 				await delay(ANIMATION.delay);
+				await pauseIfNeeded();
 				return node;
 			}
 
-			await pauseIfNeeded();
 			await delay(ANIMATION.delay);
+			await pauseIfNeeded();
 
 			// Create new node if empty
 			if (!node) {
@@ -375,15 +374,15 @@
 			// Highlight current node and pause
 			highlightedNode = node;
 			log(`Vizsgált csúcs: ${node.value}`);
-			await pauseIfNeeded();
 			await delay(ANIMATION.delay);
+			await pauseIfNeeded();
 
 			// Check current node
 			if (value === node.value) {
 				activeLine.set(9);
 				log(`Érték megtalálva: ${value}`);
-				await pauseIfNeeded();
 				await delay(ANIMATION.delay);
+				await pauseIfNeeded();
 				return true;
 			}
 			// Search left
@@ -444,8 +443,8 @@
 			// Highlight current node and pause
 			highlightedNode = node;
 			log(`Vizsgált csúcs: ${node.value}`);
-			await pauseIfNeeded();
 			await delay(ANIMATION.delay);
+			await pauseIfNeeded();
 
 			// Traverse tree to find node
 			if (value < node.value) {
@@ -456,61 +455,60 @@
 				activeLine.set(19);
 				log(`${value} > ${node.value}, jobbra keresünk`);
 				node.right = await remove(node.right, value);
-			} 
+			}
 			// Found node to delete
 			else {
 				activeLine.set(24);
-				
+
 				// Case 1: Leaf node (no children)
 				if (!node.left && !node.right) {
 					log(`Levél csúcs törölve: ${value}`);
-					await pauseIfNeeded();
 					await delay(ANIMATION.delay);
+					await pauseIfNeeded();
 					return null;
 				}
 				// Case 2: Node with only one child
 				else if (!node.left) {
 					activeLine.set(29);
 					log(`Csúcs törölve (${value}), jobb gyerek helyettesíti`);
-					
+
 					// Preserve animation position for child node
 					if (node.right && node.right.prevX === undefined) {
 						node.right.prevX = node.right.x;
 						node.right.prevY = node.right.y;
 					}
-					
-					await pauseIfNeeded();
+
 					await delay(ANIMATION.delay);
+					await pauseIfNeeded();
 					return node.right;
-				}
-				else if (!node.right) {
+				} else if (!node.right) {
 					activeLine.set(33);
 					log(`Csúcs törölve (${value}), bal gyerek helyettesíti`);
-					
+
 					// Preserve animation position for child node
 					if (node.left && node.left.prevX === undefined) {
 						node.left.prevX = node.left.x;
 						node.left.prevY = node.left.y;
 					}
-					
-					await pauseIfNeeded();
+
 					await delay(ANIMATION.delay);
+					await pauseIfNeeded();
 					return node.left;
 				}
 				// Case 3: Node with two children
 				else {
 					activeLine.set(39);
-					
+
 					// Find successor (minimum value in right subtree)
 					const successor = findMin(node.right);
 					log(`Két gyermekes csúcs (${value}) helyettesítése ${successor.value} értékkel`);
-					
+
 					// Replace node value with successor value
 					node.value = successor.value;
-					
+
 					// Delete successor
-					await pauseIfNeeded();
 					await delay(ANIMATION.delay);
+					await pauseIfNeeded();
 					activeLine.set(46);
 					node.right = await remove(node.right, successor.value);
 				}
@@ -519,13 +517,13 @@
 		};
 
 		tree = await remove(tree, elementValue);
-		
+
 		// Calculate new positions
 		calculatePositions(tree);
-		
+
 		// Animate nodes to their new positions
 		await animateNodeMovements();
-		
+
 		highlightedNode = null;
 		activeLine.set(-1);
 		algorithmStatus.set('idle');

@@ -149,8 +149,8 @@
 
 		highlightedNode = node;
 		log(`Vizsgált csomópont: ${node.keys.join(', ')}`);
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		let i = 0;
 		while (i < node.keys.length && value > node.keys[i]) {
@@ -173,8 +173,8 @@
 
 	async function insertNonFull(node, key) {
 		log(`Beszúrás csomópontba: [${node.keys.join(', ')}]`);
+		await delay(900 - get(speed) * 8);
 		await pauseIfNeeded();
-		await delay(600 - get(speed) * 5);
 		
 		let i = node.keys.length - 1;
 		if (node.isLeaf) {
@@ -188,8 +188,8 @@
 			node.keys[i + 1] = key;
 			highlightedNode = node;
 			await tick();
-			await pauseIfNeeded();
-			await delay(500 - get(speed) * 4);
+			await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		} else {
 			// Nem levél esetén, keressük meg a megfelelő gyereket
 			while (i >= 0 && key < node.keys[i]) {
@@ -200,8 +200,8 @@
 			log(`Gyermek csomópontba navigálunk: [${node.children[i].keys.join(', ')}]`);
 			
 			await tick();
-			await pauseIfNeeded();
-			await delay(500 - get(speed) * 4);
+			await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 			
 			if (node.children[i].keys.length === 2 * maxDegree - 1) {
 				log(`Tele gyermek csomópont, felosztás történik`);
@@ -243,8 +243,8 @@
 		
 		highlightedNode = parent;
 		await tick();
+		await delay(900 - get(speed) * 8);
 		await pauseIfNeeded();
-		await delay(700 - get(speed) * 6);
 	}
 
 	async function updateTreeLayout() {

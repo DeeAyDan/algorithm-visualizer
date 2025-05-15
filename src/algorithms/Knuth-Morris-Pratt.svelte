@@ -98,19 +98,19 @@
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			return new Promise((resolve) => {
-			const unsub = resumeSignal.subscribe(() => {
-				if (get(algorithmStatus) === 'idle') {
-					consoleLog.set([]);
-					currentStep.set(0);
-					matchPositions = new Set<number>([]);
+				const unsub = resumeSignal.subscribe(() => {
+					if (get(algorithmStatus) === 'idle') {
+						consoleLog.set([]);
+						currentStep.set(0);
+						matchPositions = new Set<number>([]);
 
-					patternPosition = 0; // Reset pattern position
+						patternPosition = 0; // Reset pattern position
 
-					unsub();
-					resolve();
-				}
+						unsub();
+						resolve();
+					}
+				});
 			});
-		});
 		}
 	}
 
@@ -163,14 +163,14 @@
 			textIndex = i;
 
 			activeLine.set(8);
-			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
+			await pauseIfNeeded();
 
 			if (pattern[j] == text[i]) {
 				log(`Egyezés.`);
 				activeLine.set(9);
-				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 				j++;
 				i++;
 				patternPosition = i - j;
@@ -181,15 +181,15 @@
 				for (let k = 0; k < j; k++) matchPositions.add(i - j + k);
 				matchPositions = new Set<number>([...matchPositions]);
 				activeLine.set(14);
-				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 				j = lps[j - 1];
 				patternPosition = i - j;
 			} else if (i < text.length && pattern[j] != text[i]) {
 				log(`Eltérés. A minta visszaállítása.`);
 				activeLine.set(16);
-				await pauseIfNeeded();
 				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 				if (j != 0) {
 					j = lps[j - 1];
 					patternPosition = i - j;
@@ -290,22 +290,19 @@ function computeLPS(pattern, lps) {
 	<div class="array-visual">
 		<div class="row">
 			{#each Array.from({ length: text.length }) as _, i}
-			<div
-			class="bar {matchPositions.has(i) ? 'match' : ''} {i === textIndex ? 'active' : ''}"
-			style=" background-color: #2f4f4f;"
-		>
-			{text[i]}
-		</div>
+				<div
+					class="bar {matchPositions.has(i) ? 'match' : ''} {i === textIndex ? 'active' : ''}"
+					style=" background-color: #2f4f4f;"
+				>
+					{text[i]}
+				</div>
 			{/each}
 		</div>
 		<div class="row pattern-row" style="left: {patternPosition * 45}px">
 			{#each Array.from({ length: pattern.length }) as _, i}
-			<div
-			class="bar pattern"
-			style="background-color: #ffd700;"
-		>
-			{pattern[i]}
-		</div>
+				<div class="bar pattern" style="background-color: #ffd700;">
+					{pattern[i]}
+				</div>
 			{/each}
 		</div>
 	</div>

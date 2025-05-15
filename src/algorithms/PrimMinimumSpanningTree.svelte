@@ -17,15 +17,9 @@
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
 
-
-	// ==== Alapadatok ====
-
-	currentStep.set(0);
-	algorithmStatus.set('idle');
-	consoleLog.set([]);
-	activeLine.set(-1);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
+	// ==== Alapadatok ====
 	let edges = [
 		{ from: 0, to: 1, weight: 2 },
 		{ from: 1, to: 2, weight: 2 },
@@ -60,7 +54,18 @@
 
 	onMount(() => {
 		totalSteps.set((numVertices - 1) * 2);
+		resetParameters();
 	});
+
+	function resetParameters() {
+		algorithmStatus.set('idle');
+		currentStep.set(0);
+		consoleLog.set([]);
+		activeLine.set({ start: -1, end: -1 });
+
+		mstEdges = [];
+		randomizeEdgeWeights();
+	}
 
 	// ==== Késleltetés és vezérlés ====
 	async function restartAlgorithm() {
@@ -68,10 +73,7 @@
 			await new Promise((resolve) => {
 				const unsub = resumeSignal.subscribe(() => {
 					if (get(algorithmStatus) === 'idle') {
-						consoleLog.set([]);
-						currentStep.set(0);
-						mstEdges = [];
-						randomizeEdgeWeights();
+						resetParameters();
 						unsub();
 						resolve();
 					}
@@ -86,8 +88,9 @@
 		mstEdges = [];
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
-		await prim(0); // indulás az első csúcsból
-		activeLine.set(-1);
+		await prim(0);
+		activeLine.set({ start: -1, end: -1 });
+
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -107,17 +110,19 @@
 			for (let i = 0; i < edgeQueue.length; i++) {
 				const { from, to, weight } = edgeQueue[i];
 
-				if ((visited[from] && !visited[to]) || (visited[to] && !visited[from])) {
-					highlightedEdge = { from, to };
-					log(`Él vizsgálata: (${from}, ${to}) súly: ${weight}`);
-					activeLine.set(11);
+				log(`Él vizsgálata: (${from}, ${to}) súly: ${weight}`);
+					activeLine.set({ start: 10, end: 10 });
 					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
+
+				if ((visited[from] && !visited[to]) || (visited[to] && !visited[from])) {
+					highlightedEdge = { from, to };
+					
 
 					result.push(edgeQueue[i]);
 					mstEdges = [...result];
 					log(`Hozzáadás az feszítőfához: (${from}, ${to})`);
-					activeLine.set(15);
+					activeLine.set({ start: 12, end: 17 });
 
 					visited[from] = true;
 					visited[to] = true;
@@ -131,7 +136,7 @@
 			await delay(900 - get(speed) * 8);
 			await pauseIfNeeded();
 
-			if (!found) break; // Nem található új él, izolált komponens
+			if (!found) break;
 		}
 
 		mstEdges = result;
@@ -147,13 +152,14 @@ function prim(start) {
   while (result.length < numVertices - 1) {
     for (let edge of edges) {
       let {from, to, weight} = edge;
-      if ((visited[from] && !visited[to]) || 
-          (visited[to] && !visited[from])) {
+
+      if ((visited[from] && !visited[to]) || (visited[to] && !visited[from])) {
         result.push(edge);
         visited[from] = true;
         visited[to] = true;
         break;
       }
+
     }
   }
   mstEdges = result;
@@ -183,8 +189,8 @@ function prim(start) {
 				stroke-width="2"
 			/>
 			<text
-			x={(nodes[from].x + nodes[to].x) / 2}
-			y={(nodes[from].y + nodes[to].y) / 2 - 5}
+				x={(nodes[from].x + nodes[to].x) / 2}
+				y={(nodes[from].y + nodes[to].y) / 2 - 5}
 				text-anchor="middle"
 				font-size="12"
 				fill="aliceblue">{weight}</text
@@ -193,9 +199,7 @@ function prim(start) {
 		<!-- Csúcsok -->
 		{#each nodes as { id, x, y }}
 			<circle cx={x} cy={y} r="20" fill="#2f4f4f" stroke="aliceblue" stroke-width="2" />
-			<text x={x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12"
-				>{id}</text
-			>
+			<text {x} y={y + 5} text-anchor="middle" fill="aliceblue" font-size="12">{id}</text>
 		{/each}
 	</svg>
 </div>

@@ -94,9 +94,8 @@
 		updateHeight(x);
 		
 		log(`Jobbra forgatás: ${y.value}`);
-		
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		
 		// Update tree positions and trigger rerender
 		positionTree(root);
@@ -118,8 +117,8 @@
 		
 		log(`Balra forgatás: ${x.value}`);
 		
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 		
 		// Update tree positions and trigger rerender
 		positionTree(root);
@@ -140,8 +139,8 @@
 				nodes = flatten(root);
 			}
 			// Delay before second rotation
-			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 			return await rotateRight(n);
 		}
 
@@ -153,8 +152,8 @@
 				nodes = flatten(root);
 			}
 			// Delay before second rotation
-			await pauseIfNeeded();
 			await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 			return await rotateLeft(n);
 		}
 
@@ -177,8 +176,8 @@
 
 		highlightedNode = node;
 		log(`Vizsgálat: ${node.value}`);
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		if (value < node.value) {
 			node.left = await insert(node.left, value);
@@ -193,8 +192,8 @@
 		positionTree(root);
 		nodes = flatten(root);
 		
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		return await balance(node);
 	}
@@ -255,8 +254,8 @@
 
 		highlightedNode = node;
 		log(`Vizsgálat: ${node.value}`);
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		if (value === node.value) {
 			log(`Érték megtalálva: ${value}`);
@@ -285,8 +284,8 @@
 
 		highlightedNode = node;
 		log(`Vizsgálat: ${node.value}`);
-		await pauseIfNeeded();
 		await delay(900 - get(speed) * 8);
+		await pauseIfNeeded();
 
 		if (value < node.value) {
 			node.left = await remove(node.left || null, value);
