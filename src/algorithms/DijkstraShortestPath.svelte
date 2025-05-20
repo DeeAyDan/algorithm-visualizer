@@ -22,7 +22,7 @@
 	currentStep.set(0);
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
-	activeLine.set(-1);
+	activeLine.set({ start: -1, end: -1 });
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
 
 	let edges = [
@@ -139,7 +139,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await dijkstra(0);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -152,7 +152,7 @@
 	async function dijkstra(start: number) {
 		distances = Array(numVertices).fill(Infinity);
 		let visited = Array(numVertices).fill(false);
-		let parent = Array(numVertices).fill(null); // <- új
+		let parent = Array(numVertices).fill(null);
 		distances[start] = 0;
 
 		for (let i = 0; i < numVertices; i++) {
@@ -169,7 +169,7 @@
 			if (current === -1) break;
 			visited[current] = true;
 
-			activeLine.set(17);
+			activeLine.set({ start: 14, end: 15 });
 			log(`Aktív csúcs: ${current} (távolság: ${distances[current]})`);
 			await delay(900 - get(speed) * 8);
 			await pauseIfNeeded();
@@ -179,10 +179,10 @@
 				let neighbor = -1;
 				if (from === current) {
 					neighbor = to;
-					activeLine.set(30);
+					activeLine.set({ start: 25, end: 27 });
 				} else if (to === current) {
 					neighbor = from;
-					activeLine.set(32);
+					activeLine.set({ start: 28, end: 30 });
 				} else continue;
 
 				log(`Csúcs kiválasztva: ${neighbor}`);
@@ -194,7 +194,7 @@
 				const newDist = distances[current] + weight;
 				highlightedEdge = { from: current, to: neighbor };
 
-				activeLine.set(41);
+				activeLine.set({ start: 35, end: 35 });
 				log(`Távolságok összehasonlítása: ${newDist} < ${distances[neighbor]}`);
 				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
@@ -209,7 +209,7 @@
 						}
 					}
 
-					activeLine.set(42);
+					activeLine.set({ start: 37, end: 40 });
 					log(`Távolság frissítve: ${current} → ${neighbor}, új érték: ${newDist}`);
 					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
@@ -219,41 +219,42 @@
 		}
 	}
 
-	selectedAlgorithmSourceCode.set(`
-function dijkstra(start) {
+	selectedAlgorithmSourceCode.set(`function dijkstra(start) {
   const distances = Array(numVertices)
                     .fill(Infinity);
   const visited = Array(numVertices)
                     .fill(false);
   distances[start] = 0;
- \n
+ 
   while (true) {
     let minDist = Infinity;
     let current = -1;
- \n
+ 
     for (let i = 0; i < numVertices; i++) {
       if (!visited[i] && distances[i] < minDist) {
         minDist = distances[i];
         current = j;
       }
     }
- \n
+ 
     if (current === -1) break;
     visited[current] = true;
- \n
+ 
     for (const edge of edges) {
       const { from, to, weight } = edge;
       let neighbor = -1;
       if (from === current) {
         neighbor = to;
-      } else if (to === current) {
+      }
+      else if (to === current) {
         neighbor = from;
-      } else continue;
-	  \n
+      }
+      else continue;
+	  
       if (neighbor === -1 || visited[neighbor]) continue;
 
       const newDist = distances[current] + weight;
-	\n
+	
       if (newDist < distances[neighbor]) {
         distances[neighbor] = newDist;
         }

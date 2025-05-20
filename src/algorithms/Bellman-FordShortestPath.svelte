@@ -22,7 +22,7 @@
 	algorithmStatus.set('idle');
 	consoleLog.set([]);
 	const displayName = algorithmDisplayNames[get(selectedAlgorithm)];
-	activeLine.set(-1);
+	activeLine.set({ start: -1, end: -1 });
 
 	let highlightedEdge = null;
 	let pathEdges = [];
@@ -120,7 +120,7 @@
 		consoleLog.update((logs) => [...logs, `${displayName} indítása...`]);
 
 		await bellmanFord(source);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -134,40 +134,35 @@
 
 		for (let i = 0; i < nodes.length - 1; i++) {
 			for (const { from, to, weight } of edges) {
-
-				activeLine.set(9);
+				activeLine.set({ start: 7, end: 8 });
 				highlightedEdge = { from, to };
 				log(`Ellenőrzés: ${from} → ${to}, távolság: ${distances[from] + weight} < ${distances[to]}`);
 				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
 
-
 				if (distances[from] + weight < distances[to]) {
 					distances[to] = distances[from] + weight;
 					pathEdges.push(highlightedEdge);
 					predecessor[to] = from;
-					activeLine.set(10);
+					activeLine.set({ start: 9, end: 12 });
 					log(`Távolság frissítése: ${from} → ${to}, új távolság: ${distances[to]}`);
 					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
 				}
 			}
 			pathEdges = [];
-	for (let i = 0; i < predecessor.length; i++) {
-		if (predecessor[i] !== null) {
-			pathEdges.push({ from: predecessor[i], to: i });
+			for (let i = 0; i < predecessor.length; i++) {
+				if (predecessor[i] !== null) {
+					pathEdges.push({ from: predecessor[i], to: i });
+				}
+			}
 		}
-	}
-		}
-
-
 
 		for (const { from, to, weight } of edges) {
 			let needToBreak = false;
 			if (distances[from] + weight < distances[to]) {
 				highlightedEdge = { from, to };
-				activeLine.set(19);
-
+				activeLine.set({ start: 17, end: 22 });
 				log(`Negatív ciklus: ${from} → ${to}, új távolság: ${distances[to]}`);
 				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
@@ -179,28 +174,30 @@
 		highlightedEdge = null;
 	}
 
-	selectedAlgorithmSourceCode.set(`
-async function bellmanFord(start) {
-  distances = Array(nodes.length)
-             .fill(Infinity);
-    distances[start] = 0;
- \n
+	selectedAlgorithmSourceCode.set(`async function bellmanFord(start) {
+  distances = Array(nodes.length).fill(Infinity);
+  const predecessor = Array(nodes.length).fill(null);
+  distances[start] = 0;
+
+  // Relaxáció
   for (let i = 0; i < nodes.length - 1; i++) {
     for (const { from, to, weight } of edges) {
       if (distances[from] + weight < distances[to]) {
         distances[to] = distances[from] + weight;
+        predecessor[to] = from;
       }
     }
   }
- \n
+
+  // Negatív ciklus ellenőrzése
   for (const { from, to, weight } of edges) {
-    let needToBreak = false;
     if (distances[from] + weight < distances[to]) {
-      needToBreak = true;
+      // Negative cycle detected
+      return false;
     }
-    if (needToBreak) break;
   }
-  highlightedEdge = null;
+
+  return true;
 }`);
 </script>
 
