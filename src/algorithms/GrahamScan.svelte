@@ -95,93 +95,61 @@
 	}
 
 	function grahamScanCounter(points) {
-  if (points.length < 3) return 0;
-  let steps = 0;
+		if (points.length < 3) return 0;
+		let steps = 0;
 
-  // ---- STEP 1: Find lowest point ----
-  // Matches: currentStep.update(n => n + 1) before finding lowest point
-  steps++;
-  
-  // Find the lowest point (same as in grahamScan)
-  const lowest = points.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x < b.x) ? a : b));
-  
-  // ---- STEP 2: Sort the points ----
-  // Matches: currentStep.update(n => n + 1) before sorting points
-  steps++;
-  
-  // Sort all points except lowest (same logic as grahamScan)
-  const sorted = points
-    .filter(p => p !== lowest)
-    .sort((a, b) => {
-      const cp = crossProduct(lowest, a, b);
-      if (cp === 0) {
-        return euclideanDistance(lowest, a) - euclideanDistance(lowest, b);
-      }
-      return -cp;
-    });
-  
-  // Handle edge case with insufficient points
-  if (sorted.length === 0) return steps;
-  
-  // ---- STEP 3: Initialize stack with first two points ----
-  // Matches: currentStep.update(n => n + 1) before initializing stack
-  steps++;
-  
-  // Initialize stack with lowest point and first sorted point
-  let stack = [lowest, sorted[0]];
-  
-  // ---- Process each remaining sorted point ----
-  for (let i = 1; i < sorted.length; i++) {
-    // Step for examining each point (matches currentStep update at start of loop)
-    steps++;
-    
-    const current = sorted[i];
-    
-    // Process and potentially pop points from stack
-    let top = stack[stack.length - 1];
-    let nextToTop = stack[stack.length - 2];
-    
-    // Check if we need to remove points that don't create a left turn
-    while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
-      // Step for each pop operation (matches currentStep update in while loop)
-      steps++;
-      
-      // Remove point from stack
-      stack.pop();
-      
-      // Update pointers (if we have enough points left)
-      if (stack.length >= 2) {
-        top = stack[stack.length - 1];
-        nextToTop = stack[stack.length - 2];
-      }
-    }
-    
-    // Step for pushing current point (matches currentStep update after while loop)
-    steps++;
-    stack.push(current);
-  }
-  
-  // ---- Step for adding final connecting edge ----
-  // Matches: currentStep update after the main loop
-  steps++;
-  
-  // ---- Final step for each edge in the hull ----
-  // In grahamScan, there's a loop that processes each edge in the final hull
-  // with a currentStep update for each iteration
-  steps += stack.length;
-  
-  return steps;
-  
-  // Helper functions needed for simulation
-  function crossProduct(a, b, c) {
-    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-  }
-  
-  function euclideanDistance(p1, p2) {
-    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-  }
-}
-	
+		// Find lowest point
+		const lowest = points.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x < b.x) ? a : b));
+		steps++; // log(`Legalsó pont: index: ${points.indexOf(lowest)}`);
+
+		// Sort points
+		const sorted = points
+			.filter((p) => p !== lowest)
+			.sort((a, b) => {
+				const cp = crossProduct(lowest, a, b);
+				if (cp === 0) {
+					return euclideanDistance(lowest, a) - euclideanDistance(lowest, b);
+				}
+				return -cp;
+			});
+		steps++; // log(`Rendezett pontok indexei: ${[lowest, ...sorted].map((p) => points.indexOf(p)).join(', ')}`);
+
+		// Initialize stack
+		const stack = [lowest, sorted[0]];
+		steps++; // log(`Kezdő él: (${lowest.x.toFixed(2)}, ${lowest.y.toFixed(2)}) → (${sorted[0].x.toFixed(2)}, ${sorted[0].y.toFixed(2)})`);
+
+		// Process each point
+		for (let i = 1; i < sorted.length; i++) {
+			const current = sorted[i];
+			let top = stack[stack.length - 1];
+			let nextToTop = stack[stack.length - 2];
+
+			steps++; // log(`Vizsgált pont indexe: ${points.indexOf(current)}`);
+
+			while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
+				steps++; // log(`Nem balra fordul → töröljük: (${top.x.toFixed(2)}, ${top.y.toFixed(2)})`);
+				stack.pop();
+				top = stack[stack.length - 1];
+				nextToTop = stack[stack.length - 2];
+			}
+
+			stack.push(current);
+			steps++; // log(`Hozzáadva a burokhoz: (${top.x.toFixed(2)}, ${top.y.toFixed(2)}) → (${current.x.toFixed(2)}, ${current.y.toFixed(2)})`);
+		}
+
+		// Final connecting edge
+		const last = stack[stack.length - 1];
+		const first = stack[0];
+		steps++; // log(`Záró él: (${last.x.toFixed(2)}, ${last.y.toFixed(2)}) → (${first.x.toFixed(2)}, ${first.y.toFixed(2)})`);
+
+		// Final hull edges
+		for (let i = 0; i < stack.length; i++) {
+			steps++; // Each final edge visualization
+		}
+
+		return steps;
+	}
+
 	async function restartAlgorithm() {
 		if (get(algorithmStatus) === 'finished') {
 			return new Promise((resolve) => {
@@ -219,7 +187,6 @@
 		if (points.length < 3) return;
 
 		highlightedEdge = null;
-		currentStep.update(n => n + 1); // Increment step counter
 
 		const lowest = points.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x < b.x) ? a : b));
 		activeLine.set({start: 5, end: 5});
@@ -227,7 +194,6 @@
 		await delay(900 - get(speed) * 8);
 		await pauseIfNeeded();
 
-		currentStep.update(n => n + 1); // Increment step counter
 		const sorted = points
 			.filter((p) => p !== lowest)
 			.sort((a, b) => {
@@ -244,7 +210,6 @@
 		await delay(900 - get(speed) * 8);
 		await pauseIfNeeded();
 
-		currentStep.update(n => n + 1); // Increment step counter
 		const stack: Point[] = [lowest, sorted[0]];
 		stackEdges = [[lowest, sorted[0]]];
 		stackEdges = [...stackEdges];
@@ -257,7 +222,6 @@
 		await pauseIfNeeded();
 
 		for (let i = 1; i < sorted.length; i++) {
-			currentStep.update(n => n + 1); // Increment step counter
 			const current = sorted[i];
 			let top = stack[stack.length - 1];
 			let nextToTop = stack[stack.length - 2];
@@ -271,7 +235,6 @@
 			await pauseIfNeeded();
 
 			while (stack.length >= 2 && crossProduct(nextToTop, top, current) <= 0) {
-				currentStep.update(n => n + 1); // Increment step counter for each pop
 				activeLine.set({start: 22, end: 26});
 				log(`Nem balra fordul → töröljük: (${top.x.toFixed(2)}, ${top.y.toFixed(2)})`);
 				stack.pop();
@@ -285,7 +248,6 @@
 				await pauseIfNeeded();
 			}
 
-			currentStep.update(n => n + 1); // Increment step counter
 			stack.push(current);
 			stackEdges.push([top, current]);
 			stackEdges = [...stackEdges];
@@ -299,7 +261,6 @@
 			await pauseIfNeeded();
 		}
 
-		currentStep.update(n => n + 1); // Increment step counter
 		highlightedEdge = null;
 		const last = stack[stack.length - 1];
 		const first = stack[0];

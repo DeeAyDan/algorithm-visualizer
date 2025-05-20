@@ -52,8 +52,46 @@
 
 	// ==== Előkalkulált lépésszám ====
 
+	function primCounter(start: number) {
+		let visited = Array(numVertices).fill(false);
+		let edgeQueue = [...edges].sort((a, b) => a.weight - b.weight);
+		let result = [];
+		let steps = 0;
+
+		visited[start] = true;
+
+		while (result.length < numVertices - 1) {
+			let found = false;
+
+			for (let i = 0; i < edgeQueue.length; i++) {
+				const { from, to, weight } = edgeQueue[i];
+				steps++; // log(`Él vizsgálata: (${from}, ${to}) súly: ${weight}`);
+
+				if ((visited[from] && !visited[to]) || (visited[to] && !visited[from])) {
+					result.push(edgeQueue[i]);
+					steps++; // log(`Hozzáadás az feszítőfához: (${from}, ${to})`);
+					visited[from] = true;
+					visited[to] = true;
+					edgeQueue.splice(i, 1);
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) break;
+		}
+
+		return steps;
+	}
+
+	// Make totalSteps reactive to edge changes
+	$: {
+		if (edges && edges.length > 0) {
+			totalSteps.set(primCounter(0));
+		}
+	}
+
 	onMount(() => {
-		totalSteps.set((numVertices - 1) * 2);
 		resetParameters();
 	});
 
@@ -97,6 +135,27 @@
 		await restartAlgorithm();
 	}
 
+	selectedAlgorithmSourceCode.set(`function prim(start) {
+  let visited = Array(numVertices).fill(false);
+  let result = [];
+
+  visited[start] = true;
+
+  while (result.length < numVertices - 1) {
+    for (let edge of edges) {
+      let {from, to, weight} = edge;
+
+      if ((visited[from] && !visited[to]) || (visited[to] && !visited[from])) {
+        result.push(edge);
+        visited[from] = true;
+        visited[to] = true;
+        break;
+      }
+    }
+  }
+  mstEdges = result;
+}`);
+
 	async function prim(start: number) {
 		let visited = Array(numVertices).fill(false);
 		let edgeQueue = [...edges].sort((a, b) => a.weight - b.weight);
@@ -110,19 +169,17 @@
 			for (let i = 0; i < edgeQueue.length; i++) {
 				const { from, to, weight } = edgeQueue[i];
 
+				highlightedEdge = { from, to };
 				log(`Él vizsgálata: (${from}, ${to}) súly: ${weight}`);
-					activeLine.set({ start: 10, end: 10 });
-					await delay(900 - get(speed) * 8);
-					await pauseIfNeeded();
+				activeLine.set({ start: 9, end: 9 });
+				await delay(900 - get(speed) * 8);
+				await pauseIfNeeded();
 
 				if ((visited[from] && !visited[to]) || (visited[to] && !visited[from])) {
-					highlightedEdge = { from, to };
-					
-
 					result.push(edgeQueue[i]);
 					mstEdges = [...result];
 					log(`Hozzáadás az feszítőfához: (${from}, ${to})`);
-					activeLine.set({ start: 12, end: 17 });
+					activeLine.set({ start: 11, end: 16 });
 
 					visited[from] = true;
 					visited[to] = true;
@@ -141,29 +198,6 @@
 
 		mstEdges = result;
 	}
-
-	selectedAlgorithmSourceCode.set(`
-function prim(start) {
-  let visited = Array(numVertices).fill(false);
-  let result = [];
-
-  visited[start] = true;
-
-  while (result.length < numVertices - 1) {
-    for (let edge of edges) {
-      let {from, to, weight} = edge;
-
-      if ((visited[from] && !visited[to]) || (visited[to] && !visited[from])) {
-        result.push(edge);
-        visited[from] = true;
-        visited[to] = true;
-        break;
-      }
-
-    }
-  }
-  mstEdges = result;
-}`);
 </script>
 
 <Controls {currentStep} {totalSteps} on:start={startAlgorithm} />

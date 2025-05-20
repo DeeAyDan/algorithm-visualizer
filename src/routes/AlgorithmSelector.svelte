@@ -77,7 +77,7 @@
 			Keresőfák
 		</button>
 		<div class="algorithm-list {algorithmGroups.searchTrees ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('binaryTree')}>Bináris fa</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('binaryTree')}>Bináris fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('avlTree')}>AVL-fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('bTree')}>B-fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('redBlackTree')}>Piros-fekete fa</button>
@@ -108,7 +108,7 @@
 			Minimális feszítőfák
 		</button>
 		<div class="algorithm-list {algorithmGroups.minimumSpanningTree ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('primMinimumSpanningTree')}>Prim algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('primMinimumSpanningTree')}>Prim algoritmus</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('kruskalMinimumSpanningTree')}>Kruskal algoritmus</button>
 		</div>
 	</div>
@@ -119,7 +119,7 @@
 		<div class="algorithm-list {algorithmGroups.geometryAlgorithms ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('convexHull')}>Konvex burok (Brute Force)</button>
 			<button class="algorithm-button" on:click={() => selectAlgorithm('jarvisMarch')}>Jarvis menetelés</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('grahamScan')}>Graham pásztázás</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('grahamScan')}>Graham pásztázás</button>
 		</div>
 	</div>
 </div>

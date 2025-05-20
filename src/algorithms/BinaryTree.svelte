@@ -14,6 +14,7 @@
 	} from '../stores/store.svelte.js';
 	import { algorithmDisplayNames } from '../stores/algorithmMap.js';
 	import { waitUntilResume, delay, pauseIfNeeded, log } from '../stores/utils.js';
+	import SourceCode from '../routes/SourceCode.svelte';
 
 	// Tree node interface
 	interface TreeNode {
@@ -54,7 +55,8 @@
 		currentStep.set(0);
 		algorithmStatus.set('idle');
 		consoleLog.set([]);
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
+		selectedAlgorithmSourceCode.set('Válassz egy műveletet!');
 	}
 
 	onMount(initStores);
@@ -153,37 +155,25 @@
 	function updateInsertSourceCode(): void {
 		selectedAlgorithmSourceCode.set(
 			`function insertElement(tree, value) {
-  if (!validateInput()) return;
-
   const insert = (node, value, depth = 0) => {
-    // Check depth limit
     if (depth > ${LAYOUT.maxDepth - 1}) {
-      log("A fa mélysége nem lehet nagyobb, mint ${LAYOUT.maxDepth}.");
       return node;
     }
 
-    // Create new node if empty
     if (!node) {
       return { value, x: 0, y: 0, isNew: true };
     }
 
-    // Traverse tree
     if (value < node.value) {
       node.left = insert(node.left, value, depth + 1);
-    } else if (value > node.value) {
+    }
+    else if (value > node.value) {
       node.right = insert(node.right, value, depth + 1);
-    } else {
-      log('Az érték már szerepel a fában.');
     }
     
     return node;
   };
 
-  tree = insert(tree, value);
-  // Save current positions before recalculating
-  saveCurrentPositions(tree);
-  calculatePositions(tree);
-  animateNodeMovements();
 }`
 		);
 	}
@@ -192,25 +182,17 @@
 		selectedAlgorithmSourceCode.set(
 			`function searchElement(tree, value) {
   const search = (node, value) => {
-    // Base case - not found
     if (!node) {
-      log('Elem nem található.');
       return false;
     }
     
-    // Check current node
     if (value === node.value) {
-      log('Érték megtalálva!');
       return true;
     } 
-    // Search left
     else if (value < node.value) {
-      log(\`\${value} < \${node.value}, balra keresünk\`);
       return search(node.left, value);
     } 
-    // Search right
     else {
-      log(\`\${value} > \${node.value}, jobbra keresünk\`);
       return search(node.right, value);
     }
   };
@@ -223,7 +205,6 @@
 	function updateDeleteSourceCode(): void {
 		selectedAlgorithmSourceCode.set(
 			`function deleteElement(tree, value) {
-  // Helper function to find minimum value node
   const findMin = (node) => {
     let current = node;
     while (current.left) {
@@ -233,57 +214,35 @@
   };
 
   const remove = (node, value) => {
-    // Base case - not found
     if (!node) {
-      log('Elem nem található.');
       return null;
     }
 
-    // Traverse tree to find node
     if (value < node.value) {
-      log(\`\${value} < \${node.value}, balra keresünk\`);
       node.left = remove(node.left, value);
-    } else if (value > node.value) {
-      log(\`\${value} > \${node.value}, jobbra keresünk\`);
+    }
+    else if (value > node.value) {
       node.right = remove(node.right, value);
     } 
-    // Found node to delete
     else {
-      // Case 1: Leaf node (no children)
       if (!node.left && !node.right) {
-        log(\`Levél csúcs törölve: \${value}\`);
         return null;
       }
-      // Case 2: Node with only one child
       else if (!node.left) {
-        log(\`Csúcs törölve (\${value}), jobb gyerek helyettesíti\`);
         return node.right;
       }
       else if (!node.right) {
-        log(\`Csúcs törölve (\${value}), bal gyerek helyettesíti\`);
         return node.left;
       }
-      // Case 3: Node with two children
       else {
-        // Find successor (minimum value in right subtree)
         const successor = findMin(node.right);
-        log(\`Két gyermekes csúcs (\${value}) helyettesítése \${successor.value} értékkel\`);
-        
-        // Replace node value with successor value
         node.value = successor.value;
-        
-        // Delete successor
         node.right = remove(node.right, successor.value);
       }
     }
     return node;
   };
 
-  tree = remove(tree, value);
-  // Save current positions before recalculating
-  saveCurrentPositions(tree);
-  calculatePositions(tree);
-  animateNodeMovements();
 }`
 		);
 	}
@@ -299,9 +258,8 @@
 		updateInsertSourceCode();
 
 		const insert = async (node: TreeNode | null, value: number, depth = 0): Promise<TreeNode> => {
-			// Check depth limit
 			if (depth > LAYOUT.maxDepth - 1) {
-				activeLine.set(5);
+				activeLine.set({ start: 3, end: 5 });
 				log(`A fa mélysége nem lehet nagyobb, mint ${LAYOUT.maxDepth}.`);
 				await delay(ANIMATION.delay);
 				await pauseIfNeeded();
@@ -311,47 +269,38 @@
 			await delay(ANIMATION.delay);
 			await pauseIfNeeded();
 
-			// Create new node if empty
 			if (!node) {
-				activeLine.set(10);
+				activeLine.set({ start: 7, end: 9 });
 				log(`Beszúrt érték: ${value}`);
 				return { value, x: 25, y: 25, isNew: true };
 			}
 
-			// Highlight current node and log
 			highlightedNode = node;
 			log(`Vizsgált csúcs: ${node.value}`);
 
-			// Traverse tree
 			if (value < node.value) {
-				activeLine.set(15);
+				activeLine.set({ start: 11, end: 13 });
 				log(`${value} < ${node.value}, balra haladunk`);
 				node.left = await insert(node.left, value, depth + 1);
 			} else if (value > node.value) {
-				activeLine.set(17);
+				activeLine.set({ start: 14, end: 16 });
 				log(`${value} > ${node.value}, jobbra haladunk`);
 				node.right = await insert(node.right, value, depth + 1);
 			} else {
-				activeLine.set(19);
+				activeLine.set({ start: 17, end: 19 });
 				log('Az érték már szerepel a fában.');
 			}
 			return node;
 		};
 
 		tree = await insert(tree, elementValue);
-
-		// Save current positions for nodes before recalculating
 		saveCurrentPositions(tree);
-
-		// Calculate new positions
 		calculatePositions(tree);
-
-		// Animate the movement of nodes to their new positions
 		await animateNodeMovements();
 
 		highlightedNode = null;
+		activeLine.set({ start: -1, end: -1 });
 		algorithmStatus.set('idle');
-		activeLine.set(-1);
 	}
 
 	async function searchElement(): Promise<void> {
@@ -364,36 +313,29 @@
 		updateSearchSourceCode();
 
 		const search = async (node: TreeNode | null, value: number): Promise<boolean> => {
-			// Base case - not found
 			if (!node) {
-				activeLine.set(4);
+				activeLine.set({ start: 3, end: 5 });
 				log('Elem nem található.');
 				return false;
 			}
 
-			// Highlight current node and pause
 			highlightedNode = node;
 			log(`Vizsgált csúcs: ${node.value}`);
 			await delay(ANIMATION.delay);
 			await pauseIfNeeded();
 
-			// Check current node
 			if (value === node.value) {
-				activeLine.set(9);
+				activeLine.set({ start: 7, end: 9 });
 				log(`Érték megtalálva: ${value}`);
 				await delay(ANIMATION.delay);
 				await pauseIfNeeded();
 				return true;
-			}
-			// Search left
-			else if (value < node.value) {
-				activeLine.set(13);
+			} else if (value < node.value) {
+				activeLine.set({ start: 10, end: 12 });
 				log(`${value} < ${node.value}, balra keresünk`);
 				return await search(node.left, value);
-			}
-			// Search right
-			else {
-				activeLine.set(18);
+			} else {
+				activeLine.set({ start: 13, end: 15 });
 				log(`${value} > ${node.value}, jobbra keresünk`);
 				return await search(node.right, value);
 			}
@@ -401,7 +343,7 @@
 
 		await search(tree, elementValue);
 		highlightedNode = null;
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 		algorithmStatus.set('idle');
 	}
 
@@ -410,11 +352,9 @@
 
 		algorithmStatus.set('running');
 		consoleLog.set([]);
-		currentStep.set(0);
 		log(`Törlés: ${elementValue}`);
 		updateDeleteSourceCode();
 
-		// Helper function to find the minimum value node
 		const findMin = (node: TreeNode): TreeNode => {
 			let current = node;
 			while (current.left) {
@@ -423,7 +363,6 @@
 			return current;
 		};
 
-		// Store positions for animation
 		if (tree) {
 			const nodes = getAllNodes(tree);
 			nodes.forEach((node) => {
@@ -433,46 +372,40 @@
 		}
 
 		const remove = async (node: TreeNode | null, value: number): Promise<TreeNode | null> => {
-			// Base case - not found
 			if (!node) {
-				activeLine.set(11);
+				activeLine.set({ start: 11, end: 13 });
 				log('Elem nem található.');
 				return null;
 			}
 
-			// Highlight current node and pause
 			highlightedNode = node;
 			log(`Vizsgált csúcs: ${node.value}`);
 			await delay(ANIMATION.delay);
-			await pauseIfNeeded();
+				await pauseIfNeeded();
 
-			// Traverse tree to find node
 			if (value < node.value) {
-				activeLine.set(16);
+				activeLine.set({ start: 15, end: 17 });
 				log(`${value} < ${node.value}, balra keresünk`);
 				node.left = await remove(node.left, value);
+				await delay(ANIMATION.delay);
+				await pauseIfNeeded();
 			} else if (value > node.value) {
-				activeLine.set(19);
+				activeLine.set({ start: 18, end: 20 });
 				log(`${value} > ${node.value}, jobbra keresünk`);
 				node.right = await remove(node.right, value);
-			}
-			// Found node to delete
-			else {
-				activeLine.set(24);
-
-				// Case 1: Leaf node (no children)
+				await delay(ANIMATION.delay);
+				await pauseIfNeeded();
+			} else {
 				if (!node.left && !node.right) {
+					activeLine.set({ start: 22, end: 24 });
 					log(`Levél csúcs törölve: ${value}`);
 					await delay(ANIMATION.delay);
 					await pauseIfNeeded();
 					return null;
-				}
-				// Case 2: Node with only one child
-				else if (!node.left) {
-					activeLine.set(29);
+				} else if (!node.left) {
+					activeLine.set({ start: 25, end: 27 });
 					log(`Csúcs törölve (${value}), jobb gyerek helyettesíti`);
 
-					// Preserve animation position for child node
 					if (node.right && node.right.prevX === undefined) {
 						node.right.prevX = node.right.x;
 						node.right.prevY = node.right.y;
@@ -482,10 +415,9 @@
 					await pauseIfNeeded();
 					return node.right;
 				} else if (!node.right) {
-					activeLine.set(33);
+					activeLine.set({ start: 28, end: 30 });
 					log(`Csúcs törölve (${value}), bal gyerek helyettesíti`);
 
-					// Preserve animation position for child node
 					if (node.left && node.left.prevX === undefined) {
 						node.left.prevX = node.left.x;
 						node.left.prevY = node.left.y;
@@ -494,22 +426,15 @@
 					await delay(ANIMATION.delay);
 					await pauseIfNeeded();
 					return node.left;
-				}
-				// Case 3: Node with two children
-				else {
-					activeLine.set(39);
-
-					// Find successor (minimum value in right subtree)
+				} else {
+					activeLine.set({ start: 31, end: 35 });
 					const successor = findMin(node.right);
 					log(`Két gyermekes csúcs (${value}) helyettesítése ${successor.value} értékkel`);
 
-					// Replace node value with successor value
 					node.value = successor.value;
 
-					// Delete successor
 					await delay(ANIMATION.delay);
 					await pauseIfNeeded();
-					activeLine.set(46);
 					node.right = await remove(node.right, successor.value);
 				}
 			}
@@ -517,15 +442,11 @@
 		};
 
 		tree = await remove(tree, elementValue);
-
-		// Calculate new positions
 		calculatePositions(tree);
-
-		// Animate nodes to their new positions
 		await animateNodeMovements();
 
 		highlightedNode = null;
-		activeLine.set(-1);
+		activeLine.set({ start: -1, end: -1 });
 		algorithmStatus.set('idle');
 	}
 
@@ -533,12 +454,11 @@
 		tree = null;
 		consoleLog.set([]);
 		currentStep.set(0);
-		updateInsertSourceCode();
 		log('Fa törölve.');
+		selectedAlgorithmSourceCode.set('Válassz egy műveletet!');
 	}
 
 	function createSampleTree(): void {
-		// Create a sample balanced tree
 		tree = { value: 50, x: 0, y: 0 };
 		tree.left = { value: 25, x: 0, y: 0 };
 		tree.right = { value: 75, x: 0, y: 0 };
@@ -551,17 +471,24 @@
 		consoleLog.set([]);
 		currentStep.set(0);
 		log('Minta fa létrehozva.');
+		selectedAlgorithmSourceCode.set('Válassz egy műveletet!');
 	}
 </script>
 
 <div class="control-buttons">
-	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Elem értéke" />
+	<input
+		class="custom-input"
+		type="number"
+		bind:value={elementValue}
+		placeholder="Elem értéke"
+		disabled={$algorithmStatus !== 'idle'}
+	/>
 	<div>
-		<button on:click={insertElement} disabled={animating}>Elem beszúrás</button>
-		<button on:click={deleteElement} disabled={animating}>Elem törlés</button>
-		<button on:click={searchElement} disabled={animating}>Elem keresés</button>
-		<button on:click={resetTree} disabled={animating}>Fa törlése</button>
-		<button on:click={createSampleTree} disabled={animating}>Minta fa</button>
+		<button on:click={insertElement} disabled={$algorithmStatus !== 'idle'}>Elem beszúrás</button>
+		<button on:click={deleteElement} disabled={$algorithmStatus !== 'idle'}>Elem törlés</button>
+		<button on:click={searchElement} disabled={$algorithmStatus !== 'idle'}>Elem keresés</button>
+		<button on:click={resetTree} disabled={$algorithmStatus !== 'idle'}>Fa törlése</button>
+		<button on:click={createSampleTree} disabled={$algorithmStatus !== 'idle'}>Minta fa</button>
 	</div>
 </div>
 
@@ -571,7 +498,14 @@
 			<!-- Draw edges first so they appear behind nodes -->
 			{#each getAllNodes(tree) as node (node.value)}
 				{#if node.left}
-					<g class="edge-group">
+					<g
+						class="edge-group"
+						style="transform: translate({node.left.prevX !== undefined && animating
+							? node.left.prevX - node.left.x
+							: 0}px, 
+							{node.left.prevY !== undefined && animating ? node.left.prevY - node.left.y : 0}px); 
+							transition: transform {ANIMATION.duration}ms {ANIMATION.easing};"
+					>
 						<line
 							class="edge-line"
 							x1={node.x}
@@ -584,7 +518,14 @@
 					</g>
 				{/if}
 				{#if node.right}
-					<g class="edge-group">
+					<g
+						class="edge-group"
+						style="transform: translate({node.right.prevX !== undefined && animating
+							? node.right.prevX - node.right.x
+							: 0}px, 
+							{node.right.prevY !== undefined && animating ? node.right.prevY - node.right.y : 0}px); 
+							transition: transform {ANIMATION.duration}ms {ANIMATION.easing};"
+					>
 						<line
 							class="edge-line"
 							x1={node.x}
@@ -679,6 +620,12 @@
 		cursor: not-allowed;
 	}
 
+	.custom-input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
+	}
+
 	.svg {
 		margin: 1rem auto;
 		border: 1px solid #666;
@@ -698,6 +645,11 @@
 
 	.node-group {
 		transform-origin: center;
+		will-change: transform;
+	}
+
+	.edge-group {
+		transform-origin: 0 0;
 		will-change: transform;
 	}
 
