@@ -215,7 +215,8 @@ function updateDeleteSourceCode(): void {
 
     if (value < node.value) {
       node.left = remove(node.left, value);
-    } else if (value > node.value) {
+    }
+    else if (value > node.value) {
       node.right = remove(node.right, value);
     } 
     else {
@@ -234,11 +235,6 @@ function updateDeleteSourceCode(): void {
         node.right = remove(node.right, successor.value);
       }
     }
-
-    // Update height and balance
-    node.height = Math.max(height(node.left), height(node.right)) + 1;
-    return balance(node);
-  };
 
   return remove(tree, value);
 }`
@@ -879,7 +875,6 @@ async function balance(n: Node): Promise<Node> {
 		flex-direction: column;
 		align-items: center;
 		gap: 1rem;
-		padding: 1rem;
 	}
 
 	.svg {
