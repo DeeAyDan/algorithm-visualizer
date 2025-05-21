@@ -78,7 +78,7 @@
 		</button>
 		<div class="algorithm-list {algorithmGroups.searchTrees ? 'visible' : ''}">
 			<button class="algorithm-button" on:click={() => selectAlgorithm('binaryTree')}>Bináris fa</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('avlTree')}>AVL-fa</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('avlTree')}>AVL-fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('bTree')}>B-fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('redBlackTree')}>Piros-fekete fa</button>
 			<button class="algorithm-button todo" on:click={() => selectAlgorithm('twoThreeTree')}>2-3 fa</button>
@@ -90,8 +90,8 @@
 			Sztring algoritmusok
 		</button>
 		<div class="algorithm-list {algorithmGroups.stringAlgorithms ? 'visible' : ''}">
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('rabinKarp')}>Rabin-Karp algoritmus</button>
-			<button class="algorithm-button todo" on:click={() => selectAlgorithm('knuthMorrisPratt')}>Knuth-Morris-Pratt algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('rabinKarp')}>Rabin-Karp algoritmus</button>
+			<button class="algorithm-button" on:click={() => selectAlgorithm('knuthMorrisPratt')}>Knuth-Morris-Pratt algoritmus</button>
 		</div>
 	</div>
 	<div class="algorithm-group">

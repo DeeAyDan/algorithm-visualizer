@@ -28,7 +28,7 @@
 	let text = 'ABBBAABA';
 	let pattern = 'AAB';
 	let patternPosition = 0;
-	activeLine.set(-1);
+	activeLine.set({start: -1, end: -1});
 
 	// ==== Vizualizációs indexek ====
 	let textIndex: number | null = null;
@@ -141,7 +141,7 @@
 		totalSteps.set(rabinKarpCounter(text, pattern));
 		await rabinKarp(text, pattern);
 		textIndex = null;
-		activeLine.set(-1);
+		activeLine.set({start: -1, end: -1});
 
 		consoleLog.update((logs) => [...logs, 'A futás befejeződött!']);
 		algorithmStatus.set('finished');
@@ -149,8 +149,8 @@
 	}
 
 	async function rabinKarp(text: string, pattern: string) {
-		const d = 256; // karakterkészlet mérete
-		const q = 101; // prímszám a mod művelethez
+		const d = 256;
+		const q = 101; 
 
 		let M = pattern.length;
 		let N = text.length;
@@ -167,7 +167,7 @@
 			t = (d * t + text.charCodeAt(i)) % q;
 		}
 
-		activeLine.set(23);
+		activeLine.set({start: 15, end: 18});
 		await delay(900 - get(speed) * 8);
 		await pauseIfNeeded();
 
@@ -175,13 +175,13 @@
 			patternPosition = i;
 			textIndex = null;
 			log(`Hash összehasonlítás: minta=${p}, szöveg=${t}`);
-			activeLine.set(25);
+			activeLine.set({start: 20, end: 20});
 			await delay(900 - get(speed) * 8);
 			await pauseIfNeeded();
 
 			if (p === t) {
 				log(`Hash egyezik, karakter-összehasonlítás...`);
-				activeLine.set(26);
+				activeLine.set({start: 21, end: 22});
 				await delay(900 - get(speed) * 8);
 				await pauseIfNeeded();
 
@@ -189,12 +189,12 @@
 				for (let j = 0; j < M; j++) {
 					if (text[i + j] !== pattern[j]) {
 						log(`Eltérés '${text[i + j]}' ≠ '${pattern[j]}'`);
-						activeLine.set(30);
+						activeLine.set({start: 25, end: 28});
 						match = false;
 						break;
 					}
 					log(`Egyezés '${text[i + j]}' = '${pattern[j]}'`);
-					activeLine.set(29);
+					activeLine.set({start: 32, end: 35});
 					textIndex = i + j;
 					await delay(900 - get(speed) * 8);
 					await pauseIfNeeded();
@@ -217,28 +217,28 @@
 	// ==== Forráskód megjelenítés ====
 	selectedAlgorithmSourceCode.set(
 		`function rabinKarp(text, pattern) {
- \n
+  // karakterkészlet mérete
   const d = 256;
+  // prímszám a mod művelethez
   const q = 101;
- \n
+ 
   let M = pattern.length;
   let N = text.length;
   let p = 0;
   let t = 0;
   let h = 1;
- \n
+ 
   for (let i = 0; i < M - 1; i++) h = (h * d) % q;
- \n
+ 
   for (let i = 0; i < M; i++){
     p = (d * p + pattern.charCodeAt(i)) % q;
     t = (d * t + text.charCodeAt(i)) % q;
   }
- \n
+ 
   for (let i = 0; i <= N - M; i++) {
-    patternPosition = i;
     if (p === t) {
       let match = true;
-		 \n
+		 
       for (let j = 0; j < M; j++) {
         if (text[i + j] !== pattern[j]) {
           match = false;
@@ -246,24 +246,28 @@
         }
       }
     }
- \n
+
+    if (match) {
+      for (let k = 0; k < M; k++) matchPositions.add(i + k);
+      matchPositions = new Set<number>([...matchPositions]);
+    }
+ 
     if (i < N - M) {
       t = (d * (t - text.charCodeAt(i) * h) + text.charCodeAt(i + M)) % q;
       if (t < 0) t += q;
     }
   }
-}`
-	);
+}`);
 </script>
 
 <div class="custom-input">
 	<div>
 		<span>Szöveg:</span>
-		<input class="text-input" bind:value={text} maxlength="15" />
+		<input class="text-input" bind:value={text} maxlength="15" disabled={$algorithmStatus !== 'idle'} />
 	</div>
 	<div>
 		<span>Mintázat:</span>
-		<input class="pattern-input" bind:value={pattern} maxlength="5" />
+		<input class="pattern-input" bind:value={pattern} maxlength="5" disabled={$algorithmStatus !== 'idle'} />
 	</div>
 </div>
 
@@ -271,22 +275,26 @@
 <div class="algorithm-container">
 	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="array-visual">
-		<div class="row">
-			{#each Array.from({ length: text.length }) as _, i}
-				<div
-					class="bar {matchPositions.has(i) ? 'match' : ''} {i === textIndex ? 'active' : ''}"
-					style=" background-color: #2f4f4f;"
-				>
-					{text[i]}
+		<div class="visualization-container">
+			<div class="row-container">
+				<div class="row text-row">
+					{#each Array.from({ length: text.length }) as _, i}
+						<div
+							class="bar {matchPositions.has(i) ? 'match' : ''} {i === textIndex ? 'active' : ''}"
+							style=" background-color: #2f4f4f;"
+						>
+							{text[i]}
+						</div>
+					{/each}
 				</div>
-			{/each}
-		</div>
-		<div class="row pattern-row" style="left: {patternPosition * 45}px">
-			{#each Array.from({ length: pattern.length }) as _, i}
-				<div class="bar pattern" style="background-color: #ffd700;">
-					{pattern[i]}
+				<div class="row pattern-row" style="margin-left: {patternPosition * 48}px">
+					{#each Array.from({ length: pattern.length }) as _, i}
+						<div class="bar pattern" style="background-color: #ffd700;">
+							{pattern[i]}
+						</div>
+					{/each}
 				</div>
-			{/each}
+			</div>
 		</div>
 	</div>
 </div>
@@ -295,14 +303,21 @@
 <style>
 	.array-visual {
 		display: flex;
-		flex-direction: column;
-		gap: 10px;
 		justify-content: center;
 		align-items: center;
 		height: 200px;
 		margin: 1rem auto;
-		width: fit-content;
+		width: 100%;
 	}
+	
+	.visualization-container {
+		position: relative;
+		display: flex;
+		justify-content: center;
+		width: 100%;
+		height: 120px;
+	}
+	
 	.custom-input {
 		display: flex;
 		justify-content: space-around;
@@ -327,12 +342,27 @@
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
 	}
+	.row-container{
+		width: fit-content;
+		display: flex;
+		flex-direction: column;
+	}
 	.row {
 		display: flex;
-		width: 100%;
+		width: fit-content;
 		justify-content: flex-start;
 		gap: 5px;
 	}
+	
+	.text-row {
+		position: relative;
+	}
+	
+	.pattern-row {
+		margin-top: 5px;
+		transition: margin-left 0.3s ease;
+	}
+	
 	.bar {
 		display: flex;
 		justify-content: center;
@@ -341,20 +371,30 @@
 		width: 35px;
 		height: 35px;
 		transition: background-color 0.3s ease;
-		border: 3px solid #2f2f2f;
+		border: 4px solid transparent;
 	}
+	
+	.bar:last-child {
+		margin-right: 0;
+	}
+	
 	.bar.active {
-		border: 3px solid #dc143c;
+		border: 4px solid #dc143c;
 	}
+	
 	.pattern {
 		color: #2f2f2f;
 	}
-	.pattern-row {
-		position: relative;
-		transition: left 0.3s ease;
-	}
+	
 	.row .match {
 		color: #2f2f2f;
 		background-color: #45a049 !important;
+	}
+	
+	.text-input:disabled,
+	.pattern-input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		border-color: #3a3a3a;
 	}
 </style>
