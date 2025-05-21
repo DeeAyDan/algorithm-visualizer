@@ -24,8 +24,6 @@ import RabinKarp from "../algorithms/Rabin-Karp.svelte";
 import RedBlackTree from "../algorithms/Red-BlackTree.svelte";
 import TowersOfHanoi from "../algorithms/TowersOfHanoi.svelte";
 import TravelingProblem from "../algorithms/TravelingProblem.svelte";
-import TwoThreeTree from "../algorithms/Two-ThreeTree.svelte";
-
 
 export const algorithmComponents = {
     avlTree: AvlTree,
@@ -54,5 +52,4 @@ export const algorithmComponents = {
     redBlackTree: RedBlackTree,
     towersOfHanoi: TowersOfHanoi,
     travelingProblem: TravelingProblem,
-    twoThreeTree: TwoThreeTree,
   };
