@@ -761,8 +761,9 @@ async function balance(n: Node): Promise<Node> {
 		<button on:click={insertElement} disabled={$algorithmStatus !== 'idle'}>Elem beszúrás</button>
 		<button on:click={deleteElement} disabled={$algorithmStatus !== 'idle'}>Elem törlés</button>
 		<button on:click={searchElement} disabled={$algorithmStatus !== 'idle'}>Elem keresés</button>
-		<button on:click={resetTree} disabled={$algorithmStatus !== 'idle'}>Fa törlése</button>
-		<button on:click={createSampleTree} disabled={$algorithmStatus !== 'idle'}>Minta fa</button>
+		<button on:click={createSampleTree} disabled={$algorithmStatus !== 'idle'} class="special-button">Minta fa</button>
+		<button on:click={resetTree} disabled={$algorithmStatus !== 'idle'} class="clear-button">Fa törlése</button>
+
 	</div>
 </div>
 
@@ -833,6 +834,27 @@ async function balance(n: Node): Promise<Node> {
 		border-bottom: 3px solid #505050;
 		flex-wrap: wrap;
 		gap: 10px;
+	}
+	.special-button {
+		background-color: #3498db !important;
+	}
+	
+	.special-button:hover {
+		background-color: #2980b9 !important;
+	}
+	
+	.clear-button {
+		background-color: #e74c3c !important;
+	}
+	
+	.clear-button:hover {
+		background-color: #c0392b !important;
+	}
+	.control-buttons div {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
 	}
 
 	.control-buttons input {

@@ -120,13 +120,16 @@
 
 <div class="control-buttons">
 	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Elem értéke" />
-	<button on:click={insertElement}>Elem beszúrás</button>
-	<button on:click={deleteElement}>Gyökér törlés</button>
-	<button on:click={searchElement}>Elem keresés</button>
+
+	<div><button on:click={insertElement}>Elem beszúrás</button>
+		<button on:click={deleteElement}>Gyökér törlés</button>
+		<button on:click={searchElement}>Elem keresés</button>
+		<button on:click={createExampleHeap} class="special-button">Példa kupac</button>
+		<button on:click={clearHeap} class="clear-button">Kupac törlése</button></div>
 </div>
 
+
 <div class="algorithm-container">
-	<Controls {currentStep} {totalSteps} on:start={startAlgorithm} />
 	<div class="array-visual">
 		<div class="row">
 			{#each heap.slice(1) as value, i}
@@ -187,17 +190,27 @@
 	}
 	.control-buttons {
 		display: flex;
-		justify-content: center;
-		gap: 1rem;
-		margin-bottom: 1rem;
+		justify-content: space-around;
+		align-items: center;
+		padding: 1rem;
+		border-bottom: 3px solid #505050;
+		flex-wrap: wrap;
+		gap: 8px;
 	}
 	.control-buttons input {
 		width: 150px;
 		padding: 0.5rem;
+		margin-right: 10px;
 		border-radius: 5px;
 		background-color: #2f2f2f;
 		border: 3px solid #505050;
 		color: white;
+	}
+	.control-buttons div {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
 	}
 	.control-buttons button {
 		padding: 0.5rem 1rem;
@@ -206,9 +219,27 @@
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;
+		transition: background-color 0.2s;
 	}
+
 	.control-buttons button:hover {
 		background-color: #45a049;
+	}
+	
+	.special-button {
+		background-color: #3498db !important;
+	}
+	
+	.special-button:hover {
+		background-color: #2980b9 !important;
+	}
+	
+	.clear-button {
+		background-color: #e74c3c !important;
+	}
+	
+	.clear-button:hover {
+		background-color: #c0392b !important;
 	}
 	.svg-tree {
 		width: 100%;

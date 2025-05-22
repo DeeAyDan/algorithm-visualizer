@@ -777,25 +777,13 @@
 
 <div class="control-buttons">
 	<input class="custom-input" type="number" bind:value={elementValue} placeholder="Elem értéke" />
-	<button on:click={insertElement}>Elem beszúrás</button>
-	<button on:click={deleteElement}>Elem törlés</button>
-	<button on:click={() => searchElement(Number(elementValue))}>Elem keresés</button>
-	<button on:click={createExampleTree} class="special-button">Példa fa</button>
-	<button on:click={clearTree} class="clear-button">Fa törlése</button>
-</div>
-
-<div class="speed-control">
-	<label for="animationSpeed">Animáció sebessége:</label>
-	<input 
-		type="range" 
-		id="animationSpeed" 
-		min="100" 
-		max="900" 
-		step="100" 
-		value={1000 - animationSpeed} 
-		on:input={(e) => setAnimationSpeed(e.target.value)} 
-	/>
-	<span>{animationSpeed > 500 ? 'Lassú' : animationSpeed > 200 ? 'Közepes' : 'Gyors'}</span>
+	<div>
+		<button on:click={insertElement}>Elem beszúrás</button>
+		<button on:click={deleteElement}>Elem törlés</button>
+		<button on:click={() => searchElement(Number(elementValue))}>Elem keresés</button>
+		<button on:click={createExampleTree} class="special-button">Példa fa</button>
+		<button on:click={clearTree} class="clear-button">Fa törlése</button>
+	</div>
 </div>
 
 <!-- ==== Komponens markup ==== -->
@@ -836,6 +824,13 @@
 		transition: background-color 0.2s;
 	}
 
+	.control-buttons div {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
 	.control-buttons button:hover {
 		background-color: #45a049;
 	}
@@ -862,29 +857,5 @@
 		border-radius: 4px;
 		display: block;
 		background-color: #2f2f2f;
-	}
-	
-	.speed-control {
-		display: flex;
-		align-items: center;
-		padding: 0.5rem 1rem;
-		gap: 10px;
-		background-color: #3d3d3d;
-		border-bottom: 2px solid #505050;
-	}
-	
-	.speed-control label {
-		color: white;
-		font-size: 0.9rem;
-	}
-	
-	.speed-control input[type="range"] {
-		width: 150px;
-	}
-	
-	.speed-control span {
-		color: white;
-		font-size: 0.9rem;
-		width: 60px;
 	}
 </style>
